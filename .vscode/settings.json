@@ -1,4 +1,10 @@
 {
+    "files.exclude": {
+        ".git": true,
+        ".vscode": true,
+        "**/bin": true,
+        "**/obj": true,
+    },
     "cSpell.words": [
         "vulkancore"
     ]
