@@ -1,19 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-  
+
     <Authors>Bastian Blokland</Authors>
-    <Description>Main application logic</Description>
+    <Description>Generic engine logic</Description>
 
     <TargetFramework>netstandard2.0</TargetFramework>
-    <RootNamespace>HT.Main</RootNamespace>
+    <RootNamespace>HT.Engine</RootNamespace>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
   </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="../ht.engine/ht.engine.csproj"/>
-  </ItemGroup>
 
 </Project>

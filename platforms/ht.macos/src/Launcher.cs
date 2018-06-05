@@ -6,11 +6,14 @@ namespace HT.MacOS
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            Console.WriteLine("[MacOS] Launching program..");
 
-            var prog = new HT.Main.Program();
-            //Logic here :)
-            prog.Dispose();
+            using(var app = new NativeApp())
+            {
+                HT.Main.Program.Run(app);
+            }
+
+            Console.WriteLine("[MacOS] Program terminated");
         }
     }
 }
