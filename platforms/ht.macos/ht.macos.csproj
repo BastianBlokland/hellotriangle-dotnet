@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../ht.main/ht.main.csproj"/>
+    <None Include="lib/**" CopyToOutputDirectory="PreserveNewest" Link="%(Filename)%(Extension)"/>
   </ItemGroup>
 
 </Project>
