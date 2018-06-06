@@ -25,7 +25,7 @@ namespace HT.MacOS
         private delegate void CloseRequestedDelegate();
 
         [DllImport("libmacwindow")] 
-        private static extern IntPtr CreateWindow(	IntPtr appPointer, 
+        private static extern IntPtr CreateWindow(  IntPtr appPointer, 
                                                     Float2 size, 
                                                     [MarshalAs(UnmanagedType.FunctionPtr)] BeginResizeCallback beginResizeCallback,
                                                     [MarshalAs(UnmanagedType.FunctionPtr)] ResizeCallback resizeCallback,
