@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+
+    <Authors>Bastian Blokland</Authors>
+    <Description>Wrapper for Windows platform code</Description>
+
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <RootNamespace>HT.Win32</RootNamespace>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../ht.engine/ht.engine.csproj"/>
+    <ProjectReference Include="../../ht.main/ht.main.csproj"/>
+  </ItemGroup>
+
+</Project>
