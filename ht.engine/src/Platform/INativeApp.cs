@@ -9,11 +9,9 @@ namespace HT.Engine.Platform
     /// </summary>
     public interface INativeApp : IDisposable
     {
-        INativeWindow CreateWindow(Float2 size);
+        INativeWindow CreateWindow(Int2 size, string title);
+        void DestroyWindow(INativeWindow window);
 
-        /// <summary>
-        /// Send a update pulse to a native-app so it can handle os events 
-        /// </summary>
         void Update();
     }
 }

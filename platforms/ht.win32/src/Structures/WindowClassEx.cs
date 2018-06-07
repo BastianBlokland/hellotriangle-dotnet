@@ -25,16 +25,16 @@ namespace HT.Win32.Structures
         public readonly string ClassName;
         public readonly IntPtr IconSmall;
 
-        public WindowClassEx(   WindowClassStyles style, 
-                                Delegates.WindowProcedure windowProcedure, 
-                                int classExtraBytes, 
-                                int windowExtraBytes, 
-                                IntPtr instance, 
-                                IntPtr icon, 
-                                IntPtr cursor, 
-                                IntPtr backgroundBrush, 
-                                string menuName, 
-                                string className, 
+        public WindowClassEx(   WindowClassStyles style,
+                                Delegates.WindowProcedure windowProcedure,
+                                int classExtraBytes,
+                                int windowExtraBytes,
+                                IntPtr instance,
+                                IntPtr icon,
+                                IntPtr cursor,
+                                IntPtr backgroundBrush,
+                                string menuName,
+                                string className,
                                 IntPtr iconSmall)
         {
             Size = (uint)Marshal.SizeOf(typeof(WindowClassEx));

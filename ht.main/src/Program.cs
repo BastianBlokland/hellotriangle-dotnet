@@ -11,17 +11,15 @@ namespace HT.Main
         {
             bool running = true;
 
-            using(var window = nativeApp.CreateWindow(new Float2(600f, 400f)))
-            {
-                window.CloseRequested += () => running = false;
+            var window = nativeApp.CreateWindow(new Int2(600, 400), "test");
+            window.CloseRequested += () => running = false;
 
-                int tick = 0;
-                while(running)
-                {
-                    window.Title = (++tick).ToString();
-                    nativeApp.Update();
-                    System.Threading.Thread.Sleep(100);
-                }
+            int tick = 0;
+            while(running)
+            {
+                window.Title = (++tick).ToString();
+                nativeApp.Update();
+                System.Threading.Thread.Sleep(100);
             }
         }
     }

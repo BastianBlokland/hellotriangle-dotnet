@@ -40,9 +40,10 @@ namespace HT.MacOS
         #endregion
 
         public event Action CloseRequested;
-        public event Action BeginResizing;
-        public event Action<Float2> Resized;
-        public event Action EndResizing;
+        public event Action<Int2> Resized;
+        public event Action<Int2> Moved;
+        public event Action BeginClientRectChange;
+        public event Action<IntRect> EndClientRectChange;
 
         public string Title
         {
@@ -57,27 +58,31 @@ namespace HT.MacOS
                 }
             }
         }
-        public bool IsResizing { get; private set; }
-        public Float2 Size { get; private set; }
-        public Float2 MinSize { get; set; } = new Float2(0f, 0f);
-        public Float2 MaxSize { get; set; } = new Float2(float.MaxValue, float.MaxValue);
+        public bool Minimized { get; private set; }
+        public bool Maximized { get; private set; }
+        public bool IsMovingOrResizing { get; private set; }
+        public IntRect ClientRect { get; private set; }
 
         private readonly IntPtr nativeWindowPointer;
         private string title;
         private bool disposed;
 
-        public NativeWindow(IntPtr nativeAppPointer, Float2 size)
+        public NativeWindow(IntPtr nativeAppPointer, Int2 size)
         {
-            Size = size;
             nativeWindowPointer = CreateWindow
             (
                 nativeAppPointer,
-                size,
+                new Float2(size.X, size.Y),
                 OnBeginResize,
                 OnResize,
                 OnEndResize,
                 OnCloseRequested
             );
+        }
+
+        public void Update()
+        {
+            
         }
         
         public void Dispose()
@@ -91,25 +96,21 @@ namespace HT.MacOS
 
         private void OnBeginResize()
         {
-            IsResizing = true;
-            BeginResizing?.Invoke();
+            IsMovingOrResizing = true;
+            BeginClientRectChange?.Invoke();
         }
 
         private Float2 OnResize(Float2 size)
         {
-            Size = new Float2
-            (
-                size.X.Clamp(MinSize.X, MaxSize.X),
-                size.Y.Clamp(MinSize.Y, MaxSize.Y)
-            );
-            Resized?.Invoke(Size);
+            ClientRect = new IntRect(0, 0, (int)size.X, (int)size.Y);
+            Resized?.Invoke(ClientRect.Size);
             return size;
         }
 
         private void OnEndResize()
         {
-            IsResizing = false;
-            EndResizing?.Invoke();
+            IsMovingOrResizing = false;
+            EndClientRectChange?.Invoke(ClientRect);
         }
 
         private void OnCloseRequested() => CloseRequested?.Invoke();

@@ -28,10 +28,15 @@ namespace HT.MacOS
         
         public NativeApp() => nativeAppPointer = SetupApp();
 
-        public HT.Engine.Platform.INativeWindow CreateWindow(Float2 size)
+        public HT.Engine.Platform.INativeWindow CreateWindow(Int2 size, string title)
         {
             ThrowIfDisposed();
             return new NativeWindow(nativeAppPointer, size);
+        }
+
+        public void DestroyWindow(HT.Engine.Platform.INativeWindow window)
+        {
+            //TODO: Implement
         }
 
         public void Update()
