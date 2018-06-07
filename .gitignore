@@ -1,7 +1,3 @@
 # Build output directories
 bin
 obj
-
-# User specific config files
-.vscode/launch.json
-.vscode/tasks.json
