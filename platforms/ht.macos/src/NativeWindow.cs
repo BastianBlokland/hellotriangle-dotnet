@@ -61,10 +61,8 @@ namespace HT.MacOS
         #endregion
 
         public event Action CloseRequested;
-        public event Action<Int2> Resized;
-        public event Action<Int2> Moved;
-        public event Action BeginClientRectChange;
-        public event Action<IntRect> EndClientRectChange;
+        public event Action Resized;
+        public event Action Moved;
 
         public string Title
         {
@@ -120,25 +118,17 @@ namespace HT.MacOS
         private void OnResized(Int2 size)
         {
             ClientRect = new IntRect(ClientRect.Min, ClientRect.Min + size);
-            Resized?.Invoke(size);
+            Resized?.Invoke();
         }
 
-        private void OnBeginResize()
-        {
-            IsMovingOrResizing = true;
-            BeginClientRectChange?.Invoke();
-        }
+        private void OnBeginResize() => IsMovingOrResizing = true;
 
-        private void OnEndResize()
-        {
-            IsMovingOrResizing = false;
-            EndClientRectChange?.Invoke(ClientRect);
-        }
+        private void OnEndResize() => IsMovingOrResizing = false;
 
         private void OnMoved(Int2 pos)
         {
             ClientRect = new IntRect(pos, pos + ClientRect.Size);
-            Moved?.Invoke(pos);
+            Moved?.Invoke();
         }
 
         private void OnMinimized() => Minimized = true;

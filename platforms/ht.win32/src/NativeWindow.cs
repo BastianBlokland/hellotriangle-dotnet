@@ -77,11 +77,8 @@ namespace HT.Win32
         #endregion
 
         public event Action CloseRequested;
-        public event Action<Int2> Resized;
-        public event Action<Int2> Moved;
-        public event Action BeginClientRectChange;
-        public event Action<IntRect> EndClientRectChange;
-
+        public event Action Resized;
+        public event Action Moved;
         public string Title
         {
             get => title;
@@ -214,7 +211,7 @@ namespace HT.Win32
                     lParam.ToInt64().Split(out width, out height);
                     
                     ClientRect = new IntRect(ClientRect.Min, ClientRect.Min + new Int2(width, height));
-                    Resized?.Invoke(ClientRect.Size);
+                    Resized?.Invoke();
                     break;
 
                 case WM_MOVE:
@@ -223,17 +220,15 @@ namespace HT.Win32
                     
                     Int2 pos = new Int2(x, y);
                     ClientRect = new IntRect(pos, pos + ClientRect.Size);
-                    Moved?.Invoke(pos);
+                    Moved?.Invoke();
                     break;
 
                 case WM_ENTERSIZEMOVE:
                     IsMovingOrResizing = true;
-                    BeginClientRectChange?.Invoke();
                     break;
 
                 case WM_EXITSIZEMOVE:
                     IsMovingOrResizing = false;
-                    EndClientRectChange?.Invoke(ClientRect);
                     break;
 
                 case WM_CLOSE:
