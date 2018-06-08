@@ -213,7 +213,7 @@ namespace HT.Win32
                     short width, height;
                     lParam.ToInt64().Split(out width, out height);
                     
-                    ClientRect = new IntRect(ClientRect.Min.X, ClientRect.Min.Y, ClientRect.Min.X + width, ClientRect.Min.Y + height);
+                    ClientRect = new IntRect(ClientRect.Min, ClientRect.Min + new Int2(width, height));
                     Resized?.Invoke(ClientRect.Size);
                     break;
 
@@ -221,8 +221,9 @@ namespace HT.Win32
                     short x, y;
                     lParam.ToInt64().Split(out x, out y);
                     
-                    ClientRect = new IntRect(x, y, x + ClientRect.Width, y + ClientRect.Height);
-                    Moved?.Invoke(new Int2(x, y));
+                    Int2 pos = new Int2(x, y);
+                    ClientRect = new IntRect(pos, pos + ClientRect.Size);
+                    Moved?.Invoke(pos);
                     break;
 
                 case WM_ENTERSIZEMOVE:

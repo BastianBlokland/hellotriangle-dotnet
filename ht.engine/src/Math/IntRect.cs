@@ -1,14 +1,12 @@
 using System;
 using System.Runtime.InteropServices;
 
-using static System.Math;
-
 namespace HT.Engine.Math
 {
     [StructLayout(LayoutKind.Sequential)]
-    public struct IntRect
+    public struct IntRect : IEquatable<IntRect>
     {
-        public static IntRect Zero => new IntRect();
+        public static readonly IntRect Zero = new IntRect();
 
         public Int2 Size => new Int2(Width, Height);
         public int Width => Max.X - Min.X;
@@ -26,6 +24,16 @@ namespace HT.Engine.Math
             Min = min;
             Max = max;
         }
+
+        public static bool operator ==(IntRect a, IntRect b) => a.Equals(b);
+
+        public static bool operator !=(IntRect a, IntRect b) => !a.Equals(b);
+
+        public override bool Equals(object obj) => obj is IntRect && Equals((IntRect)obj);
+        
+        public bool Equals(IntRect other) => other.Min == Min && other.Max == Max;
+        
+        public override int GetHashCode() => Min.GetHashCode() ^ Max.GetHashCode();
 
         public override string ToString() => $"(Min: {Min}, Max: {Max})";
     }
