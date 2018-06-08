@@ -6,6 +6,10 @@
         "**/obj": true,
     },
     "cSpell.words": [
+        "Cdecl",
+        "Demaximized",
+        "Deminimized",
+        "Rect",
         "vulkancore"
     ]
 }

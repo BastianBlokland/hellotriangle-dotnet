@@ -2,18 +2,21 @@ using System;
 using System.Collections.Generic;
 
 using HT.Engine.Math;
+using HT.Engine.Platform;
 
 namespace HT.Win32
 {
     /// <summary>
     /// Handle to a win32 application
     /// </summary>
-    internal sealed class NativeApp : HT.Engine.Platform.INativeApp
+    internal sealed class NativeApp : INativeApp
     {
+        public IEnumerable<INativeWindow> Windows => windows;
+
         private readonly List<NativeWindow> windows = new List<NativeWindow>();
         private bool disposed;
         
-        public HT.Engine.Platform.INativeWindow CreateWindow(Int2 size, string title)
+        public INativeWindow CreateWindow(Int2 size, string title)
         {
             ThrowIfDisposed();
             NativeWindow newWindow = new NativeWindow(size, title);
@@ -21,7 +24,7 @@ namespace HT.Win32
             return newWindow;
         }
 
-        public void DestroyWindow(HT.Engine.Platform.INativeWindow window)
+        public void DestroyWindow(INativeWindow window)
         {
             if(window == null)
                 throw new ArgumentNullException($"{nameof(window)}");

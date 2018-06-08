@@ -1,5 +1,5 @@
 using System;
-
+using System.Collections.Generic;
 using HT.Engine.Math;
 
 namespace HT.Engine.Platform
@@ -9,6 +9,8 @@ namespace HT.Engine.Platform
     /// </summary>
     public interface INativeApp : IDisposable
     {
+        IEnumerable<INativeWindow> Windows { get; }
+
         INativeWindow CreateWindow(Int2 size, string title);
         void DestroyWindow(INativeWindow window);
 
