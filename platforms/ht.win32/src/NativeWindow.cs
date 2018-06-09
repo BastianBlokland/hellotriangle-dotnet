@@ -98,6 +98,7 @@ namespace HT.Win32
         public IntRect ClientRect { get; private set; }
         public Int2 MinClientSize { get; private set; }
 
+        private IntPtr instanceHandle;
         private IntPtr nativeWindowClassAtom;
         private IntPtr nativeWindowHandle;
         private WindowStyles windowStyle;
@@ -113,6 +114,9 @@ namespace HT.Win32
             //Value as used by the user32 functions to indicate that a default should be used
             const int USE_DEFAULT = unchecked((int)0x80000000);
 
+            //Gets a handle to our process
+            instanceHandle = System.Diagnostics.Process.GetCurrentProcess().Handle;
+
             //Create the 'WindowClass' that this window will be bound to
             WindowClassEx windowClass = new WindowClassEx
             (
@@ -120,7 +124,7 @@ namespace HT.Win32
                 windowProcedure: WindowProcedure,
                 classExtraBytes: 0,
                 windowExtraBytes: 0,
-                instance: IntPtr.Zero,
+                instance: instanceHandle,
                 icon: IntPtr.Zero,
                 cursor: IntPtr.Zero,
                 backgroundBrush: IntPtr.Zero,
@@ -153,7 +157,7 @@ namespace HT.Win32
                 height: windowRect.Height,
                 parent: IntPtr.Zero,
                 menu: IntPtr.Zero,
-                instance: IntPtr.Zero,
+                instance: instanceHandle,
                 param: IntPtr.Zero
             );
             if(nativeWindowHandle == IntPtr.Zero)
@@ -185,7 +189,7 @@ namespace HT.Win32
             if(!disposed)
             {
                 DestroyWindow(nativeWindowHandle);
-                UnregisterClass(nativeWindowClassAtom, instance: IntPtr.Zero);
+                UnregisterClass(nativeWindowClassAtom, instanceHandle);
                 disposed = true;
             }
         }
