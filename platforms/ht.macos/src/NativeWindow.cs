@@ -41,7 +41,7 @@ namespace HT.MacOS
 
         [DllImport("libmacwindow", CharSet = CharSet.Ansi)] 
         private static extern IntPtr CreateWindow(	IntPtr appHandle,
-                                                    Int2 size,
+                                                    Int2 size, Int2 minSize,
                                                     string title,
                                                     [MarshalAs(UnmanagedType.FunctionPtr)]ResizedDelegate resizedCallback,
                                                     [MarshalAs(UnmanagedType.FunctionPtr)]BeginResizeDelegate beginResizeCallback,
@@ -96,6 +96,7 @@ namespace HT.MacOS
             (
                 nativeAppHandle,
                 size,
+                minSize,
                 title,
                 OnResized,
                 OnBeginResize,
