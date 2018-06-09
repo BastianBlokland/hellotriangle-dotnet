@@ -11,7 +11,7 @@ namespace HT.Engine.Platform
     {
         IEnumerable<INativeWindow> Windows { get; }
 
-        INativeWindow CreateWindow(Int2 size, string title);
+        INativeWindow CreateWindow(Int2 size, Int2 minSize, string title);
         void DestroyWindow(INativeWindow window);
 
         void Update();

@@ -96,14 +96,18 @@ namespace HT.Win32
         public bool Maximized { get; private set; }
         public bool IsMovingOrResizing { get; private set; }
         public IntRect ClientRect { get; private set; }
+        public Int2 MinClientSize { get; private set; }
 
         private IntPtr nativeWindowClassAtom;
         private IntPtr nativeWindowHandle;
+        private WindowStyles windowStyle;
+        private ExtendedWindowStyles extendedWindowStyle;
         private string title;
         private bool disposed;
 
-        public NativeWindow(Int2 size, string title)
+        public NativeWindow(Int2 size, Int2 minSize, string title)
         {
+            MinClientSize = minSize;
             this.title = title;
 
             //Value as used by the user32 functions to indicate that a default should be used
@@ -129,11 +133,11 @@ namespace HT.Win32
                 throw new Exception($"[{nameof(NativeWindow)}] Failed to create a window-class");
             
             //Setup window styles
-            WindowStyles windowStyle = WindowStyles.OverlappedWindow;
-            ExtendedWindowStyles extendedWindowStyle = ExtendedWindowStyles.AppWindow | ExtendedWindowStyles.WindowEdge;
+            windowStyle = WindowStyles.OverlappedWindow;
+            extendedWindowStyle = ExtendedWindowStyles.AppWindow | ExtendedWindowStyles.WindowEdge;
 
             //Need to adjust the rect here because we want to the requested size to be the client size so we need extra space for the top-bar
-            IntRect windowRect = new IntRect(min: Int2.Zero, max: size);
+            IntRect windowRect = new IntRect(min: Int2.Zero, max: Int2.Max(size, minSize));
             AdjustWindowRect(ref windowRect, style: windowStyle, menu: false, extendedStyle: extendedWindowStyle);
 
             //Create the actual window
@@ -194,9 +198,22 @@ namespace HT.Win32
             const uint WM_EXITSIZEMOVE = 0x0232;
             const uint WM_SIZE = 0x0005;
             const uint WM_MOVE = 0x0003;
+            const uint WM_GETMINMAXINFO = 0x0024;
 
             switch(message)
             {
+                case WM_GETMINMAXINFO:
+                    //This gets called when the window wants to know its min and max size
+                    WindowMinMaxInfo info = Marshal.PtrToStructure<WindowMinMaxInfo>(lParam);
+
+                    IntRect windowRect = new IntRect(min: Int2.Zero, max: MinClientSize);
+                    //Adjust here so the size we clamp to is actually the clientSize and not the outer size (that includes the topbar)
+                    AdjustWindowRect(ref windowRect, style: windowStyle, menu: false, extendedStyle: extendedWindowStyle);
+
+                    info.MinTrackSize = windowRect.Size;
+                    Marshal.StructureToPtr(info, lParam, fDeleteOld: false); //No need for deleteOld because its plain data that doesn't hold references 
+                    break;
+
                 case WM_SIZE:
                     //Constants that can apply to the 'wParam'
                     //Documentation: https://msdn.microsoft.com/en-us/library/windows/desktop/ms632646(v=vs.85).aspx

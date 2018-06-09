@@ -33,10 +33,10 @@ namespace HT.MacOS
         
         public NativeApp() => nativeAppHandle = SetupApp();
 
-        public INativeWindow CreateWindow(Int2 size, string title)
+        public INativeWindow CreateWindow(Int2 size, Int2 minSize, string title)
         {
             ThrowIfDisposed();
-            NativeWindow newWindow = new NativeWindow(nativeAppHandle, size, title);
+            NativeWindow newWindow = new NativeWindow(nativeAppHandle, size, minSize, title);
             windows.Add(newWindow);
             return newWindow;
         }

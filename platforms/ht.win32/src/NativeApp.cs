@@ -16,10 +16,10 @@ namespace HT.Win32
         private readonly List<NativeWindow> windows = new List<NativeWindow>();
         private bool disposed;
         
-        public INativeWindow CreateWindow(Int2 size, string title)
+        public INativeWindow CreateWindow(Int2 size, Int2 minSize, string title)
         {
             ThrowIfDisposed();
-            NativeWindow newWindow = new NativeWindow(size, title);
+            NativeWindow newWindow = new NativeWindow(size, minSize, title);
             windows.Add(newWindow);
             return newWindow;
         }

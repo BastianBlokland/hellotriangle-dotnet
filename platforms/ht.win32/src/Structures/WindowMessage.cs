@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
-using HT.Win32.Flags;
 
+using HT.Win32.Flags;
 using HT.Engine.Math;
 
 namespace HT.Win32.Structures

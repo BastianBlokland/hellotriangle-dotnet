@@ -22,6 +22,10 @@ namespace HT.Engine.Math
             Y = y;
         }
 
+        public static Float2 Max(Float2 left, Float2 right) => new Float2(System.Math.Max(left.X, right.X), System.Math.Max(left.Y, right.Y));
+
+        public static Float2 Min(Float2 left, Float2 right) => new Float2(System.Math.Min(left.X, right.X), System.Math.Min(left.Y, right.Y));
+
         public static Float2 operator +(Float2 left, Float2 right) => new Float2(left.X + right.X, left.Y + right.Y);
 
         public static Float2 operator -(Float2 left, Float2 right) => new Float2(left.X - right.X, left.Y - right.Y);
@@ -39,9 +43,9 @@ namespace HT.Engine.Math
         public static bool operator !=(Float2 a, Float2 b) => !a.Equals(b);
 
         public override bool Equals(object obj) => obj is Float2 && Equals((Float2)obj);
-        
+
         public bool Equals(Float2 other) => other.X == X && other.Y == Y;
-        
+
         public override int GetHashCode() => X.GetHashCode() ^ Y.GetHashCode();
 
         public override string ToString() => $"(X: {X}, Y: {Y})";

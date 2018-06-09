@@ -11,7 +11,7 @@ namespace HT.Main
         {
             bool running = true;
 
-            var window = nativeApp.CreateWindow(new Int2(600, 400), "test");
+            var window = nativeApp.CreateWindow(size: new Int2(600, 400), minSize: new Int2(150, 150), title: "test");
             window.CloseRequested += () => running = false;
 
             int tick = 0;

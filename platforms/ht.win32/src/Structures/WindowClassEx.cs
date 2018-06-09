@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+
 using HT.Win32.Flags;
 
 namespace HT.Win32.Structures

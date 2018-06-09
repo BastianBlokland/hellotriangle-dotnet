@@ -16,6 +16,7 @@ namespace HT.Engine.Math
         public readonly Int2 Max;
 
         public IntRect(int minX, int minY, int maxX, int maxY) : this(new Int2(minX, minY), new Int2(maxX, maxY)) {}
+        public IntRect(int minX, int minY, Int2 max) : this(new Int2(minX, minY), max) {}
 
         public IntRect(Int2 min, Int2 max)
         {
@@ -30,9 +31,9 @@ namespace HT.Engine.Math
         public static bool operator !=(IntRect a, IntRect b) => !a.Equals(b);
 
         public override bool Equals(object obj) => obj is IntRect && Equals((IntRect)obj);
-        
+
         public bool Equals(IntRect other) => other.Min == Min && other.Max == Max;
-        
+
         public override int GetHashCode() => Min.GetHashCode() ^ Max.GetHashCode();
 
         public override string ToString() => $"(Min: {Min}, Max: {Max})";

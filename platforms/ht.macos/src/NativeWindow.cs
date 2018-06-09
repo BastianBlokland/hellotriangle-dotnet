@@ -81,14 +81,17 @@ namespace HT.MacOS
         public bool Maximized { get; private set; }
         public bool IsMovingOrResizing { get; private set; }
         public IntRect ClientRect { get; private set; }
+        public Int2 MinClientSize { get; private set; }
 
         private IntPtr nativeWindowHandle;
         private string title;
         private bool disposed;
 
-        public NativeWindow(IntPtr nativeAppHandle, Int2 size, string title)
+        public NativeWindow(IntPtr nativeAppHandle, Int2 size, Int2 minSize, string title)
         {
+            MinClientSize = minSize;
             this.title = title;
+
             nativeWindowHandle = CreateWindow
             (
                 nativeAppHandle,

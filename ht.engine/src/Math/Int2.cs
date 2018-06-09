@@ -21,7 +21,11 @@ namespace HT.Engine.Math
             X = x;
             Y = y;
         }
-        
+
+        public static Int2 Max(Int2 left, Int2 right) => new Int2(System.Math.Max(left.X, right.X), System.Math.Max(left.Y, right.Y));
+
+        public static Int2 Min(Int2 left, Int2 right) => new Int2(System.Math.Min(left.X, right.X), System.Math.Min(left.Y, right.Y));
+
         public static Int2 operator +(Int2 left, Int2 right) => new Int2(left.X + right.X, left.Y + right.Y);
 
         public static Int2 operator -(Int2 left, Int2 right) => new Int2(left.X - right.X, left.Y - right.Y);
@@ -39,9 +43,9 @@ namespace HT.Engine.Math
         public static bool operator !=(Int2 a, Int2 b) => !a.Equals(b);
 
         public override bool Equals(object obj) => obj is Int2 && Equals((Int2)obj);
-        
+
         public bool Equals(Int2 other) => other.X == X && other.Y == Y;
-        
+
         public override int GetHashCode() => X ^ Y;
 
         public override string ToString() => $"(X: {X}, Y: {Y})";
