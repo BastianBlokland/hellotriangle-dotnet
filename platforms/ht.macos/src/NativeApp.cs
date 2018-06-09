@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 using HT.Engine.Math;
+using HT.Engine.Rendering;
 using HT.Engine.Platform;
 
 namespace HT.MacOS
@@ -24,6 +25,8 @@ namespace HT.MacOS
         [DllImport("libmacwindow")] 
         private static extern void DisposeApp(IntPtr nativeAppHandle);
         #endregion
+
+        public SurfaceType SurfaceType => SurfaceType.MvkMacOS;
 
         public IEnumerable<INativeWindow> Windows => windows;
 

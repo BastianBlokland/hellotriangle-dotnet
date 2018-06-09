@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 
 using HT.Engine.Math;
+using HT.Engine.Rendering;
 using HT.Win32.Delegates;
 using HT.Win32.Structures;
 using HT.Win32.Flags;
@@ -168,6 +169,12 @@ namespace HT.Win32
 
             SetForegroundWindow(nativeWindowHandle);
             SetFocus(nativeWindowHandle);
+        }
+
+        public Surface CreateSurface(Host host)
+        {
+            ThrowIfDisposed();
+            return host.CreateWin32Surface(instanceHandle, nativeWindowHandle);
         }
 
         public void Update()

@@ -9,6 +9,8 @@ namespace HT.Engine.Platform
     /// </summary>
     public interface INativeApp : IDisposable
     {
+        Rendering.SurfaceType SurfaceType { get; }
+
         IEnumerable<INativeWindow> Windows { get; }
 
         INativeWindow CreateWindow(Int2 size, Int2 minSize, string title);

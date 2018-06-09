@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 
 using HT.Engine.Math;
+using HT.Engine.Rendering;
 using HT.Engine.Platform;
 
 namespace HT.Win32
@@ -11,6 +12,8 @@ namespace HT.Win32
     /// </summary>
     internal sealed class NativeApp : INativeApp
     {
+        public SurfaceType SurfaceType => SurfaceType.HkrWin32;
+
         public IEnumerable<INativeWindow> Windows => windows;
 
         private readonly List<NativeWindow> windows = new List<NativeWindow>();

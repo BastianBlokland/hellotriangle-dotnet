@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 
 using HT.Engine.Math;
+using HT.Engine.Rendering;
 
 namespace HT.MacOS
 {
@@ -53,6 +54,9 @@ namespace HT.MacOS
                                                     [MarshalAs(UnmanagedType.FunctionPtr)]DemaximizedDelegate demaximizedCallback,
                                                     [MarshalAs(UnmanagedType.FunctionPtr)]CloseRequestedDelegate closeCallback);
 
+        [DllImport("libmacwindow")] 
+        private static extern IntPtr CreateMetalView(IntPtr windowPointer);
+
         [DllImport("libmacwindow", CharSet = CharSet.Ansi)] 
         private static extern void SetTitle(IntPtr windowHandle, string title);
 
@@ -84,6 +88,7 @@ namespace HT.MacOS
         public Int2 MinClientSize { get; private set; }
 
         private IntPtr nativeWindowHandle;
+        private IntPtr nativeMetalViewHandle;
         private string title;
         private bool disposed;
 
@@ -108,6 +113,13 @@ namespace HT.MacOS
                 OnDemaximized,
                 OnCloseRequested
             );
+            nativeMetalViewHandle = CreateMetalView(nativeWindowHandle);
+        }
+
+        public Surface CreateSurface(Host host)
+        {
+            ThrowIfDisposed();
+            return host.CreateMacOSSurface(nativeMetalViewHandle);
         }
 
         public void Dispose()

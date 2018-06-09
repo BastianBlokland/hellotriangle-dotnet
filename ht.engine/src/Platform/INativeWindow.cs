@@ -19,5 +19,7 @@ namespace HT.Engine.Platform
         bool IsMovingOrResizing { get; }
         IntRect ClientRect { get; }
         Int2 MinClientSize { get; }
+
+        Rendering.Surface CreateSurface(Rendering.Host host);
     }
 }
