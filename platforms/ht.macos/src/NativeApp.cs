@@ -74,7 +74,7 @@ namespace HT.MacOS
         private void ThrowIfDisposed()
         {
             if(disposed)
-                throw new Exception($"[{nameof(NativeApp)}] Allready disposed!");
+                throw new Exception($"[{nameof(NativeApp)}] Allready disposed");
         }
     }
 }

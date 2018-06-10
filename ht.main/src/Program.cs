@@ -16,15 +16,13 @@ namespace HT.Main
             window.CloseRequested += () => running = false;
 
             using(var host = new Host(nativeApp: nativeApp, applicationName: "Test", applicationVersion: 1))
-            using(var renderSurface = window.CreateSurface(host))
-            using(var renderer = new RenderDevice(host.FindSuitableDevice(renderSurface)))
+            using(var surface = window.CreateSurface(host))
+            using(var renderer = new Renderer(host.FindSuitableDevice(surface), surface))
             {
-                Console.WriteLine("Initialized with device: " + renderer.PhysicalDevice.Name);
+                window.Title = renderer.Device.Name;
 
-                int tick = 0;
                 while(running)
                 {
-                    window.Title = (++tick).ToString();
                     nativeApp.Update();
                     System.Threading.Thread.Sleep(100);
                 }

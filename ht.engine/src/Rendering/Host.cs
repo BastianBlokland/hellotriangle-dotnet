@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 
+using VulkanCore;
 using VulkanCore.Mvk;
 using VulkanCore.Khr;
 
@@ -9,18 +10,18 @@ namespace HT.Engine.Rendering
 {
     public sealed class Host : IDisposable
     {
-        private readonly VulkanCore.Instance instance;
-        private readonly PhysicalDevice[] devices;
+        private readonly Instance instance;
+        private readonly GraphicsDevice[] devices;
         private bool disposed;
 
         public Host(Platform.INativeApp nativeApp, string applicationName, int applicationVersion)
         {
-            VulkanCore.InstanceCreateInfo createInfo = new VulkanCore.InstanceCreateInfo
+            InstanceCreateInfo createInfo = new InstanceCreateInfo
             (
-                appInfo: new VulkanCore.ApplicationInfo
+                appInfo: new ApplicationInfo
                 (
-                    applicationName: applicationName, 
-                    applicationVersion: applicationVersion, 
+                    applicationName: applicationName,
+                    applicationVersion: applicationVersion,
                     engineName: Info.NAME,
                     engineVersion: Info.VERSION,
                     apiVersion: new VulkanCore.Version(major: 1, minor: 0, patch: 69)
@@ -28,13 +29,13 @@ namespace HT.Engine.Rendering
                 enabledLayerNames: GetLayerNames(nativeApp),
                 enabledExtensionNames: GetExtensionNames(nativeApp)
             );
-            instance = new VulkanCore.Instance(createInfo);
+            instance = new Instance(createInfo);
 
             //Get devices
             VulkanCore.PhysicalDevice[] physicalDevices = instance.EnumeratePhysicalDevices();
-            devices = new PhysicalDevice[physicalDevices.Length];
+            devices = new GraphicsDevice[physicalDevices.Length];
             for (int i = 0; i < devices.Length; i++)
-                devices[i] = new PhysicalDevice(physicalDevices[i]);
+                devices[i] = new GraphicsDevice(physicalDevices[i]);
         }
 
         public Surface CreateMacOSSurface(IntPtr metalViewHandle)
@@ -51,7 +52,7 @@ namespace HT.Engine.Rendering
             return new Surface(instance.CreateWin32SurfaceKhr(createInfo), SurfaceType.HkrWin32);
         }
 
-        public PhysicalDevice FindSuitableDevice(Surface surface)
+        public GraphicsDevice FindSuitableDevice(Surface surface)
         {
             ThrowIfDisposed();
             //If we have a supported discrete gpu then we pick that
@@ -69,6 +70,8 @@ namespace HT.Engine.Rendering
         {
             if(!disposed)
             {
+                for (int i = 0; i < devices.Length; i++)
+                    devices[i].Dispose();
                 instance.Dispose();
                 disposed = true;
             }
@@ -77,11 +80,11 @@ namespace HT.Engine.Rendering
         private void ThrowIfDisposed()
         {
             if(disposed)
-                throw new Exception($"[{nameof(Host)}] Allready disposed!");
+                throw new Exception($"[{nameof(Host)}] Allready disposed");
         }
 
         private static string[] GetLayerNames(Platform.INativeApp nativeApp) => new string[0];
-        private static string[] GetExtensionNames(Platform.INativeApp nativeApp) => new [] 
+        private static string[] GetExtensionNames(Platform.INativeApp nativeApp) => new []
         { 
             "VK_KHR_surface", //Generic surface-extension
             GetSurfaceExtension(nativeApp.SurfaceType) //Platform-specific surface-extension

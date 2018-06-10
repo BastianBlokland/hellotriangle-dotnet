@@ -271,7 +271,7 @@ namespace HT.Win32
         private void ThrowIfDisposed()
         {
             if(disposed)
-                throw new Exception($"[{nameof(NativeWindow)}] Allready disposed!");
+                throw new Exception($"[{nameof(NativeWindow)}] Allready disposed");
         }
     }
 }
