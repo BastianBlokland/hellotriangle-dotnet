@@ -17,16 +17,29 @@ namespace HT.Main
 
             using(var host = new Host(nativeApp: nativeApp, applicationName: "Test", applicationVersion: 1))
             using(var surface = window.CreateSurface(host))
-            using(var renderer = new Renderer(host.FindSuitableDevice(surface), surface))
+            using(var renderer = new Renderer(host.FindSuitableDevice(surface), surface, window.ClientRect.Size))
             {
-                window.Title = renderer.Device.Name;
-
+                SetTitle(window, renderer);
+                
                 while(running)
                 {
                     nativeApp.Update();
-                    System.Threading.Thread.Sleep(100);
+
+                    if(!window.IsMovingOrResizing && renderer.SurfaceSize != window.ClientRect.Size)
+                    {
+                        renderer.SetupSwapchain(window.ClientRect.Size);
+                        SetTitle(window, renderer);
+                    }
+
+                    if(window.Minimized)
+                        System.Threading.Thread.Sleep(100);
+                    else
+                        renderer.Draw();
                 }
             }
         }
+
+        private static void SetTitle(INativeWindow window, Renderer renderer)
+            => window.Title = $"{renderer.Device.Name} {renderer.SurfaceSize}";
     }
 }

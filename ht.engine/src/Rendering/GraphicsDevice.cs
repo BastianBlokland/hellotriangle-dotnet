@@ -30,6 +30,24 @@ namespace HT.Engine.Rendering
                 return commandPool;
             }
         }
+        internal Queue GraphicsQueue
+        {
+            get
+            {
+                if(!initialized)
+                    throw new Exception($"[{nameof(GraphicsDevice)}] {nameof(GraphicsQueue)} is only available after initialization");
+                return graphicsQueue;
+            }
+        }
+        internal CommandPool CommandPool
+        {
+            get
+            {
+                if(!initialized)
+                    throw new Exception($"[{nameof(GraphicsDevice)}] {nameof(CommandPool)} is only available after initialization");
+                return commandPool;
+            }
+        }
 
         //Info about the physical device
         private readonly PhysicalDevice vulkanPhysicalDevice;
