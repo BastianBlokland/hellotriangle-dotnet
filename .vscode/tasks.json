@@ -2,7 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "buildMacOS",
+            "label": "build-macos",
             "command": "dotnet",
             "type": "process",
             "args": [
@@ -12,11 +12,37 @@
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "buildWin32",
+            "label": "run-macos",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "run",
+                "--project",
+                "${workspaceFolder}/platforms/ht.macos/ht.macos.csproj"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "build-win32",
             "command": "dotnet",
             "type": "process",
             "args": [
                 "build",
+                "${workspaceFolder}/platforms/ht.win32/ht.win32.csproj"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "run-win32",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "run",
+                "--project",
                 "${workspaceFolder}/platforms/ht.win32/ht.win32.csproj"
             ],
             "problemMatcher": "$msCompile"

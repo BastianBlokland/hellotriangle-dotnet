@@ -2,10 +2,10 @@
    "version": "0.2.0",
    "configurations": [
         {
-            "name": "MacOS",
+            "name": "macos",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "buildMacOS",
+            "preLaunchTask": "build-macos",
             "program": "${workspaceFolder}/platforms/ht.macos/bin/Debug/netcoreapp2.1/ht.macos.dll",
             "args": [],
             "cwd": "${workspaceFolder}/platforms/ht.macos",
@@ -14,10 +14,10 @@
             "internalConsoleOptions": "openOnSessionStart"
         },
         {
-            "name": "Win32",
+            "name": "win32",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "buildWin32",
+            "preLaunchTask": "build-win32",
             "program": "${workspaceFolder}/platforms/ht.win32/bin/Debug/netcoreapp2.1/ht.win32.dll",
             "args": [],
             "cwd": "${workspaceFolder}/platforms/ht.win32",
@@ -26,7 +26,7 @@
             "internalConsoleOptions": "openOnSessionStart"
         },
         {
-            "name": "Attach",
+            "name": "attach",
             "type": "coreclr",
             "request": "attach",
             "processId": "${command:pickProcess}"
