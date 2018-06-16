@@ -101,6 +101,8 @@ namespace HT.Engine.Rendering
             CreateCommandPool();
             CreateCommandBuffers();
             CreateSynchronizationObjects();
+
+            nativeWindow.Title = $"{hostDevice.Name} - {nativeWindow.ClientRect.Size}";
         }
 
         private void DisposeRenderSetup()
