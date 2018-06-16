@@ -14,6 +14,7 @@ namespace HT.Engine.Rendering
         private readonly SurfaceKhr surface;
         private readonly Device logicalDevice;
         private readonly Queue graphicsQueue;
+        private readonly Queue presentQueue;
 
         private bool disposed;
 
@@ -26,7 +27,7 @@ namespace HT.Engine.Rendering
             nativeWindow.CloseRequested += NativeCloseRequested;
 
             //Create a logical device (and queues on the device)
-            (logicalDevice, graphicsQueue) = device.CreateLogicalDevice();
+            (logicalDevice, graphicsQueue, presentQueue) = device.CreateLogicalDevice(surface);
         }
 
         public void Dispose()
