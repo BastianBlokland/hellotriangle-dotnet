@@ -44,20 +44,16 @@ namespace HT.Engine.Rendering
             this.logger = logger;
 
             //Subscribe to callbacks for the native window
-            nativeWindow.CloseRequested += OnNativeCloseRequested;
+            nativeWindow.CloseRequested += OnNativeWindowCloseRequested;
+            nativeWindow.Resized += OnNativeWindowResized;
 
             //Create a logical device (and queues on the device)
             (logicalDevice, graphicsQueue, presentQueue) = hostDevice.CreateLogicalDevice(surface);
             presentMode = hostDevice.GetPresentMode(surface);
             (surfaceFormat, surfaceColorspace) = hostDevice.GetSurfaceFormat(surface);
 
-            //Setup swapchain
-            CreateSwapChain(nativeWindow.ClientRect.Size);
-            CreateRenderPass();
-            CreateFrameBuffers();
-            CreateCommandPool();
-            CreateCommandBuffers();
-            CreateSynchronizationObjects();
+            //Initialize the entire setup
+            CreateRenderSetup();
         }
 
         public void Draw()
@@ -89,20 +85,43 @@ namespace HT.Engine.Rendering
                 //Wait for all rendering to stop before we start disposing of resources
                 logicalDevice.WaitIdle();
 
-                imageAvailableSemaphore.Dispose();
-                renderFinishedSemaphore.Dispose();
-                waitFences.DisposeAll();
-
-                commandPool.Dispose();
-                framebuffers.DisposeAll();
-                renderpass.Dispose();
-                swapchainImageViews.DisposeAll();
-                swapchain.Dispose();
+                DisposeRenderSetup();
 
                 logicalDevice.Dispose();
                 nativeWindow.Dispose();
                 disposed = true;
             }
+        }
+
+        private void CreateRenderSetup()
+        {
+            CreateSwapChain(nativeWindow.ClientRect.Size);
+            CreateRenderPass();
+            CreateFrameBuffers();
+            CreateCommandPool();
+            CreateCommandBuffers();
+            CreateSynchronizationObjects();
+        }
+
+        private void DisposeRenderSetup()
+        {
+            imageAvailableSemaphore.Dispose();
+            renderFinishedSemaphore.Dispose();
+            waitFences.DisposeAll();
+            commandPool.Dispose();
+            framebuffers.DisposeAll();
+            renderpass.Dispose();
+            swapchainImageViews.DisposeAll();
+            swapchain.Dispose();
+        }
+
+        private void RecreateRenderSetup()
+        {
+            //Wait for all rendering to stop
+            logicalDevice.WaitIdle();
+
+            DisposeRenderSetup();
+            CreateRenderSetup();
         }
 
         private void CreateSwapChain(Int2 size)
@@ -138,7 +157,6 @@ namespace HT.Engine.Rendering
             createInfo.CompositeAlpha = CompositeAlphasKhr.Opaque;
             createInfo.PresentMode = presentMode;
             createInfo.Clipped = true;
-            createInfo.OldSwapchain = swapchain; //Reference to the previous swapchain so when we recreate it can reuse some resources
 
             //Create the swapchain
             swapchain = logicalDevice.CreateSwapchainKhr(createInfo);
@@ -194,7 +212,6 @@ namespace HT.Engine.Rendering
                 attachments: new [] { colorAttachment },
                 dependencies: new [] { attachmentAvailableDependency }
             ));
-            logger?.Log(nameof(Window), $"Renderpass created");
         }
 
         private void CreateFrameBuffers()
@@ -210,7 +227,6 @@ namespace HT.Engine.Rendering
                     layers: 1
                 ));
             }
-            logger?.Log(nameof(Window), $"Created {framebuffers.Length} framebuffers");
         }
 
         private void CreateCommandPool()
@@ -220,7 +236,6 @@ namespace HT.Engine.Rendering
                 queueFamilyIndex: graphicsQueue.FamilyIndex,
                 flags: CommandPoolCreateFlags.None
             ));
-            logger?.Log(nameof(Window), $"Created commandpool");
         }
 
         private void CreateCommandBuffers()
@@ -245,7 +260,6 @@ namespace HT.Engine.Rendering
 
                 commandbuffers[i].End();
             }
-            logger?.Log(nameof(Window), $"Created and recorded {commandbuffers.Length} commandbuffers");
         }
 
         private void CreateSynchronizationObjects()
@@ -257,6 +271,7 @@ namespace HT.Engine.Rendering
                 waitFences[i] = logicalDevice.CreateFence(new FenceCreateInfo(FenceCreateFlags.Signaled));
         }
 
-        private void OnNativeCloseRequested() => CloseRequested?.Invoke();
+        private void OnNativeWindowResized() => RecreateRenderSetup();
+        private void OnNativeWindowCloseRequested() => CloseRequested?.Invoke();
     }
 }
