@@ -32,6 +32,46 @@ namespace HT.Engine.Rendering
             logger?.LogList(nameof(HostDevice), $"{Name} available extensions:", availableExtensions);
         }
 
+        internal SurfaceCapabilitiesKhr GetCurrentCapabilities(SurfaceKhr surface) => physicalDevice.GetSurfaceCapabilitiesKhr(surface);
+
+        internal (Format imageFormat, ColorSpaceKhr colorspace) GetSurfaceFormat(SurfaceKhr surface)
+        {
+            SurfaceFormatKhr[] formats = physicalDevice.GetSurfaceFormatsKhr(surface);
+
+            //If the device only returns 1 options for this surface and it contains 'Undefined' it means that the 
+            //device doesn't care and we can pick.
+            if(formats.Length == 1 && formats[0].Format == VulkanCore.Format.Undefined)
+                return (Format.B8G8R8A8UNorm, ColorSpaceKhr.SRgbNonlinear);
+
+            //If the device has preference then we check if it supports the combo we prefer
+            for (int i = 0; i < formats.Length; i++)
+                if(formats[i].Format == Format.B8G8R8A8UNorm && formats[i].ColorSpace == ColorSpaceKhr.SRgbNonlinear)
+                    return (formats[i].Format, formats[i].ColorSpace);
+            
+            //If our preference is not there then we take the first that is supported
+            if(formats.Length > 0) return (formats[0].Format, formats[0].ColorSpace);
+
+            throw new Exception($"[{nameof(HostDevice)}] Device {Name} doesn't support any format for use with given surface");
+        }
+
+        internal PresentModeKhr GetPresentMode(SurfaceKhr surface)
+        {
+            PresentModeKhr[] modes = physicalDevice.GetSurfacePresentModesKhr(surface);
+
+            //If mailbox is present then go for that, it is basically having 1 frame being displayed and
+            //multiple frames in the background being rendered to, and also allows to redraw those in the background,
+            //this allows for things like triple-buffering
+            for (int i = 0; i < modes.Length; i++)
+                if(modes[i] == PresentModeKhr.Mailbox)
+                    return PresentModeKhr.Mailbox;
+
+            //If mailbox is not supported then we go for Fifo
+            //Fifo is basically uses 2 frame's, 1 thats being displayed right now and one that is being rendered to
+            //When rendering is done but the previous frame is not done being display then the program has to wait
+            //According to spec this must be available on all platforms
+            return PresentModeKhr.Fifo;
+        }
+
         internal (Device logicalDevice, Queue graphicsQueue, Queue presentQueue) CreateLogicalDevice(SurfaceKhr surface)
         {
             string[] requiredExtensions = GetRequiredExtensions(surfaceType);

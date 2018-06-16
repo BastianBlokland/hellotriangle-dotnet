@@ -101,7 +101,7 @@ namespace HT.Engine.Rendering
             INativeWindow nativeWindow = nativeApp.CreateWindow(windowSize, minSize: new Int2(150, 150), title: string.Empty);
             SurfaceKhr surface = CreateSurface(nativeWindow);
             HostDevice graphicsDevice = FindSuitableDevice(surface);
-            return new Window(nativeWindow, surface, graphicsDevice);
+            return new Window(nativeWindow, surface, graphicsDevice, logger);
         }
 
         public void Dispose()

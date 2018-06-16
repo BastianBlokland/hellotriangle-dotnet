@@ -22,10 +22,12 @@ namespace HT.Engine.Math
             Y = y;
         }
 
+        public Int2 Clamp(Int2 min, Int2 max) => new Int2(X.Clamp(min.X, max.X), Y.Clamp(min.Y, max.Y));
+
         public static Int2 Max(Int2 left, Int2 right) => new Int2(System.Math.Max(left.X, right.X), System.Math.Max(left.Y, right.Y));
 
         public static Int2 Min(Int2 left, Int2 right) => new Int2(System.Math.Min(left.X, right.X), System.Math.Min(left.Y, right.Y));
-
+        
         public static Int2 operator +(Int2 left, Int2 right) => new Int2(left.X + right.X, left.Y + right.Y);
 
         public static Int2 operator -(Int2 left, Int2 right) => new Int2(left.X - right.X, left.Y - right.Y);
