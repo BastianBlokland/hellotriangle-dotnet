@@ -125,8 +125,8 @@ namespace HT.Engine.Rendering
         {
             switch(surfaceType)
             {
-                case SurfaceType.HkrWin32: return new [] { "VK_KHR_surface", "VK_KHR_swapchain" };
-                case SurfaceType.MvkMacOS: return new [] { "VK_KHR_surface", "VK_KHR_swapchain", "VK_MVK_macos_surface", "VK_MVK_moltenvk" };
+                case SurfaceType.HkrWin32: return new [] { "VK_KHR_swapchain" };
+                case SurfaceType.MvkMacOS: return new [] { "VK_KHR_swapchain", "VK_MVK_macos_surface", "VK_MVK_moltenvk" };
             }
             throw new Exception($"[{nameof(HostDevice)}] Unknown surfaceType: {surfaceType}");
         }
