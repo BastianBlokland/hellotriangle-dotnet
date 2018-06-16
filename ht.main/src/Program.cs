@@ -12,8 +12,12 @@ namespace HT.Main
         public static void Run(INativeApp nativeApp, Logger logger = null)
         {
             using(var host = new Host(nativeApp: nativeApp, applicationName: "Test", applicationVersion: 1, logger: logger))
+            using(var window = host.CreateWindow(new Int2(800, 600)))
             {
-                while(true)
+                bool running = true;
+                window.CloseRequested += () => running = false;
+
+                while(running)
                 {
                     nativeApp.Update();
                     System.Threading.Thread.Sleep(100);

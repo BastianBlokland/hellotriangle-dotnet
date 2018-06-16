@@ -35,5 +35,14 @@ namespace HT.Engine.Utils
             a[a.Length - 1] = b;
             return a;
         }
+
+        public static bool Contains<T>(this T[] array, T element)
+            where T : IEquatable<T>
+        {
+            for (int i = 0; i < array.Length; i++)
+                if(array[i].Equals(element))
+                    return true;
+            return false;
+        }
     }
 }

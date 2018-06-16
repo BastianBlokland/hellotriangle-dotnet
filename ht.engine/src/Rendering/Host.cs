@@ -19,6 +19,7 @@ namespace HT.Engine.Rendering
         private readonly ExtensionProperties[] availbleExtensions;
         private readonly Instance instance;
         private readonly DebugReportCallbackExt debugCallback;
+        private readonly HostDevice[] hostDevices;
         private bool disposed;
 
         public Host(Platform.INativeApp nativeApp, string applicationName, int applicationVersion, Logger logger = null)
@@ -86,6 +87,21 @@ namespace HT.Engine.Rendering
             #else
                 debugCallback = null;
             #endif
+
+            //Get all the devices in this host
+            PhysicalDevice[] physicalDevices = instance.EnumeratePhysicalDevices();
+            hostDevices = new HostDevice[physicalDevices.Length];
+            for (int i = 0; i < hostDevices.Length; i++)
+                hostDevices[i] = new HostDevice(physicalDevices[i], nativeApp.SurfaceType, logger);
+        }
+
+        public Window CreateWindow(Int2 windowSize)
+        {
+            ThrowIfDisposed();
+            INativeWindow nativeWindow = nativeApp.CreateWindow(windowSize, minSize: new Int2(150, 150), title: string.Empty);
+            SurfaceKhr surface = CreateSurface(nativeWindow);
+            HostDevice graphicsDevice = FindSuitableDevice(surface);
+            return new Window(nativeWindow, surface, graphicsDevice);
         }
 
         public void Dispose()
@@ -94,9 +110,8 @@ namespace HT.Engine.Rendering
             {
                 debugCallback?.Dispose();
                 instance.Dispose();
-                disposed = true;
-
                 logger?.Log(nameof(Host), "Destroyed instance");
+                disposed = true;
             }
         }
 
@@ -109,6 +124,27 @@ namespace HT.Engine.Rendering
                 case SurfaceType.HkrWin32: return instance.CreateWin32SurfaceKhr(new Win32SurfaceCreateInfoKhr(nativeWindow.OSInstanceHandle, nativeWindow.OSViewHandle));
             }
             throw new Exception($"[{nameof(Host)}] Unable to create surface for unknown surfaceType: {nativeApp.SurfaceType}");
+        }
+
+        private HostDevice FindSuitableDevice(SurfaceKhr surface)
+        {
+            ThrowIfDisposed();
+            List<HostDevice> supportedDevices = new List<HostDevice>();
+
+            //Find all devices that support the given surface
+            for (int i = 0; i < hostDevices.Length; i++)
+                if(hostDevices[i].IsSurfaceSupported(surface))
+                    supportedDevices.Add(hostDevices[i]);
+
+            if(supportedDevices.IsEmpty())
+                throw new Exception($"[{nameof(Host)}] Unable to find a supported device");
+
+            //If we have a supported discrete gpu then prefer that
+            for (int i = 0; i < supportedDevices.Count; i++)
+                if(supportedDevices[i].IsDiscreteGPU)
+                    return supportedDevices[i];
+
+            return supportedDevices[0];
         }
 
         private bool IsLayerAvailable(string layerName)
