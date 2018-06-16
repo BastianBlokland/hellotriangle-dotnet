@@ -2,6 +2,7 @@
     "files.exclude": {
         ".git": true,
         ".vscode": true,
+        "build": true,
         "**/bin": true,
         "**/obj": true,
     },

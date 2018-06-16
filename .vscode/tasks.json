@@ -2,23 +2,39 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build-macos",
+            "label": "publish",
+            "dependsOn": [
+                "publish-macos",
+                "publish-win32"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "build-macos-debug",
             "command": "dotnet",
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/platforms/ht.macos/ht.macos.csproj"
+                "${workspaceFolder}/platforms/ht.macos/ht.macos.csproj",
+                "--runtime",
+                "osx-x64",
+                "--configuration",
+                "Debug"
             ],
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "run-macos",
+            "label": "run-macos-debug",
             "command": "dotnet",
             "type": "process",
             "args": [
                 "run",
                 "--project",
-                "${workspaceFolder}/platforms/ht.macos/ht.macos.csproj"
+                "${workspaceFolder}/platforms/ht.macos/ht.macos.csproj",
+                "--runtime",
+                "osx-x64",
+                "--configuration",
+                "Debug"
             ],
             "problemMatcher": "$msCompile",
             "group": {
@@ -27,23 +43,105 @@
             }
         },
         {
-            "label": "build-win32",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "build",
-                "${workspaceFolder}/platforms/ht.win32/ht.win32.csproj"
-            ],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "run-win32",
+            "label": "run-macos-release",
             "command": "dotnet",
             "type": "process",
             "args": [
                 "run",
                 "--project",
-                "${workspaceFolder}/platforms/ht.win32/ht.win32.csproj"
+                "${workspaceFolder}/platforms/ht.macos/ht.macos.csproj",
+                "--runtime",
+                "osx-x64",
+                "--configuration",
+                "Release"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "publish-macos",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "${workspaceFolder}/platforms/ht.macos/ht.macos.csproj",
+                "--runtime",
+                "osx-x64",
+                "--configuration",
+                "Release",
+                "--output",
+                "${workspaceFolder}/build/macos/"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build-win32-debug",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/platforms/ht.win32/ht.win32.csproj",
+                "--runtime",
+                "win-x64",
+                "--configuration",
+                "Debug"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "run-win32-debug",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "run",
+                "--project",
+                "${workspaceFolder}/platforms/ht.win32/ht.win32.csproj",
+                "--runtime",
+                "win-x64",
+                "--configuration",
+                "Debug"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "run-win32-release",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "run",
+                "--project",
+                "${workspaceFolder}/platforms/ht.win32/ht.win32.csproj",
+                "--runtime",
+                "win-x64",
+                "--configuration",
+                "Release"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "publish-win32",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "${workspaceFolder}/platforms/ht.win32/ht.win32.csproj",
+                "--runtime",
+                "win-x64",
+                "--configuration",
+                "Release",
+                "--output",
+                "${workspaceFolder}/build/win32/"
             ],
             "problemMatcher": "$msCompile"
         }

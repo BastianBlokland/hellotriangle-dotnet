@@ -1,3 +1,6 @@
-# Build output directories
+# build output directories
+build
+
+# intermediate output directories
 bin
 obj
