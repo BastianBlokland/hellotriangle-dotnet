@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 
 using HT.Engine.Math;
 using HT.Engine.Rendering;
+using HT.Engine.Utils;
 using HT.Engine.Platform;
 
 namespace HT.MacOS
@@ -28,8 +29,6 @@ namespace HT.MacOS
 
         public SurfaceType SurfaceType => SurfaceType.MvkMacOS;
 
-        public IEnumerable<INativeWindow> Windows => windows;
-
         private readonly IntPtr nativeAppHandle;
         private readonly List<NativeWindow> windows = new List<NativeWindow>();
         private bool disposed;
@@ -41,19 +40,8 @@ namespace HT.MacOS
             ThrowIfDisposed();
             NativeWindow newWindow = new NativeWindow(nativeAppHandle, size, minSize, title);
             windows.Add(newWindow);
+            newWindow.Disposed += () => OnWindowDisposed(newWindow);
             return newWindow;
-        }
-
-        public void DestroyWindow(INativeWindow window)
-        {
-            if(window == null)
-                throw new ArgumentNullException($"{nameof(window)}");
-            NativeWindow nativeWindow = window as NativeWindow;
-            if(nativeWindow == null)
-                throw new ArgumentException($"[{nameof(NativeApp)}] Provided window is incorrect type", $"{nameof(window)}");
-            if(!windows.Remove(nativeWindow))
-                throw new ArgumentException($"[{nameof(NativeApp)}] Provided window is not registered to this app", $"{nameof(window)}");
-            nativeWindow.Dispose();
         }
 
         public void Update()
@@ -66,9 +54,16 @@ namespace HT.MacOS
         {
             if(!disposed)
             {
+                windows.DisposeAll();
                 DisposeApp(nativeAppHandle);
                 disposed = true;
             }
+        }
+
+        private void OnWindowDisposed(NativeWindow window)
+        {
+            if(!windows.Remove(window))
+                throw new ArgumentException($"[{nameof(NativeApp)}] Provided window is not registered to this app", $"{nameof(window)}");
         }
 
         private void ThrowIfDisposed()

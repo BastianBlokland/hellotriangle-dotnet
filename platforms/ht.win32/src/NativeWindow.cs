@@ -3,6 +3,8 @@ using System.Runtime.InteropServices;
 
 using HT.Engine.Math;
 using HT.Engine.Rendering;
+using HT.Engine.Utils;
+using HT.Engine.Platform;
 using HT.Win32.Delegates;
 using HT.Win32.Structures;
 using HT.Win32.Flags;
@@ -12,7 +14,7 @@ namespace HT.Win32
     /// <summary>
     /// Wrapper around a native Win32 window. Uses user32.dll bindings to for the native interop.
     /// </summary>
-    internal sealed class NativeWindow : HT.Engine.Platform.INativeWindow
+    internal sealed class NativeWindow : INativeWindow, IUpdatable
     {
         #region Native bindings
         [DllImport("user32.dll", EntryPoint = "RegisterClassExA", CharSet = CharSet.Ansi)]
@@ -77,6 +79,7 @@ namespace HT.Win32
         private static extern bool UnregisterClass(IntPtr windowClassAtom, IntPtr instance);
         #endregion
 
+        public event Action Disposed;
         public event Action CloseRequested;
         public event Action Resized;
         public event Action Moved;
@@ -198,6 +201,7 @@ namespace HT.Win32
                 DestroyWindow(nativeWindowHandle);
                 UnregisterClass(nativeWindowClassAtom, instanceHandle);
                 disposed = true;
+                Disposed?.Invoke();
             }
         }
 

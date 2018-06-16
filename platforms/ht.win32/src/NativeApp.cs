@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 using HT.Engine.Math;
 using HT.Engine.Rendering;
+using HT.Engine.Utils;
 using HT.Engine.Platform;
 
 namespace HT.Win32
@@ -14,8 +15,6 @@ namespace HT.Win32
     {
         public SurfaceType SurfaceType => SurfaceType.HkrWin32;
 
-        public IEnumerable<INativeWindow> Windows => windows;
-
         private readonly List<NativeWindow> windows = new List<NativeWindow>();
         private bool disposed;
         
@@ -24,36 +23,29 @@ namespace HT.Win32
             ThrowIfDisposed();
             NativeWindow newWindow = new NativeWindow(size, minSize, title);
             windows.Add(newWindow);
+            newWindow.Disposed += () => OnWindowDisposed(newWindow);
             return newWindow;
-        }
-
-        public void DestroyWindow(INativeWindow window)
-        {
-            if(window == null)
-                throw new ArgumentNullException($"{nameof(window)}");
-            NativeWindow nativeWindow = window as NativeWindow;
-            if(nativeWindow == null)
-                throw new ArgumentException($"[{nameof(NativeApp)}] Provided window is incorrect type", $"{nameof(window)}");
-            if(!windows.Remove(nativeWindow))
-                throw new ArgumentException($"[{nameof(NativeApp)}] Provided window is not registered to this app", $"{nameof(window)}");
-            nativeWindow.Dispose();
         }
 
         public void Update()
         {
             ThrowIfDisposed();
-            for (int i = 0; i < windows.Count; i++)
-                windows[i].Update();
+            windows.UpdateAll();
         }
 
         public void Dispose()
         {
             if(!disposed)
             {
-                for (int i = 0; i < windows.Count; i++)
-                    windows[i].Dispose();
+                windows.DisposeAll();
                 disposed = true;
             }
+        }
+
+        private void OnWindowDisposed(NativeWindow window)
+        {
+            if(!windows.Remove(window))
+                throw new ArgumentException($"[{nameof(NativeApp)}] Provided window is not registered to this app", $"{nameof(window)}");
         }
 
         private void ThrowIfDisposed()

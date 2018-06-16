@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 
 using HT.Engine.Math;
 using HT.Engine.Rendering;
+using HT.Engine.Platform;
 
 namespace HT.MacOS
 {
@@ -10,7 +11,7 @@ namespace HT.MacOS
     /// Wrapper around the NSWindow object, can be used to set properties of the window and get 
     /// callbacks when the user interacts with the window.
     /// </summary>
-    internal sealed class NativeWindow : HT.Engine.Platform.INativeWindow
+    internal sealed class NativeWindow : INativeWindow
     {
         #region Native bindings
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -64,6 +65,7 @@ namespace HT.MacOS
         private static extern void DisposeWindow(IntPtr windowHandle);
         #endregion
 
+        public event Action Disposed;
         public event Action CloseRequested;
         public event Action Resized;
         public event Action Moved;
@@ -128,6 +130,7 @@ namespace HT.MacOS
             {
                 DisposeWindow(nativeWindowHandle);
                 disposed = true;
+                Disposed?.Invoke();
             }
         }
 

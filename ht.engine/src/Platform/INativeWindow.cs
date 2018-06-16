@@ -7,8 +7,9 @@ namespace HT.Engine.Platform
     /// <summary>
     /// Handle to a native platform window
     /// </summary>
-    public interface INativeWindow
+    public interface INativeWindow : IDisposable
     {
+        event Action Disposed;
         event Action CloseRequested;
         event Action Resized;
         event Action Moved;
