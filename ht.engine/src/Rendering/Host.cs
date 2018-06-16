@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 using HT.Engine.Math;
 using HT.Engine.Platform;
@@ -6,6 +7,7 @@ using HT.Engine.Utils;
 using VulkanCore;
 using VulkanCore.Mvk;
 using VulkanCore.Khr;
+using VulkanCore.Ext;
 
 namespace HT.Engine.Rendering
 {
@@ -16,6 +18,7 @@ namespace HT.Engine.Rendering
         private readonly LayerProperties[] availableLayers;
         private readonly ExtensionProperties[] availbleExtensions;
         private readonly Instance instance;
+        private readonly DebugReportCallbackExt debugCallback;
         private bool disposed;
 
         public Host(Platform.INativeApp nativeApp, string applicationName, int applicationVersion, Logger logger = null)
@@ -29,16 +32,28 @@ namespace HT.Engine.Rendering
             logger?.LogList(nameof(Host), "Available extensions:", availbleExtensions);
 
             //Verify that all the required layers are available on this host
-            string[] requiredLayers = GetRequiredLayerNames(nativeApp.SurfaceType);
-            for (int i = 0; i < requiredLayers.Length; i++)
-                if(!IsLayerAvailable(requiredLayers[i]))
-                    throw new Exception($"[{nameof(Host)}] Required layer '{requiredLayers[i]}' is not available");
+            var layersToEnable = new List<string>(GetRequiredLayers(nativeApp.SurfaceType));
+            for (int i = 0; i < layersToEnable.Count; i++)
+                if(!IsLayerAvailable(layersToEnable[i]))
+                    throw new Exception($"[{nameof(Host)}] Required layer '{layersToEnable[i]}' is not available");
 
             //Verify that all the required extensions are available on this host
-            string[] requiredExtensions = GetRequiredExtensionNames(nativeApp.SurfaceType);
-            for (int i = 0; i < requiredExtensions.Length; i++)
-                if(!IsExtensionAvailable(requiredExtensions[i]))
-                    throw new Exception($"[{nameof(Host)}] Required extension '{requiredExtensions[i]}' is not available");
+            var extensionsToEnable = new List<string>(GetRequiredExtensions(nativeApp.SurfaceType));
+            for (int i = 0; i < extensionsToEnable.Count; i++)
+                if(!IsExtensionAvailable(extensionsToEnable[i]))
+                    throw new Exception($"[{nameof(Host)}] Required extension '{extensionsToEnable[i]}' is not available");
+
+            //Add any optional layers IF its supported by this host
+            string[] optionalLayers = GetOptionalLayers(nativeApp.SurfaceType);
+            for (int i = 0; i < optionalLayers.Length; i++)
+                if(IsLayerAvailable(optionalLayers[i]))
+                    layersToEnable.Add(optionalLayers[i]);
+
+            //Add any optional extensions IF its supported by this host
+            string[] optionalExtensions = GetOptionalExtensions(nativeApp.SurfaceType);
+            for (int i = 0; i < optionalExtensions.Length; i++)
+                if(IsLayerAvailable(optionalExtensions[i]))
+                    extensionsToEnable.Add(optionalExtensions[i]);
 
             InstanceCreateInfo createInfo = new InstanceCreateInfo
             (
@@ -50,17 +65,34 @@ namespace HT.Engine.Rendering
                     engineVersion: Info.VERSION,
                     apiVersion: new VulkanCore.Version(major: 1, minor: 0, patch: 69)
                 ),
-                enabledLayerNames: requiredLayers,
-                enabledExtensionNames: requiredExtensions
+                enabledLayerNames: layersToEnable.ToArray(),
+                enabledExtensionNames: extensionsToEnable.ToArray()
             );
             instance = new Instance(createInfo);
+
             logger?.Log(nameof(Host), "Created instance");
+            logger?.LogList(nameof(Host), "Enabled layers:", layersToEnable);
+            logger?.LogList(nameof(Host), "Enabled extensions:", extensionsToEnable);
+
+            #if DEBUG
+            if(extensionsToEnable.Contains("VK_EXT_debug_report"))
+            {
+                debugCallback = instance.CreateDebugReportCallbackExt(new DebugReportCallbackCreateInfoExt
+                (
+                    flags: ~DebugReportFlagsExt.Information, //We want to handle everthing except for info reports
+                    callback: OnDebugReport
+                ));
+            }
+            #else
+                debugCallback = null;
+            #endif
         }
 
         public void Dispose()
         {
             if(!disposed)
             {
+                debugCallback?.Dispose();
                 instance.Dispose();
                 disposed = true;
 
@@ -95,13 +127,21 @@ namespace HT.Engine.Rendering
             return false;
         }
 
+        #if DEBUG
+        private bool OnDebugReport(DebugReportCallbackInfo args)
+        {
+            logger?.Log(nameof(Host), $"[{args.Flags}][{args.LayerPrefix}] {args.Message}");
+            return false; //Returning false will keep the app running, returning true will abort
+        }
+        #endif
+
         private void ThrowIfDisposed()
         {
             if(disposed)
                 throw new Exception($"[{nameof(Host)}] Allready disposed");
         }
 
-        private static string[] GetRequiredLayerNames(SurfaceType surfaceType)
+        private static string[] GetRequiredLayers(SurfaceType surfaceType)
         {
             switch(surfaceType)
             {
@@ -111,7 +151,16 @@ namespace HT.Engine.Rendering
             throw new Exception($"[{nameof(Host)}] Unknown surfaceType: {surfaceType}");
         }
 
-        private static string[] GetRequiredExtensionNames(SurfaceType surfaceType)
+        private static string[] GetOptionalLayers(SurfaceType surfaceType)
+        {
+            #if DEBUG
+                return new [] { "VK_LAYER_LUNARG_standard_validation" };
+            #else
+                return new string[0];
+            #endif
+        }
+
+        private static string[] GetRequiredExtensions(SurfaceType surfaceType)
         {
             switch(surfaceType)
             {
@@ -119,6 +168,15 @@ namespace HT.Engine.Rendering
                 case SurfaceType.MvkMacOS: return new [] { "VK_KHR_surface", "VK_MVK_macos_surface" };
             }
             throw new Exception($"[{nameof(Host)}] Unknown surfaceType: {surfaceType}");
+        }
+
+        private static string[] GetOptionalExtensions(SurfaceType surfaceType)
+        {
+            #if DEBUG
+                return new [] { "VK_EXT_debug_report" };
+            #else
+                return new string[0];
+            #endif
         }
     }
 }
