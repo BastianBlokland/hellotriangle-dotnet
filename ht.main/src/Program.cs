@@ -20,7 +20,7 @@ namespace HT.Main
                 while(running)
                 {
                     nativeApp.Update();
-                    System.Threading.Thread.Sleep(100);
+                    window.Draw();
                 }
             }
         }
