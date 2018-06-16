@@ -29,11 +29,16 @@ namespace HT.MacOS
 
         public SurfaceType SurfaceType => SurfaceType.MvkMacOS;
 
+        private readonly Logger logger;
         private readonly IntPtr nativeAppHandle;
         private readonly List<NativeWindow> windows = new List<NativeWindow>();
         private bool disposed;
         
-        public NativeApp() => nativeAppHandle = SetupApp();
+        public NativeApp(Logger logger = null)
+        {
+            this.logger = logger;
+            nativeAppHandle = SetupApp();
+        }
 
         public INativeWindow CreateWindow(Int2 size, Int2 minSize, string title)
         {
@@ -41,6 +46,8 @@ namespace HT.MacOS
             NativeWindow newWindow = new NativeWindow(nativeAppHandle, size, minSize, title);
             windows.Add(newWindow);
             newWindow.Disposed += () => OnWindowDisposed(newWindow);
+
+            logger?.Log(nameof(NativeApp), $"Native window created (size: {size}, minSize: {minSize}, title: '{title}')");
             return newWindow;
         }
 
@@ -64,6 +71,7 @@ namespace HT.MacOS
         {
             if(!windows.Remove(window))
                 throw new ArgumentException($"[{nameof(NativeApp)}] Provided window is not registered to this app", $"{nameof(window)}");
+            logger?.Log(nameof(NativeApp), $"Native window destroyed");
         }
 
         private void ThrowIfDisposed()

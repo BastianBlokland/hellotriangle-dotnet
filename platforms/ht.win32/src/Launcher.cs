@@ -1,19 +1,22 @@
 ﻿using System;
 
+using HT.Engine.Utils;
+
 namespace HT.Win32
 {
     public static class Launcher
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("[Win32] Launching program..");
+            Logger logger = new Logger();
+            logger.Log($"Win32-{nameof(Launcher)}", "Launching program"); 
 
-            using(var app = new NativeApp())
+            using(var app = new NativeApp(logger))
             {
-                HT.Main.Program.Run(app);
+                HT.Main.Program.Run(app, logger);
             }
 
-            Console.WriteLine("[Win32] Program terminated");
+            logger.Log($"Win32-{nameof(Launcher)}", "Program terminated"); 
         }
     }
 }

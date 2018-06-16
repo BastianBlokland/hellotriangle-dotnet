@@ -15,15 +15,20 @@ namespace HT.Win32
     {
         public SurfaceType SurfaceType => SurfaceType.HkrWin32;
 
+        private readonly Logger logger;
         private readonly List<NativeWindow> windows = new List<NativeWindow>();
         private bool disposed;
         
+        public NativeApp(Logger logger = null) => this.logger = logger;
+
         public INativeWindow CreateWindow(Int2 size, Int2 minSize, string title)
         {
             ThrowIfDisposed();
             NativeWindow newWindow = new NativeWindow(size, minSize, title);
             windows.Add(newWindow);
             newWindow.Disposed += () => OnWindowDisposed(newWindow);
+            
+            logger?.Log(nameof(NativeApp), $"Native window created (size: {size}, minSize: {minSize}, title: '{title}')");
             return newWindow;
         }
 
@@ -46,6 +51,7 @@ namespace HT.Win32
         {
             if(!windows.Remove(window))
                 throw new ArgumentException($"[{nameof(NativeApp)}] Provided window is not registered to this app", $"{nameof(window)}");
+            logger?.Log(nameof(NativeApp), $"Native window destroyed");
         }
 
         private void ThrowIfDisposed()

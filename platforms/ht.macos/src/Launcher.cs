@@ -1,19 +1,22 @@
 ﻿using System;
 
+using HT.Engine.Utils;
+
 namespace HT.MacOS
 {
     public static class Launcher
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("[MacOS] Launching program..");
+            Logger logger = new Logger();
+            logger.Log($"MacOS-{nameof(Launcher)}", "Launching program");
 
-            using(var app = new NativeApp())
+            using(var app = new NativeApp(logger))
             {
-                HT.Main.Program.Run(app);
+                HT.Main.Program.Run(app, logger);
             }
 
-            Console.WriteLine("[MacOS] Program terminated");
+            logger.Log($"MacOS-{nameof(Launcher)}", "Program terminated");
         }
     }
 }

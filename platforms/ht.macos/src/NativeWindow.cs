@@ -88,6 +88,10 @@ namespace HT.MacOS
         public bool IsMovingOrResizing { get; private set; }
         public IntRect ClientRect { get; private set; }
 
+        public IntPtr OSInstanceHandle => instanceHandle;
+        public IntPtr OSViewHandle => nativeMetalViewHandle;
+
+        private IntPtr instanceHandle;
         private IntPtr nativeWindowHandle;
         private IntPtr nativeMetalViewHandle;
         private string title;
@@ -97,6 +101,9 @@ namespace HT.MacOS
         {
             this.title = title;
 
+            //Gets a handle to our process
+            instanceHandle = System.Diagnostics.Process.GetCurrentProcess().Handle;
+            //Create the os window
             nativeWindowHandle = CreateWindow
             (
                 nativeAppHandle,
@@ -113,13 +120,8 @@ namespace HT.MacOS
                 OnDemaximized,
                 OnCloseRequested
             );
+            //create a metal-view so we can actually render into our window
             nativeMetalViewHandle = CreateMetalView(nativeWindowHandle);
-        }
-
-        public Surface CreateSurface(Host host)
-        {
-            ThrowIfDisposed();
-            return host.CreateMacOSSurface(nativeMetalViewHandle);
         }
 
         public void Dispose()

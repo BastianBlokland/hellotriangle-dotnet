@@ -12,6 +12,7 @@
         "Rect",
         "Vulkan",
         "macos",
+        "moltenvk",
         "vulkancore"
     ]
 }

@@ -101,17 +101,22 @@ namespace HT.Win32
         public bool IsMovingOrResizing { get; private set; }
         public IntRect ClientRect { get; private set; }
 
+        public IntPtr OSInstanceHandle => instanceHandle;
+        public IntPtr OSViewHandle => nativeWindowHandle;
+
         private IntPtr instanceHandle;
         private IntPtr nativeWindowClassAtom;
         private IntPtr nativeWindowHandle;
         private WindowStyles windowStyle;
         private ExtendedWindowStyles extendedWindowStyle;
         private string title;
+        private Int2 minClientSize;
         private bool disposed;
 
         public NativeWindow(Int2 size, Int2 minSize, string title)
         {
             this.title = title;
+            this.minClientSize = minSize;
 
             //Value as used by the user32 functions to indicate that a default should be used
             const int USE_DEFAULT = unchecked((int)0x80000000);
@@ -172,12 +177,6 @@ namespace HT.Win32
             SetFocus(nativeWindowHandle);
         }
 
-        public Surface CreateSurface(Host host)
-        {
-            ThrowIfDisposed();
-            return host.CreateWin32Surface(instanceHandle, nativeWindowHandle);
-        }
-
         public void Update()
         {
             ThrowIfDisposed();
@@ -219,7 +218,7 @@ namespace HT.Win32
                     //This gets called when the window wants to know its min and max size
                     WindowMinMaxInfo info = Marshal.PtrToStructure<WindowMinMaxInfo>(lParam);
 
-                    IntRect windowRect = new IntRect(min: Int2.Zero, max: MinClientSize);
+                    IntRect windowRect = new IntRect(min: Int2.Zero, max: minClientSize);
                     //Adjust here so the size we clamp to is actually the clientSize and not the outer size (that includes the topbar)
                     AdjustWindowRect(ref windowRect, style: windowStyle, menu: false, extendedStyle: extendedWindowStyle);
 
