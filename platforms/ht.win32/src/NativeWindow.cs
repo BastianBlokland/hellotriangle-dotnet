@@ -100,7 +100,6 @@ namespace HT.Win32
         public bool Maximized { get; private set; }
         public bool IsMovingOrResizing { get; private set; }
         public IntRect ClientRect { get; private set; }
-        public Int2 MinClientSize { get; private set; }
 
         private IntPtr instanceHandle;
         private IntPtr nativeWindowClassAtom;
@@ -112,7 +111,6 @@ namespace HT.Win32
 
         public NativeWindow(Int2 size, Int2 minSize, string title)
         {
-            MinClientSize = minSize;
             this.title = title;
 
             //Value as used by the user32 functions to indicate that a default should be used
