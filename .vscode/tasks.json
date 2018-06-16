@@ -16,8 +16,6 @@
             "args": [
                 "build",
                 "${workspaceFolder}/platforms/ht.macos/ht.macos.csproj",
-                "--runtime",
-                "osx-x64",
                 "--configuration",
                 "Debug"
             ],
@@ -84,8 +82,6 @@
             "args": [
                 "build",
                 "${workspaceFolder}/platforms/ht.win32/ht.win32.csproj",
-                "--runtime",
-                "win-x64",
                 "--configuration",
                 "Debug"
             ],
