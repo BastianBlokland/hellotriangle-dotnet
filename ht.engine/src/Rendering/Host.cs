@@ -95,12 +95,12 @@ namespace HT.Engine.Rendering
                 hostDevices[i] = new HostDevice(physicalDevices[i], nativeApp.SurfaceType, logger);
         }
 
-        public Window CreateWindow(Int2 windowSize)
+        public Window CreateWindow(Int2 windowSize, bool preferDiscreteDevice = true)
         {
             ThrowIfDisposed();
             INativeWindow nativeWindow = nativeApp.CreateWindow(windowSize, minSize: new Int2(150, 150), title: string.Empty);
             SurfaceKhr surface = CreateSurface(nativeWindow);
-            HostDevice graphicsDevice = FindSuitableDevice(surface);
+            HostDevice graphicsDevice = FindSuitableDevice(surface, preferDiscreteDevice);
             return new Window(nativeWindow, surface, graphicsDevice, logger);
         }
 
@@ -126,7 +126,7 @@ namespace HT.Engine.Rendering
             throw new Exception($"[{nameof(Host)}] Unable to create surface for unknown surfaceType: {nativeApp.SurfaceType}");
         }
 
-        private HostDevice FindSuitableDevice(SurfaceKhr surface)
+        private HostDevice FindSuitableDevice(SurfaceKhr surface, bool preferDiscreteDevice = true)
         {
             ThrowIfDisposed();
             List<HostDevice> supportedDevices = new List<HostDevice>();
@@ -139,9 +139,9 @@ namespace HT.Engine.Rendering
             if(supportedDevices.IsEmpty())
                 throw new Exception($"[{nameof(Host)}] Unable to find a supported device");
 
-            //If we have a supported discrete gpu then prefer that
+            //If we have a supported discreate gpu and we prefer a discrete one then we pick that
             for (int i = 0; i < supportedDevices.Count; i++)
-                if(supportedDevices[i].IsDiscreteGPU)
+                if(supportedDevices[i].IsDiscreteGPU == preferDiscreteDevice)
                     return supportedDevices[i];
 
             return supportedDevices[0];
