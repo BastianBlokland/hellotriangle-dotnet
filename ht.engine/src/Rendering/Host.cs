@@ -52,7 +52,7 @@ namespace HT.Engine.Rendering
             //Add any optional extensions IF its supported by this host
             string[] optionalExtensions = GetOptionalExtensions(nativeApp.SurfaceType);
             for (int i = 0; i < optionalExtensions.Length; i++)
-                if(IsLayerAvailable(optionalExtensions[i]))
+                if(IsExtensionAvailable(optionalExtensions[i]))
                     extensionsToEnable.Add(optionalExtensions[i]);
 
             InstanceCreateInfo createInfo = new InstanceCreateInfo
@@ -130,7 +130,7 @@ namespace HT.Engine.Rendering
         #if DEBUG
         private bool OnDebugReport(DebugReportCallbackInfo args)
         {
-            logger?.Log(nameof(Host), $"[{args.Flags}][{args.LayerPrefix}] {args.Message}");
+            logger?.Log(nameof(Host), $"[{args.Flags}] [{args.LayerPrefix}] {args.Message}");
             return false; //Returning false will keep the app running, returning true will abort
         }
         #endif
