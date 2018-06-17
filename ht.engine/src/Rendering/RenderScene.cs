@@ -19,6 +19,8 @@ namespace HT.Engine.Rendering
                 renderArea: new Rect2D(x: 0, y: 0, width: swapchainSize.X, height: swapchainSize.Y),
                 clearValues: new ClearValue(new ClearColorValue(new ColorF4(clearColor.R, clearColor.G, clearColor.B, clearColor.A)))
             ));
+
+            commandbuffer.CmdEndRenderPass();
         }
     }
 }
