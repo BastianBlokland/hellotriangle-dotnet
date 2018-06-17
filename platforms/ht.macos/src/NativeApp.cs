@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
@@ -49,6 +50,14 @@ namespace HT.MacOS
 
             logger?.Log(nameof(NativeApp), $"Native window created (size: {size}, minSize: {minSize}, title: '{title}')");
             return newWindow;
+        }
+
+        public FileStream ReadFile(string path)
+        {
+            string absolutePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, path);
+            if(!File.Exists(absolutePath))
+                throw new IOException($"[{nameof(NativeApp)}] No file found at path: {absolutePath}");
+            return File.OpenRead(absolutePath);
         }
 
         public void Update()
