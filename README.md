@@ -16,15 +16,39 @@ Platform specific code:
 
 Note: MacOS runs through the MoltenVK wrapper to run vulkan on metal devices.
 
-# setup
+# environment setup
 - Install dotnet-core 2.1 sdk (https://www.microsoft.com/net/download)
 - Install the vulkan sdk (https://vulkan.lunarg.com/sdk/home)
     Mac-note: On macos this will automatically include molten-vk now
 - Make sure the vulkan library (win: vulkan-1.dll, macos: libMoltenVK.dylib) is linked to a os lib folder.
-    Win-note: On windows side the installer should do this automatically.
-    Mac-note: On macos create a link from [sdkroot]/MoltenVK/macOSlibMoltenVK.dylib to /usr/lib/libMoltenVK.dylib
+    Win-note: The installer should do this automatically.
+    Mac-note: Create a link from [sdkroot]/MoltenVK/macOSlibMoltenVK.dylib to /usr/lib/libMoltenVK.dylib
+- Make sure 'glslangValidator' in the PATH variable
+    Win-note: The installer should do this automatically
+    Mac-note: Either add [sdkroot]/macOS/bin/glslangValidator to path or install separately using brew (brew install glslang)
+- Windows: Set script execution policy, because for shader compilation it uses a small powershell script
+    run 'set-executionpolicy remotesigned' in a shell with administrator rights, more info can be found here: http://go.microsoft.com/fwlink/?LinkID=135170
 
+# ide setup
+Project is setup for VSCode usage on both Windows and MacOS, this read-me assumes VSCode use but any ide should work as it only requires dotnet cli 
+for building and some simple bash / powershell scripts for asset building.
+- Install vscode (https://code.visualstudio.com/)
+- Some extensions that will make your life better:
+    - 'C#' (https://marketplace.visualstudio.com/items?itemName=ms-vscode.csharp)
+    - 'Shader languages support for VS Code' (https://marketplace.visualstudio.com/items?itemName=slevesque.shader)
+    - 'VS code SPIR-V (glsl/hlsl) shaders tools' (https://marketplace.visualstudio.com/items?itemName=elviras9t.vscode-shadercode)
+    - Very optional but i can't go without: 'Code Spell Checker' (https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker)
+        Note: Workspace settings actually already contains a white-listed words list for this project
 
+# building
+- Debugger: There are 'win32' and 'macos' entries in the launch.json that automatically pick the right launcher
+- Running: Tasks (menu -> Tasks -> Run Task...) have been setup for running in both Debug and Release mode for both win32 and macos
+- Publishing: There is a 'publish-win32' and a 'publish-macos' task that package up the app into a root/build directory.
+    -Note: The published app already contains the netcore runtime so user don't have to have the runtime installed
+    -Note: The published app does not contain the vulkan library so people will have to install the vulkan runtime
+    
+Note: When building it automatically compiles the shaders from glsl to spr-v and includes the spr-v in the build. If you want to
+run it manually there is a task 'build-shaders' which calls tools/compile-shaders.ps1 on windows and compile-shaders.sh on macos
 
 # credits
 C# vulkan bindings [VulkanCore](https://github.com/discosultan/VulkanCore) made by [discosultan](https://github.com/discosultan)
