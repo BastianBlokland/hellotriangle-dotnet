@@ -57,6 +57,7 @@ namespace HT.Engine.Rendering
             rasterizer.PolygonMode = PolygonMode.Fill;
             rasterizer.CullMode = CullModes.Back;
             rasterizer.FrontFace = FrontFace.Clockwise;
+            rasterizer.LineWidth = 1f;
             var colorblendAttachment = new PipelineColorBlendAttachmentState();
             colorblendAttachment.ColorWriteMask = ColorComponents.All;
             colorblendAttachment.BlendEnable = false; //No blending atm
@@ -65,6 +66,8 @@ namespace HT.Engine.Rendering
                 attachments: new [] { colorblendAttachment },
                 logicOpEnable: false
             );
+            var multisampleState = new PipelineMultisampleStateCreateInfo();
+            multisampleState.RasterizationSamples = SampleCounts.Count1;
             
             //Create the pipeline
             pipeline = logicalDevice.CreateGraphicsPipeline(new GraphicsPipelineCreateInfo
@@ -78,7 +81,7 @@ namespace HT.Engine.Rendering
                 rasterizationState: rasterizer,
                 tessellationState: null,
                 viewportState: viewport,
-                multisampleState: null,
+                multisampleState: multisampleState,
                 depthStencilState: null,
                 colorBlendState: blending,
                 dynamicState: null,
