@@ -11,8 +11,11 @@ namespace HT.Main
     {
         public static void Run(INativeApp nativeApp, Logger logger = null)
         {
+            ShaderProgram vert = new ShaderProgram(nativeApp, "test.vert");
+            ShaderProgram frag = new ShaderProgram(nativeApp, "test.frag");
+
             using(var host = new Host(nativeApp: nativeApp, applicationName: "Test", applicationVersion: 1, logger: logger))
-            using(var window = host.CreateWindow(new Int2(800, 600), new RenderScene(clearColor: ColorUtils.Olive)))
+            using(var window = host.CreateWindow(new Int2(800, 600), new RenderScene(clearColor: ColorUtils.Black, vertProg: vert, fragProg: frag)))
             {
                 bool running = true;
                 window.CloseRequested += () => running = false;

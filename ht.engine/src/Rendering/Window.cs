@@ -104,6 +104,7 @@ namespace HT.Engine.Rendering
             CreateSwapChain(nativeWindow.ClientRect.Size);
             CreateRenderPass();
             CreateFrameBuffers();
+            scene?.CreatePipeline(logicalDevice, swapchainSize, renderpass);
             CreateCommandPool();
             CreateCommandBuffers();
             CreateSynchronizationObjects();
@@ -117,6 +118,7 @@ namespace HT.Engine.Rendering
             renderFinishedSemaphore.Dispose();
             waitFences.DisposeAll();
             commandPool.Dispose();
+            scene?.DisposePipeline();
             framebuffers.DisposeAll();
             renderpass.Dispose();
             swapchainImageViews.DisposeAll();
@@ -259,7 +261,7 @@ namespace HT.Engine.Rendering
             {
                 commandbuffers[i].Begin(new CommandBufferBeginInfo(flags: CommandBufferUsages.SimultaneousUse));
 
-                scene?.Record(commandbuffers[i], framebuffers[i], swapchainSize);
+                scene?.Record(commandbuffers[i], framebuffers[i], renderpass, swapchainSize);
 
                 commandbuffers[i].End();
             }

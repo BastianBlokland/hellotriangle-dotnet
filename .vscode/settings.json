@@ -11,10 +11,12 @@
         "Demaximized",
         "Deminimized",
         "LUNARG",
+        "Rasterization",
         "Rect",
         "Vulkan",
         "macos",
         "moltenvk",
+        "rasterizer",
         "vulkancore"
     ]
 }
