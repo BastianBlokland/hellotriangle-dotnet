@@ -146,27 +146,25 @@ namespace HT.Engine.Rendering
                 desiredImageCount = capabilities.MaxImageCount;
 
             //Gather info about the swapchain
-            var createInfo = new SwapchainCreateInfoKhr();
-            createInfo.Surface = surface;
-            createInfo.MinImageCount = desiredImageCount;
-            createInfo.ImageFormat = surfaceFormat;
-            createInfo.ImageColorSpace = surfaceColorspace;
-            createInfo.ImageExtent = new Extent2D(swapchainSize.X, swapchainSize.Y);
-            createInfo.ImageArrayLayers = 1;
-            createInfo.ImageUsage = ImageUsages.ColorAttachment;
-            //If we have a different present-queue graphics-queue then the graphics-queue then we need to allow sharing of 
-            //the swapchain images
-            if(graphicsQueue.FamilyIndex != presentQueue.FamilyIndex)
-            {
-                createInfo.ImageSharingMode = SharingMode.Concurrent;
-                createInfo.QueueFamilyIndices = new [] { graphicsQueue.FamilyIndex, presentQueue.FamilyIndex };
-            }
-            else
-                createInfo.ImageSharingMode = SharingMode.Exclusive;
-            createInfo.PreTransform = capabilities.CurrentTransform;
-            createInfo.CompositeAlpha = CompositeAlphasKhr.Opaque;
-            createInfo.PresentMode = presentMode;
-            createInfo.Clipped = true;
+            var createInfo = new SwapchainCreateInfoKhr
+            (
+                surface: surface,
+                minImageCount: desiredImageCount,
+                imageFormat: surfaceFormat,
+                imageColorSpace: surfaceColorspace,
+                imageExtent: new Extent2D(swapchainSize.X, swapchainSize.Y),
+                imageArrayLayers: 1,
+                imageUsage: ImageUsages.ColorAttachment,
+
+                //If the graphics and present queues are different we need to allow sharing the swapchain images
+                imageSharingMode: graphicsQueue.FamilyIndex == presentQueue.FamilyIndex ? SharingMode.Exclusive : SharingMode.Concurrent,
+                queueFamilyIndices: graphicsQueue.FamilyIndex == presentQueue.FamilyIndex ? null : new [] { graphicsQueue.FamilyIndex, presentQueue.FamilyIndex },
+
+                preTransform: capabilities.CurrentTransform,
+                compositeAlpha: CompositeAlphasKhr.Opaque,
+                presentMode: presentMode,
+                clipped: true
+            );
 
             //Create the swapchain
             swapchain = logicalDevice.CreateSwapchainKhr(createInfo);

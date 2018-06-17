@@ -344,9 +344,12 @@ namespace VulkanCore.Khr
         public SwapchainCreateInfoKhr(
             SurfaceKhr surface,
             Format imageFormat,
+            ColorSpaceKhr imageColorSpace,
             Extent2D imageExtent,
-            SurfaceTransformsKhr preTransform,
-            PresentModeKhr presentMode,
+            SharingMode imageSharingMode = SharingMode.Exclusive,
+            int[] queueFamilyIndices = null,
+            SurfaceTransformsKhr preTransform = SurfaceTransformsKhr.Identity,
+            PresentModeKhr presentMode = PresentModeKhr.Fifo,
             SwapchainCreateFlagsKhr flags = 0,
             int minImageCount = 2,
             ImageUsages imageUsage = ImageUsages.ColorAttachment | ImageUsages.TransferDst,
@@ -360,11 +363,11 @@ namespace VulkanCore.Khr
             ImageUsage = imageUsage;
             MinImageCount = minImageCount;
             ImageFormat = imageFormat;
-            ImageColorSpace = 0;
+            ImageColorSpace = imageColorSpace;
             ImageExtent = imageExtent;
             ImageArrayLayers = imageArrayLayers;
-            ImageSharingMode = 0;
-            QueueFamilyIndices = null;
+            ImageSharingMode = imageSharingMode;
+            QueueFamilyIndices = queueFamilyIndices;
             PreTransform = preTransform;
             CompositeAlpha = compositeAlpha;
             PresentMode = presentMode;
