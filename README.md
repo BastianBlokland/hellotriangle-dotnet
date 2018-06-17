@@ -2,11 +2,8 @@
 Work in progress dotnet vulkan renderer
 
 # structure
-Supported platforms are Windows and MacOS at the moment. All projects target netstandard / netcoreapp so 
-pure code is portable to loads of platforms. For platform specific code (for example window management) there
-are thin wrappers around the os functions. In my opinion full dotnet is not worth it just for window-management,
-using pure netcore code allows use of the dotnet cli for building and also allows creating of windows executables
-from mac-side and vise versa. 
+Supported platforms are Windows and MacOS at the moment. Using dotnet-core so base code is portable to loads of platforms.
+For platform specific code (for example window management) there are thin wrappers around the os functions.
 
 General project structure is that platform-specific code lives in 'launcher' projects, for example: platforms/ht.win32 or platforms/ht.macos
 
@@ -30,7 +27,7 @@ Note: MacOS runs through the MoltenVK wrapper to run vulkan on metal devices.
     run 'set-executionpolicy remotesigned' in a shell with administrator rights, more info can be found here: http://go.microsoft.com/fwlink/?LinkID=135170
 
 # ide setup
-Project is setup for VSCode usage on both Windows and MacOS, this read-me assumes VSCode use but any ide should work as it only requires dotnet cli 
+Project is setup for VSCode usage on both Windows and MacOS, this readme assumes VSCode use but any ide should work as it only requires dotnet cli 
 for building and some simple bash / powershell scripts for asset building.
 - Install vscode (https://code.visualstudio.com/)
 - Some extensions that will make your life better:
@@ -46,7 +43,7 @@ for building and some simple bash / powershell scripts for asset building.
 - Publishing: There is a 'publish-win32' and a 'publish-macos' task that package up the app into a root/build directory.
     -Note: The published app already contains the netcore runtime so user don't have to have the runtime installed
     -Note: The published app does not contain the vulkan library so people will have to install the vulkan runtime
-    
+
 Note: When building it automatically compiles the shaders from glsl to spr-v and includes the spr-v in the build. If you want to
 run it manually there is a task 'build-shaders' which calls tools/compile-shaders.ps1 on windows and compile-shaders.sh on macos
 
