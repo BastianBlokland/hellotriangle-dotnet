@@ -113,6 +113,10 @@ namespace HT.Win32
         private Int2 minClientSize;
         private bool disposed;
 
+        private bool invokeCloseRequestedEvent;
+        private bool invokeResizedEvent;
+        private bool invokeMovedEvent;
+
         public NativeWindow(Int2 size, Int2 minSize, string title)
         {
             this.title = title;
@@ -189,6 +193,26 @@ namespace HT.Win32
                 TranslateMessage(ref message);
                 DispatchMessage(ref message);
             }
+
+            //Invoke events that happened during this windowProcedure
+            //Why dont we just call these from the windowProcedure? Well then the call origin of those callbacks
+            //would actually be in the user32 dll and if then someone does something in the callbacks that changes 
+            //the window state then that would happen from within the user32 callback and it doesn't like that.
+            if(invokeCloseRequestedEvent)
+            {
+                CloseRequested?.Invoke();
+                invokeCloseRequestedEvent = false;
+            }
+            if(invokeResizedEvent)
+            {
+                Resized?.Invoke();
+                invokeResizedEvent = false;
+            }
+            if(invokeMovedEvent)
+            {
+                Moved?.Invoke();
+                invokeMovedEvent = false;
+            }
         }
         
         public void Dispose()
@@ -240,7 +264,7 @@ namespace HT.Win32
                     lParam.ToInt64().Split(out width, out height);
                     
                     ClientRect = new IntRect(ClientRect.Min, ClientRect.Min + new Int2(width, height));
-                    Resized?.Invoke();
+                    invokeResizedEvent = true;
                     break;
 
                 case WM_MOVE:
@@ -249,7 +273,7 @@ namespace HT.Win32
                     
                     Int2 pos = new Int2(x, y);
                     ClientRect = new IntRect(pos, pos + ClientRect.Size);
-                    Moved?.Invoke();
+                    invokeMovedEvent = true;
                     break;
 
                 case WM_ENTERSIZEMOVE:
@@ -261,7 +285,7 @@ namespace HT.Win32
                     break;
 
                 case WM_CLOSE:
-                    CloseRequested?.Invoke();
+                    invokeCloseRequestedEvent = true;
                     return IntPtr.Zero; //'Consume' the message
             }
 
