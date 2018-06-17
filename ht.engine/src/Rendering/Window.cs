@@ -15,6 +15,7 @@ namespace HT.Engine.Rendering
         private readonly INativeWindow nativeWindow;
         private readonly SurfaceKhr surface;
         private readonly HostDevice hostDevice;
+        private readonly RenderScene scene;
         private readonly Logger logger;
         private readonly Device logicalDevice;
         private readonly Queue graphicsQueue;
@@ -36,11 +37,16 @@ namespace HT.Engine.Rendering
         private Fence[] waitFences;
         private bool disposed;
 
-        internal Window(INativeWindow nativeWindow, SurfaceKhr surface, HostDevice hostDevice, Logger logger = null)
+        internal Window(    INativeWindow nativeWindow, 
+                            SurfaceKhr surface, 
+                            HostDevice hostDevice, 
+                            RenderScene scene, 
+                            Logger logger = null)
         {
             this.nativeWindow = nativeWindow;
             this.surface = surface;
             this.hostDevice = hostDevice;
+            this.scene = scene;
             this.logger = logger;
 
             //Subscribe to callbacks for the native window
@@ -253,12 +259,7 @@ namespace HT.Engine.Rendering
             {
                 commandbuffers[i].Begin(new CommandBufferBeginInfo(flags: CommandBufferUsages.SimultaneousUse));
 
-                commandbuffers[i].CmdBeginRenderPass(new RenderPassBeginInfo
-                (
-                    framebuffer: framebuffers[i],
-                    renderArea: new Rect2D(x: 0, y: 0, width: swapchainSize.X, height: swapchainSize.Y),
-                    clearValues: new ClearValue(new ClearColorValue(new ColorF4(0f, 1f, 0f, 1f)))
-                ));
+                scene?.Record(commandbuffers[i], framebuffers[i], swapchainSize);
 
                 commandbuffers[i].End();
             }

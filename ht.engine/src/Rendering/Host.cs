@@ -95,13 +95,13 @@ namespace HT.Engine.Rendering
                 hostDevices[i] = new HostDevice(physicalDevices[i], nativeApp.SurfaceType, logger);
         }
 
-        public Window CreateWindow(Int2 windowSize, bool preferDiscreteDevice = true)
+        public Window CreateWindow(Int2 windowSize, RenderScene scene, bool preferDiscreteDevice = true)
         {
             ThrowIfDisposed();
             INativeWindow nativeWindow = nativeApp.CreateWindow(windowSize, minSize: new Int2(150, 150), title: string.Empty);
             SurfaceKhr surface = CreateSurface(nativeWindow);
             HostDevice graphicsDevice = FindSuitableDevice(surface, preferDiscreteDevice);
-            return new Window(nativeWindow, surface, graphicsDevice, logger);
+            return new Window(nativeWindow, surface, graphicsDevice, scene, logger);
         }
 
         public void Dispose()
