@@ -31,6 +31,8 @@ fi
 
 echo "Begin shader compiliation (input: '$SHADER_SOURCE_DIR', output: '$SHADER_OUTPUT_DIR')"
 
+#Create the output directory if it does not exist
+mkdir -p "$SHADER_OUTPUT_DIR"
 #Clear output directory
 rm -f "$SHADER_OUTPUT_DIR"/*.spv
 
