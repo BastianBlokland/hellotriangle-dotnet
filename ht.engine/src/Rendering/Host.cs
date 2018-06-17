@@ -80,7 +80,7 @@ namespace HT.Engine.Rendering
             {
                 debugCallback = instance.CreateDebugReportCallbackExt(new DebugReportCallbackCreateInfoExt
                 (
-                    flags: ~DebugReportFlagsExt.Information, //We want to handle everthing except for info reports
+                    flags: DebugReportFlagsExt.All & ~DebugReportFlagsExt.Information, //We want to handle everthing except for info reports
                     callback: OnDebugReport
                 ));
             }
