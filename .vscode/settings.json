@@ -1,11 +1,23 @@
 {
+    //Ignore some directories to keep the directory viewer clean
     "files.exclude": {
-        ".git": true,
         ".vscode": true,
         "build": true,
+        "**/.git": true,
         "**/bin": true,
         "**/obj": true,
     },
+
+    //Set project to use spaces
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
+
+    //Set ruler and render-whitespace (hopefully this will keep the project nice and clean)
+    "editor.rulers": [ 100 ],
+    "editor.renderWhitespace": "all",
+
+    //White-listed words for the 'Code spell checker' plugin
     "cSpell.words": [
         "Cdecl",
         "Demaximized",
