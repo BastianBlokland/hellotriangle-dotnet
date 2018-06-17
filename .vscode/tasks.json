@@ -150,6 +150,9 @@
             "label": "build-shaders",
             "type": "shell",
             "command": "./tools/compile-shaders.sh ht.main/shaders/glsl ht.main/shaders/bin",
+            "windows": {
+                "command": "./tools/compile-shaders.ps1 -SHADER_SOURCE_DIR ht.main/shaders/glsl -SHADER_OUTPUT_DIR ht.main/shaders/bin"
+            },
             "problemMatcher": "$glsl"
         },
     ]
