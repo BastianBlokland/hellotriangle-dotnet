@@ -32,11 +32,11 @@ namespace HT.Engine.Math
 
         public static Float2 operator *(Float2 left, Float2 right) => new Float2(left.X * right.X, left.Y * right.Y);
 
-        public static Float2 operator *(Float2 left, int right) => new Float2(left.X * right, left.Y * right);
+        public static Float2 operator *(Float2 left, float right) => new Float2(left.X * right, left.Y * right);
 
-        public static Float2 operator *(int left, Float2 right) => new Float2(left * right.X, left * right.Y);
+        public static Float2 operator *(float left, Float2 right) => new Float2(left * right.X, left * right.Y);
 
-        public static Float2 operator /(Float2 left, int right) => new Float2(left.X / right, left.Y / right);
+        public static Float2 operator /(Float2 left, float right) => new Float2(left.X / right, left.Y / right);
 
         public static bool operator ==(Float2 a, Float2 b) => a.Equals(b);
 
