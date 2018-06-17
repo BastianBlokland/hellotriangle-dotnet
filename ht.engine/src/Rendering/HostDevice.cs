@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 using HT.Engine.Utils;
 using VulkanCore.Khr;
@@ -86,16 +87,15 @@ namespace HT.Engine.Rendering
             if(presentQueueFamilyIndex == null)
                 throw new Exception($"[{nameof(HostDevice)}] Device '{Name}' does not support presenting to the given surface");
 
-            VulkanCore.DeviceQueueCreateInfo[] queueCreateInfos = new []
-            {
-                //Create a graphics queue
-                new VulkanCore.DeviceQueueCreateInfo(graphicsQueueFamilyIndex.Value, queueCount: 1, queuePriorities: 1f),
-                //Create a present queue
-                new VulkanCore.DeviceQueueCreateInfo(presentQueueFamilyIndex.Value, queueCount: 1, queuePriorities: 1f)
-            };
+            List<VulkanCore.DeviceQueueCreateInfo> queueCreateInfos = new List<DeviceQueueCreateInfo>();
+            queueCreateInfos.Add(new VulkanCore.DeviceQueueCreateInfo(graphicsQueueFamilyIndex.Value, queueCount: 1, queuePriorities: 1f));
+            //If the present queue and graphics queues are not the same we also need to create a present queue
+            if(graphicsQueueFamilyIndex.Value != presentQueueFamilyIndex.Value)
+                queueCreateInfos.Add(new VulkanCore.DeviceQueueCreateInfo(presentQueueFamilyIndex.Value, queueCount: 1, queuePriorities: 1f));
+            
             VulkanCore.DeviceCreateInfo createInfo = new VulkanCore.DeviceCreateInfo
             (
-                queueCreateInfos: queueCreateInfos,
+                queueCreateInfos: queueCreateInfos.ToArray(),
                 enabledExtensionNames: requiredExtensions,
                 enabledFeatures: new PhysicalDeviceFeatures() //No special features required atm
             );
