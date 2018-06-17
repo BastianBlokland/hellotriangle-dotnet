@@ -189,25 +189,28 @@ namespace HT.Engine.Rendering
         private void CreateRenderPass()
         {
             //Description of our frame-buffer attachment
-            AttachmentDescription colorAttachment = new AttachmentDescription();
-            colorAttachment.Format = surfaceFormat;
-            colorAttachment.Samples = SampleCounts.Count1;
-            colorAttachment.LoadOp = AttachmentLoadOp.Clear;
-            colorAttachment.StoreOp = AttachmentStoreOp.Store;
-            colorAttachment.StencilLoadOp = AttachmentLoadOp.DontCare;
-            colorAttachment.StencilStoreOp = AttachmentStoreOp.DontCare;
-            colorAttachment.InitialLayout = ImageLayout.Undefined;
-            colorAttachment.FinalLayout = ImageLayout.PresentSrcKhr;
-
+            var colorAttachment = new AttachmentDescription
+            (
+                flags: AttachmentDescriptions.MayAlias,
+                format: surfaceFormat,
+                samples: SampleCounts.Count1,
+                loadOp: AttachmentLoadOp.Clear,
+                storeOp: AttachmentStoreOp.Store,
+                stencilLoadOp: AttachmentLoadOp.DontCare,
+                stencilStoreOp: AttachmentStoreOp.DontCare,
+                initialLayout: ImageLayout.Undefined,
+                finalLayout: ImageLayout.PresentSrcKhr
+            );
             //Dependency to wait on the framebuffer being loaded before we write to it
-            SubpassDependency attachmentAvailableDependency = new SubpassDependency();
-            attachmentAvailableDependency.SrcSubpass = Constant.SubpassExternal; //Source is the implicit 'load' subpass
-            attachmentAvailableDependency.DstSubpass = 0; //Dest is our subpass
-            attachmentAvailableDependency.SrcStageMask = PipelineStages.ColorAttachmentOutput;
-            attachmentAvailableDependency.SrcAccessMask = 0;
-            attachmentAvailableDependency.DstStageMask = PipelineStages.ColorAttachmentOutput;
-            attachmentAvailableDependency.DstAccessMask = Accesses.ColorAttachmentRead | Accesses.ColorAttachmentWrite;
-
+            var attachmentAvailableDependency = new SubpassDependency
+            (
+                srcSubpass: Constant.SubpassExternal, //Source is the implicit 'load' subpass
+                dstSubpass: 0, //Dest is our subpass
+                srcStageMask: PipelineStages.ColorAttachmentOutput,
+                srcAccessMask: 0,
+                dstStageMask: PipelineStages.ColorAttachmentOutput,
+                dstAccessMask: Accesses.ColorAttachmentRead | Accesses.ColorAttachmentWrite
+            );
             //Create the renderpass with a single sub-pass that references the color-attachment
             renderpass = logicalDevice.CreateRenderPass(new RenderPassCreateInfo
             (

@@ -53,21 +53,31 @@ namespace HT.Engine.Rendering
                 viewport: new Viewport(0f, 0f, width: size.X, height: size.Y, minDepth: 0f, maxDepth: 1f),
                 scissor: new Rect2D(x: 0, y: 0, width: size.X, height: size.Y)
             );
-            var rasterizer = new PipelineRasterizationStateCreateInfo();
-            rasterizer.PolygonMode = PolygonMode.Fill;
-            rasterizer.CullMode = CullModes.Back;
-            rasterizer.FrontFace = FrontFace.Clockwise;
-            rasterizer.LineWidth = 1f;
-            var colorblendAttachment = new PipelineColorBlendAttachmentState();
-            colorblendAttachment.ColorWriteMask = ColorComponents.All;
-            colorblendAttachment.BlendEnable = false; //No blending atm
+            var rasterizer = new PipelineRasterizationStateCreateInfo
+            (
+                depthClampEnable: false,
+                polygonMode: PolygonMode.Fill,
+                cullMode: CullModes.Back,
+                frontFace: FrontFace.Clockwise,
+                lineWidth: 1f
+            );
             var blending = new PipelineColorBlendStateCreateInfo
             (
-                attachments: new [] { colorblendAttachment },
+                attachments: new [] 
+                { 
+                    new PipelineColorBlendAttachmentState
+                    (
+                        colorWriteMask: ColorComponents.All,
+                        blendEnable: false
+                    )
+                },
                 logicOpEnable: false
             );
-            var multisampleState = new PipelineMultisampleStateCreateInfo();
-            multisampleState.RasterizationSamples = SampleCounts.Count1;
+            var multisampleState = new PipelineMultisampleStateCreateInfo
+            (
+                rasterizationSamples: SampleCounts.Count1,
+                sampleShadingEnable: false
+            );
             
             //Create the pipeline
             pipeline = logicalDevice.CreateGraphicsPipeline(new GraphicsPipelineCreateInfo
