@@ -4,7 +4,7 @@
   
     <Authors>discosultan</Authors>
     <Description>Vulkan bindings for .NET Standard</Description>
-
+    
     <PackageIconUrl>https://raw.githubusercontent.com/discosultan/VulkanCore/master/Doc/Vulkan64.png</PackageIconUrl>
     <PackageLicenseUrl>https://raw.githubusercontent.com/discosultan/VulkanCore/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/discosultan/VulkanCore</PackageProjectUrl>
@@ -16,6 +16,7 @@
     <RootNamespace>VulkanCore</RootNamespace>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 
   </PropertyGroup>
 
