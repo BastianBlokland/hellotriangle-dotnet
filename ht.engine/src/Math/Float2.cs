@@ -13,6 +13,10 @@ namespace HT.Engine.Math
         public static readonly Float2 Right = new Float2(x: 1f, y: 0f);
         public static readonly Float2 Left = new Float2(x: -1f, y: 0f);
 
+        //Alternative names to the components
+        public float R => X;
+        public float G => Y;
+
         public readonly float X;
         public readonly float Y;
 

@@ -9,6 +9,12 @@ namespace HT.Engine.Math
         public static readonly Float4 Zero = new Float4(x: 0f, y: 0f, z: 0f, w: 0f);
         public static readonly Float4 One = new Float4(x: 1f, y: 1f, z: 1f, w: 1f);
 
+        //Alternative names to the components
+        public float R => X;
+        public float G => Y;
+        public float B => Z;
+        public float A => W;
+
         public readonly float X;
         public readonly float Y;
         public readonly float Z;

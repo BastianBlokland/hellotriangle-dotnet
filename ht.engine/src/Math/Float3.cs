@@ -15,6 +15,11 @@ namespace HT.Engine.Math
         public static readonly Float3 Forward = new Float3(x: 0f, y: 0f, z: 1f);
         public static readonly Float3 Backward = new Float3(x: 0f, y: 0f, z: -1f);
 
+        //Alternative names to the components
+        public float R => X;
+        public float G => Y;
+        public float B => Z;
+
         public readonly float X;
         public readonly float Y;
         public readonly float Z;
