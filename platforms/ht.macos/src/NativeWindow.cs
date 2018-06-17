@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 
 using HT.Engine.Math;
 using HT.Engine.Rendering;
+using HT.Engine.Utils;
 using HT.Engine.Platform;
 
 namespace HT.MacOS
@@ -11,7 +12,7 @@ namespace HT.MacOS
     /// Wrapper around the NSWindow object, can be used to set properties of the window and get 
     /// callbacks when the user interacts with the window.
     /// </summary>
-    internal sealed class NativeWindow : INativeWindow
+    internal sealed class NativeWindow : INativeWindow, IUpdatable
     {
         #region Native bindings
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -97,6 +98,10 @@ namespace HT.MacOS
         private string title;
         private bool disposed;
 
+        private bool invokeCloseRequestedEvent;
+        private bool invokeResizedEvent;
+        private bool invokeMovedEvent;
+
         public NativeWindow(IntPtr nativeAppHandle, Int2 size, Int2 minSize, string title)
         {
             this.title = title;
@@ -124,6 +129,30 @@ namespace HT.MacOS
             nativeMetalViewHandle = CreateMetalView(nativeWindowHandle);
         }
 
+        public void Update()
+        {
+            ThrowIfDisposed();
+
+            //Invoke events that happened in the native-callbacks. Why dont we just call these directly?
+            //basically if we call then directly then the call origin would be in the os event loop and if you
+            //then try to change the window from within that event-loop it doesn't like that
+            if(invokeCloseRequestedEvent)
+            {
+                CloseRequested?.Invoke();
+                invokeCloseRequestedEvent = false;
+            }
+            if(invokeResizedEvent)
+            {
+                Resized?.Invoke();
+                invokeResizedEvent = false;
+            }
+            if(invokeMovedEvent)
+            {
+                Moved?.Invoke();
+                invokeMovedEvent = false;
+            }
+        }
+
         public void Dispose()
         {
             if(!disposed)
@@ -137,7 +166,7 @@ namespace HT.MacOS
         private void OnResized(Int2 size)
         {
             ClientRect = new IntRect(ClientRect.Min, ClientRect.Min + size);
-            Resized?.Invoke();
+            invokeResizedEvent = true;
         }
 
         private void OnBeginResize() => IsMovingOrResizing = true;
@@ -147,7 +176,7 @@ namespace HT.MacOS
         private void OnMoved(Int2 pos)
         {
             ClientRect = new IntRect(pos, pos + ClientRect.Size);
-            Moved?.Invoke();
+            invokeMovedEvent = true;
         }
 
         private void OnMinimized() => Minimized = true;
@@ -158,7 +187,7 @@ namespace HT.MacOS
 
         private void OnDemaximized() => Maximized = false;
 
-        private void OnCloseRequested() => CloseRequested?.Invoke();
+        private void OnCloseRequested() => invokeCloseRequestedEvent = true;
 
         private void ThrowIfDisposed()
         {

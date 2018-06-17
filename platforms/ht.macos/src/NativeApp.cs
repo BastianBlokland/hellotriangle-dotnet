@@ -64,6 +64,8 @@ namespace HT.MacOS
         {
             ThrowIfDisposed();
             ProcessEvents(nativeAppHandle);
+
+            windows.UpdateAll();
         }
 
         public void Dispose()
