@@ -14,6 +14,11 @@
 
   <ItemGroup>
     <ProjectReference Include="../ht.engine/ht.engine.csproj"/>
+
+    <None Include="shaders/bin/*.spv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+
   </ItemGroup>
 
 </Project>
