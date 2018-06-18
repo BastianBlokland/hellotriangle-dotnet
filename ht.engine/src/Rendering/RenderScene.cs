@@ -89,7 +89,8 @@ namespace HT.Engine.Rendering
                 vertexInputState: vertexInput,
                 rasterizationState: rasterizer,
                 tessellationState: null,
-                viewportState: null, //Don't pass a viewport as we set it dynamically
+                //Pass empty viewport and scissor-rect as we set them dynamically
+                viewportState: new PipelineViewportStateCreateInfo(new Viewport(), new Rect2D()),
                 multisampleState: multisampleState,
                 depthStencilState: null,
                 colorBlendState: blending,
@@ -123,16 +124,17 @@ namespace HT.Engine.Rendering
                         new ColorF4(clearColor.R, clearColor.G, clearColor.B, clearColor.A)))
             ));
 
-            //Bind the pipeline to render with
-            commandbuffer.CmdBindPipeline(PipelineBindPoint.Graphics, pipeline);
-            //Because we marked viewport and scissor-rect as dynamic we need to set them here
+            //Set viewport and scissor-rect dynamically to avoid the pipelines depending on
+            //swapchain size (and thus having to be recreated on resize)
             commandbuffer.CmdSetViewport(
                 new Viewport(
                     x: 0f, y: 0f, width: swapchainSize.X, height: swapchainSize.Y,
                     minDepth: 0f, maxDepth: 1f));
             commandbuffer.CmdSetScissor(
                 new Rect2D(x: 0, y: 0, width: swapchainSize.X, height: swapchainSize.Y));
-            //Issue the draw
+
+            //Draw our pipeline
+            commandbuffer.CmdBindPipeline(PipelineBindPoint.Graphics, pipeline);
             commandbuffer.CmdDraw(vertexCount: 4, instanceCount: 1, firstVertex: 0, firstInstance: 0);
 
             commandbuffer.CmdEndRenderPass();
