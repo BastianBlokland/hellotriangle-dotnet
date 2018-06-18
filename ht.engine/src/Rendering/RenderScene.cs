@@ -22,7 +22,7 @@ namespace HT.Engine.Rendering
             this.fragProg = fragProg;
         }
 
-        internal void CreatePipeline(Device logicalDevice, Int2 size, RenderPass renderpass)
+        internal void CreatePipeline(Device logicalDevice, RenderPass renderpass)
         {
             if (pipelineCreated)
                 throw new Exception(
@@ -50,12 +50,6 @@ namespace HT.Engine.Rendering
                 topology: PrimitiveTopology.TriangleStrip,
                 primitiveRestartEnable: false
             );
-            var viewport = new PipelineViewportStateCreateInfo(
-                viewport: new Viewport(
-                    x: 0f, y: 0f, width: size.X, height: size.Y, minDepth: 0f, maxDepth: 1f),
-                scissor: new Rect2D(
-                    x: 0, y: 0, width: size.X, height: size.Y)
-            );
             var rasterizer = new PipelineRasterizationStateCreateInfo(
                 depthClampEnable: false,
                 polygonMode: PolygonMode.Fill,
@@ -77,6 +71,13 @@ namespace HT.Engine.Rendering
                 rasterizationSamples: SampleCounts.Count1,
                 sampleShadingEnable: false
             );
+            //Pass the viewport and scissor-rect as dynamic so we are not tied to swapchain size
+            //the advantage is this is that we don't need to recreate the pipeline on swapchain
+            //resize
+            var dynamicState = new PipelineDynamicStateCreateInfo(
+                DynamicState.Viewport,
+                DynamicState.Scissor
+            );
             
             //Create the pipeline
             pipeline = logicalDevice.CreateGraphicsPipeline(new GraphicsPipelineCreateInfo(
@@ -88,11 +89,11 @@ namespace HT.Engine.Rendering
                 vertexInputState: vertexInput,
                 rasterizationState: rasterizer,
                 tessellationState: null,
-                viewportState: viewport,
+                viewportState: null, //Don't pass a viewport as we set it dynamically
                 multisampleState: multisampleState,
                 depthStencilState: null,
                 colorBlendState: blending,
-                dynamicState: null,
+                dynamicState: dynamicState,
                 flags: PipelineCreateFlags.None
             ));
             
@@ -122,7 +123,16 @@ namespace HT.Engine.Rendering
                         new ColorF4(clearColor.R, clearColor.G, clearColor.B, clearColor.A)))
             ));
 
+            //Bind the pipeline to render with
             commandbuffer.CmdBindPipeline(PipelineBindPoint.Graphics, pipeline);
+            //Because we marked viewport and scissor-rect as dynamic we need to set them here
+            commandbuffer.CmdSetViewport(
+                new Viewport(
+                    x: 0f, y: 0f, width: swapchainSize.X, height: swapchainSize.Y,
+                    minDepth: 0f, maxDepth: 1f));
+            commandbuffer.CmdSetScissor(
+                new Rect2D(x: 0, y: 0, width: swapchainSize.X, height: swapchainSize.Y));
+            //Issue the draw
             commandbuffer.CmdDraw(vertexCount: 4, instanceCount: 1, firstVertex: 0, firstInstance: 0);
 
             commandbuffer.CmdEndRenderPass();

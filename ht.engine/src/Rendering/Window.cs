@@ -104,7 +104,7 @@ namespace HT.Engine.Rendering
             CreateSwapChain(nativeWindow.ClientRect.Size);
             CreateRenderPass();
             CreateFrameBuffers();
-            scene?.CreatePipeline(logicalDevice, swapchainSize, renderpass);
+            scene?.CreatePipeline(logicalDevice, renderpass);
             CreateCommandPool();
             CreateCommandBuffers();
             CreateSynchronizationObjects();
