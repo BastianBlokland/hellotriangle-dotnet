@@ -11,9 +11,10 @@ using HT.Engine.Platform;
 namespace HT.MacOS
 {
     /// <summary>
-    /// Native bindings around a NSApplication, this is root of the application and handles processing all the input events
-    /// and updating all the windows that are attached to this app.
-    /// NOTE: The lifetime of the app has the be longer then the lifetime of the windows it contains. Only one app can exist at a time
+    /// Native bindings around a NSApplication, this is root of the application and handles
+    /// processing all the input events and updating all the windows that are attached to this app.
+    /// NOTE: The lifetime of the app has the be longer then the lifetime of the windows it
+    /// contains. Only one app can exist at a time
     /// </summary>
     internal sealed class NativeApp : INativeApp
     {
@@ -48,14 +49,15 @@ namespace HT.MacOS
             windows.Add(newWindow);
             newWindow.Disposed += () => OnWindowDisposed(newWindow);
 
-            logger?.Log(nameof(NativeApp), $"Native window created (size: {size}, minSize: {minSize}, title: '{title}')");
+            logger?.Log(nameof(NativeApp),
+                $"Native window created (size: {size}, minSize: {minSize}, title: '{title}')");
             return newWindow;
         }
 
         public FileStream ReadFile(string path)
         {
             string absolutePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, path);
-            if(!File.Exists(absolutePath))
+            if (!File.Exists(absolutePath))
                 throw new IOException($"[{nameof(NativeApp)}] No file found at path: {absolutePath}");
             return File.OpenRead(absolutePath);
         }
@@ -70,7 +72,7 @@ namespace HT.MacOS
 
         public void Dispose()
         {
-            if(!disposed)
+            if (!disposed)
             {
                 windows.DisposeAll();
                 DisposeApp(nativeAppHandle);
@@ -80,14 +82,15 @@ namespace HT.MacOS
 
         private void OnWindowDisposed(NativeWindow window)
         {
-            if(!windows.Remove(window))
-                throw new ArgumentException($"[{nameof(NativeApp)}] Provided window is not registered to this app", $"{nameof(window)}");
+            if (!windows.Remove(window))
+                throw new ArgumentException(
+                    $"[{nameof(NativeApp)}] Provided window is not registered to this app", $"{nameof(window)}");
             logger?.Log(nameof(NativeApp), $"Native window destroyed");
         }
 
         private void ThrowIfDisposed()
         {
-            if(disposed)
+            if (disposed)
                 throw new Exception($"[{nameof(NativeApp)}] Allready disposed");
         }
     }

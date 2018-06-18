@@ -10,7 +10,7 @@ param
 
 #Check if 'glslangValidator' is installed
 where.exe /Q glslangValidator
-if($LASTEXITCODE -gt 0)
+if ($LASTEXITCODE -gt 0)
 {
     Write-Output "Error: 'glslangValidator' is not installed"
     exit 1

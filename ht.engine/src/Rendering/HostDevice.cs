@@ -20,7 +20,10 @@ namespace HT.Engine.Rendering
         private readonly ExtensionProperties[] availableExtensions;
         private readonly QueueFamilyProperties[] queueFamilies;
 
-        internal HostDevice(PhysicalDevice vulkanPhysicalDevice, SurfaceType surfaceType, Logger logger = null)
+        internal HostDevice(
+            PhysicalDevice vulkanPhysicalDevice,
+            SurfaceType surfaceType,
+            Logger logger = null)
         {
             this.physicalDevice = vulkanPhysicalDevice;
             this.surfaceType = surfaceType;
@@ -33,68 +36,81 @@ namespace HT.Engine.Rendering
             logger?.LogList(nameof(HostDevice), $"{Name} available extensions:", availableExtensions);
         }
 
-        internal SurfaceCapabilitiesKhr GetCurrentCapabilities(SurfaceKhr surface) => physicalDevice.GetSurfaceCapabilitiesKhr(surface);
+        internal SurfaceCapabilitiesKhr GetCurrentCapabilities(SurfaceKhr surface)
+            => physicalDevice.GetSurfaceCapabilitiesKhr(surface);
 
         internal (Format imageFormat, ColorSpaceKhr colorspace) GetSurfaceFormat(SurfaceKhr surface)
         {
             SurfaceFormatKhr[] formats = physicalDevice.GetSurfaceFormatsKhr(surface);
 
-            //If the device only returns 1 options for this surface and it contains 'Undefined' it means that the 
-            //device doesn't care and we can pick.
-            if(formats.Length == 1 && formats[0].Format == VulkanCore.Format.Undefined)
+            //If the device only returns 1 options for this surface and it contains 'Undefined' it 
+            //means that the device doesn't care and we can pick.
+            if (formats.Length == 1 && formats[0].Format == VulkanCore.Format.Undefined)
                 return (Format.B8G8R8A8UNorm, ColorSpaceKhr.SRgbNonlinear);
 
             //If the device has preference then we check if it supports the combo we prefer
             for (int i = 0; i < formats.Length; i++)
-                if(formats[i].Format == Format.B8G8R8A8UNorm && formats[i].ColorSpace == ColorSpaceKhr.SRgbNonlinear)
+            {
+                if (formats[i].Format == Format.B8G8R8A8UNorm &&
+                    formats[i].ColorSpace == ColorSpaceKhr.SRgbNonlinear)
                     return (formats[i].Format, formats[i].ColorSpace);
+            }
             
             //If our preference is not there then we take the first that is supported
-            if(formats.Length > 0) return (formats[0].Format, formats[0].ColorSpace);
+            if (formats.Length > 0) return (formats[0].Format, formats[0].ColorSpace);
 
-            throw new Exception($"[{nameof(HostDevice)}] Device {Name} doesn't support any format for use with given surface");
+            throw new Exception(
+                $"[{nameof(HostDevice)}] Device {Name} doesn't support any format for use with given surface");
         }
 
         internal PresentModeKhr GetPresentMode(SurfaceKhr surface)
         {
             PresentModeKhr[] modes = physicalDevice.GetSurfacePresentModesKhr(surface);
 
-            //If mailbox is present then go for that, it is basically having 1 frame being displayed and
-            //multiple frames in the background being rendered to, and also allows to redraw those in the background,
-            //this allows for things like triple-buffering
+            //If mailbox is present then go for that, it is basically having 1 frame being displayed
+            //and multiple frames in the background being rendered to, and also allows to redraw 
+            //those in the background, this allows for things like triple-buffering
             for (int i = 0; i < modes.Length; i++)
-                if(modes[i] == PresentModeKhr.Mailbox)
+                if (modes[i] == PresentModeKhr.Mailbox)
                     return PresentModeKhr.Mailbox;
 
             //If mailbox is not supported then we go for Fifo
-            //Fifo is basically uses 2 frame's, 1 thats being displayed right now and one that is being rendered to
-            //When rendering is done but the previous frame is not done being display then the program has to wait
+            //Fifo is basically uses 2 frame's, 1 thats being displayed right now and one that is 
+            //being rendered to. When rendering is done but the previous frame is not done being 
+            //displayed then the program has to wait.
             //According to spec this must be available on all platforms
             return PresentModeKhr.Fifo;
         }
 
-        internal (Device logicalDevice, Queue graphicsQueue, Queue presentQueue) CreateLogicalDevice(SurfaceKhr surface)
+        internal (Device logicalDevice, Queue graphicsQueue, Queue presentQueue) CreateLogicalDevice(
+            SurfaceKhr surface)
         {
             string[] requiredExtensions = GetRequiredExtensions(surfaceType);
-            if(!AreExtensionsAvailable(requiredExtensions))
-                throw new Exception($"[{nameof(HostDevice)}] Device '{Name}' does not support required extensions");
+            if (!AreExtensionsAvailable(requiredExtensions))
+                throw new Exception(
+                    $"[{nameof(HostDevice)}] Device '{Name}' does not support required extensions");
             
             int? graphicsQueueFamilyIndex = GetGraphicsQueueFamilyIndex();
-            if(graphicsQueueFamilyIndex == null)
-                throw new Exception($"[{nameof(HostDevice)}] Device '{Name}' does not support graphics");
+            if (graphicsQueueFamilyIndex == null)
+                throw new Exception(
+                    $"[{nameof(HostDevice)}] Device '{Name}' does not support graphics");
 
             int? presentQueueFamilyIndex = GetPresentQueueFamilyIndex(surface);
-            if(presentQueueFamilyIndex == null)
-                throw new Exception($"[{nameof(HostDevice)}] Device '{Name}' does not support presenting to the given surface");
+            if (presentQueueFamilyIndex == null)
+                throw new Exception(
+                    $"[{nameof(HostDevice)}] Device '{Name}' does not support presenting to the given surface");
 
             List<VulkanCore.DeviceQueueCreateInfo> queueCreateInfos = new List<DeviceQueueCreateInfo>();
-            queueCreateInfos.Add(new VulkanCore.DeviceQueueCreateInfo(graphicsQueueFamilyIndex.Value, queueCount: 1, queuePriorities: 1f));
+            queueCreateInfos.Add(new VulkanCore.DeviceQueueCreateInfo(
+                graphicsQueueFamilyIndex.Value, queueCount: 1, queuePriorities: 1f));
             //If the present queue and graphics queues are not the same we also need to create a present queue
-            if(graphicsQueueFamilyIndex.Value != presentQueueFamilyIndex.Value)
-                queueCreateInfos.Add(new VulkanCore.DeviceQueueCreateInfo(presentQueueFamilyIndex.Value, queueCount: 1, queuePriorities: 1f));
+            if (graphicsQueueFamilyIndex.Value != presentQueueFamilyIndex.Value)
+            {
+                queueCreateInfos.Add(new VulkanCore.DeviceQueueCreateInfo(
+                    presentQueueFamilyIndex.Value, queueCount: 1, queuePriorities: 1f));
+            }
             
-            VulkanCore.DeviceCreateInfo createInfo = new VulkanCore.DeviceCreateInfo
-            (
+            VulkanCore.DeviceCreateInfo createInfo = new VulkanCore.DeviceCreateInfo(
                 queueCreateInfos: queueCreateInfos.ToArray(),
                 enabledExtensionNames: requiredExtensions,
                 enabledFeatures: new PhysicalDeviceFeatures() //No special features required atm
@@ -107,7 +123,7 @@ namespace HT.Engine.Rendering
             logger?.LogList(nameof(HostDevice), $"Enabled extensions for logical-device:", requiredExtensions);
 
             //Note: If we are running on molten-vk then we can set some specific mvk device config
-            if(requiredExtensions.Contains("VK_MVK_moltenvk"))
+            if (requiredExtensions.Contains("VK_MVK_moltenvk"))
             {
                 var deviceConfig = logicalDevice.GetMVKDeviceConfiguration();
                 deviceConfig.DebugMode = DebugUtils.IS_DEBUG;
@@ -121,7 +137,8 @@ namespace HT.Engine.Rendering
 
         internal bool IsSurfaceSupported(SurfaceKhr surface)
         {
-            //Verify that all our required extensions are available, that we have a graphics queue and a present queue
+            //Verify that all our required extensions are available, that we have a graphics queue 
+            //and a present queue
             return  AreExtensionsAvailable(GetRequiredExtensions(surfaceType)) &&
                     GetGraphicsQueueFamilyIndex() != null &&
                     GetPresentQueueFamilyIndex(surface) != null;
@@ -130,7 +147,7 @@ namespace HT.Engine.Rendering
         private int? GetGraphicsQueueFamilyIndex()
         {
             for (int i = 0; i < queueFamilies.Length; i++)
-                if(queueFamilies[i].QueueFlags.HasFlag(Queues.Graphics))
+                if (queueFamilies[i].QueueFlags.HasFlag(Queues.Graphics))
                     return i;
             return null;
         }
@@ -140,18 +157,18 @@ namespace HT.Engine.Rendering
             for (int i = 0; i < queueFamilies.Length; i++)
             {
                 //Verify that this queue-family supports presenting to the platform compositor
-                switch(surfaceType)
+                switch (surfaceType)
                 {
                     //On windows test if this queue supports presentation to the win32 compositor
                     case SurfaceType.HkrWin32: 
-                        if(!physicalDevice.GetWin32PresentationSupportKhr(i))
+                        if (!physicalDevice.GetWin32PresentationSupportKhr(i))
                             continue;
                         break;
-                    //On MacOS it is enough to know that the MVK extension is supported, if so we can
-                    //also present to the compositor
+                    //On MacOS it is enough to know that the MVK extension is supported, if so we 
+                    //can also present to the compositor
                 }
                 //Verify that the given surface is compatible with this queue-family
-                if(physicalDevice.GetSurfaceSupportKhr(i, surface))
+                if (physicalDevice.GetSurfaceSupportKhr(i, surface))
                     return i;
             }
             return null;
@@ -160,7 +177,7 @@ namespace HT.Engine.Rendering
         private bool AreExtensionsAvailable(string[] extensions)
         {
             for (int i = 0; i < extensions.Length; i++)
-                if(!IsExtensionAvailable(extensions[i]))
+                if (!IsExtensionAvailable(extensions[i]))
                     return false;
             return true;
         }
@@ -168,14 +185,14 @@ namespace HT.Engine.Rendering
         private bool IsExtensionAvailable(string extensionName)
         {
             for (int i = 0; i < availableExtensions.Length; i++)
-                if(availableExtensions[i].ExtensionName == extensionName)
+                if (availableExtensions[i].ExtensionName == extensionName)
                     return true;
             return false;
         }
 
         private static string[] GetRequiredExtensions(SurfaceType surfaceType)
         {
-            switch(surfaceType)
+            switch (surfaceType)
             {
                 case SurfaceType.HkrWin32: return new [] { "VK_KHR_swapchain" };
                 case SurfaceType.MvkMacOS: return new [] { "VK_KHR_swapchain", "VK_MVK_moltenvk" };

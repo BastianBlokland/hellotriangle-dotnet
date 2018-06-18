@@ -19,6 +19,7 @@ namespace HT.Engine.Rendering
             }
         }
 
-        internal ShaderModule CreateModule(Device device) => device.CreateShaderModule(new ShaderModuleCreateInfo(binaryCode));
+        internal ShaderModule CreateModule(Device device) =>
+            device.CreateShaderModule(new ShaderModuleCreateInfo(binaryCode));
     }
 }

@@ -28,17 +28,23 @@ namespace HT.Engine.Math
             W = w;
         }
 
-        public static Float4 operator +(Float4 left, Float4 right) => new Float4(left.X + right.X, left.Y + right.Y, left.Z + right.Z, left.W + right.W);
+        public static Float4 operator +(Float4 left, Float4 right)
+            => new Float4(left.X + right.X, left.Y + right.Y, left.Z + right.Z, left.W + right.W);
 
-        public static Float4 operator -(Float4 left, Float4 right) => new Float4(left.X - right.X, left.Y - right.Y, left.Z - right.Z, left.W - right.W);
+        public static Float4 operator -(Float4 left, Float4 right)
+            => new Float4(left.X - right.X, left.Y - right.Y, left.Z - right.Z, left.W - right.W);
 
-        public static Float4 operator *(Float4 left, Float4 right) => new Float4(left.X * right.X, left.Y * right.Y, left.Z * right.Z, left.W * right.W);
+        public static Float4 operator *(Float4 left, Float4 right)
+            => new Float4(left.X * right.X, left.Y * right.Y, left.Z * right.Z, left.W * right.W);
 
-        public static Float4 operator *(Float4 left, float right) => new Float4(left.X * right, left.Y * right, left.Z * right, left.W * right);
+        public static Float4 operator *(Float4 left, float right)
+            => new Float4(left.X * right, left.Y * right, left.Z * right, left.W * right);
 
-        public static Float4 operator *(float left, Float4 right) => new Float4(left * right.X, left * right.Y, left * right.Z, left * right.W);
+        public static Float4 operator *(float left, Float4 right)
+            => new Float4(left * right.X, left * right.Y, left * right.Z, left * right.W);
 
-        public static Float4 operator /(Float4 left, float right) => new Float4(left.X / right, left.Y / right, left.Z / right, left.W / right);
+        public static Float4 operator /(Float4 left, float right)
+            => new Float4(left.X / right, left.Y / right, left.Z / right, left.W / right);
 
         public static bool operator ==(Float4 a, Float4 b) => a.Equals(b);
 
@@ -46,9 +52,17 @@ namespace HT.Engine.Math
 
         public override bool Equals(object obj) => obj is Float4 && Equals((Float4)obj);
 
-        public bool Equals(Float4 other) => other.X == X && other.Y == Y && other.Z == Z && other.W == W;
+        public bool Equals(Float4 other) => 
+            other.X == X &&
+            other.Y == Y &&
+            other.Z == Z &&
+            other.W == W;
 
-        public override int GetHashCode() => X.GetHashCode() ^ Y.GetHashCode() ^ Z.GetHashCode() ^ W.GetHashCode();
+        public override int GetHashCode() => 
+            X.GetHashCode() ^
+            Y.GetHashCode() ^
+            Z.GetHashCode() ^
+            W.GetHashCode();
 
         public override string ToString() => $"(X: {X}, Y: {Y}, Z: {Z}, W: {W})";
     }

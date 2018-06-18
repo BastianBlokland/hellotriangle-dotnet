@@ -31,17 +31,23 @@ namespace HT.Engine.Math
             Z = z;
         }
 
-        public static Float3 operator +(Float3 left, Float3 right) => new Float3(left.X + right.X, left.Y + right.Y, left.Z + right.Z);
+        public static Float3 operator +(Float3 left, Float3 right)
+            => new Float3(left.X + right.X, left.Y + right.Y, left.Z + right.Z);
 
-        public static Float3 operator -(Float3 left, Float3 right) => new Float3(left.X - right.X, left.Y - right.Y, left.Z - right.Z);
+        public static Float3 operator -(Float3 left, Float3 right)
+            => new Float3(left.X - right.X, left.Y - right.Y, left.Z - right.Z);
 
-        public static Float3 operator *(Float3 left, Float3 right) => new Float3(left.X * right.X, left.Y * right.Y, left.Z * right.Z);
+        public static Float3 operator *(Float3 left, Float3 right)
+            => new Float3(left.X * right.X, left.Y * right.Y, left.Z * right.Z);
 
-        public static Float3 operator *(Float3 left, float right) => new Float3(left.X * right, left.Y * right, left.Z * right);
+        public static Float3 operator *(Float3 left, float right)
+            => new Float3(left.X * right, left.Y * right, left.Z * right);
 
-        public static Float3 operator *(float left, Float3 right) => new Float3(left * right.X, left * right.Y, left * right.Z);
+        public static Float3 operator *(float left, Float3 right)
+            => new Float3(left * right.X, left * right.Y, left * right.Z);
 
-        public static Float3 operator /(Float3 left, float right) => new Float3(left.X / right, left.Y / right, left.Z / right);
+        public static Float3 operator /(Float3 left, float right)
+            => new Float3(left.X / right, left.Y / right, left.Z / right);
 
         public static bool operator ==(Float3 a, Float3 b) => a.Equals(b);
 

@@ -29,15 +29,17 @@ namespace HT.Win32
             windows.Add(newWindow);
             newWindow.Disposed += () => OnWindowDisposed(newWindow);
             
-            logger?.Log(nameof(NativeApp), $"Native window created (size: {size}, minSize: {minSize}, title: '{title}')");
+            logger?.Log(nameof(NativeApp),
+                $"Native window created (size: {size}, minSize: {minSize}, title: '{title}')");
             return newWindow;
         }
 
         public FileStream ReadFile(string path)
         {
             string absolutePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, path);
-            if(!File.Exists(absolutePath))
-                throw new IOException($"[{nameof(NativeApp)}] No file found at path: {absolutePath}");
+            if (!File.Exists(absolutePath))
+                throw new IOException(
+                    $"[{nameof(NativeApp)}] No file found at path: {absolutePath}");
             return File.OpenRead(absolutePath);
         }
 
@@ -49,7 +51,7 @@ namespace HT.Win32
 
         public void Dispose()
         {
-            if(!disposed)
+            if (!disposed)
             {
                 windows.DisposeAll();
                 disposed = true;
@@ -58,14 +60,15 @@ namespace HT.Win32
 
         private void OnWindowDisposed(NativeWindow window)
         {
-            if(!windows.Remove(window))
-                throw new ArgumentException($"[{nameof(NativeApp)}] Provided window is not registered to this app", $"{nameof(window)}");
+            if (!windows.Remove(window))
+                throw new ArgumentException(
+                    $"[{nameof(NativeApp)}] Provided window is not registered to this app", $"{nameof(window)}");
             logger?.Log(nameof(NativeApp), $"Native window destroyed");
         }
 
         private void ThrowIfDisposed()
         {
-            if(disposed)
+            if (disposed)
                 throw new Exception($"[{nameof(NativeApp)}] Allready disposed");
         }
     }

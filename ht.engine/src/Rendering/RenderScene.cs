@@ -24,64 +24,62 @@ namespace HT.Engine.Rendering
 
         internal void CreatePipeline(Device logicalDevice, Int2 size, RenderPass renderpass)
         {
-            if(pipelineCreated)
-                throw new Exception($"[{nameof(RenderScene)}] Unable to create a pipeline before disposing of the previous pipeline");
+            if (pipelineCreated)
+                throw new Exception(
+                    $"[{nameof(RenderScene)}] Unable to create a pipeline before disposing of the previous pipeline");
 
-            //Create the pipeline layout
-            pipelineLayout = logicalDevice.CreatePipelineLayout(new PipelineLayoutCreateInfo()); //Empty atm as we have no dynamic state yet
+            //Create the pipeline layout (empty atm as we have no dynamic state yet)
+            pipelineLayout = logicalDevice.CreatePipelineLayout(new PipelineLayoutCreateInfo());
 
             ShaderModule vertModule = vertProg.CreateModule(logicalDevice);
             ShaderModule fragModule = fragProg.CreateModule(logicalDevice);
 
-            var shaderStages = new [] 
-            { 
-                new PipelineShaderStageCreateInfo(stage: ShaderStages.Vertex, module: vertModule, name: "main"),
-                new PipelineShaderStageCreateInfo(stage: ShaderStages.Fragment, module: fragModule, name: "main")
+            var shaderStages = new []
+            {
+                new PipelineShaderStageCreateInfo(
+                    stage: ShaderStages.Vertex, module: vertModule, name: "main"),
+                new PipelineShaderStageCreateInfo(
+                    stage: ShaderStages.Fragment, module: fragModule, name: "main")
             };
-            var vertexInput = new PipelineVertexInputStateCreateInfo
-            (
-                vertexBindingDescriptions: null, //No vertex info atm because we are hard-coding positions in the shader
+            var vertexInput = new PipelineVertexInputStateCreateInfo(
+                //No vertex info atm because we are hard-coding positions in the shader
+                vertexBindingDescriptions: null, 
                 vertexAttributeDescriptions: null
             );
-            var inputAssembly = new PipelineInputAssemblyStateCreateInfo
-            (
+            var inputAssembly = new PipelineInputAssemblyStateCreateInfo(
                 topology: PrimitiveTopology.TriangleStrip,
                 primitiveRestartEnable: false
             );
-            var viewport = new PipelineViewportStateCreateInfo
-            (
-                viewport: new Viewport(0f, 0f, width: size.X, height: size.Y, minDepth: 0f, maxDepth: 1f),
-                scissor: new Rect2D(x: 0, y: 0, width: size.X, height: size.Y)
+            var viewport = new PipelineViewportStateCreateInfo(
+                viewport: new Viewport(
+                    x: 0f, y: 0f, width: size.X, height: size.Y, minDepth: 0f, maxDepth: 1f),
+                scissor: new Rect2D(
+                    x: 0, y: 0, width: size.X, height: size.Y)
             );
-            var rasterizer = new PipelineRasterizationStateCreateInfo
-            (
+            var rasterizer = new PipelineRasterizationStateCreateInfo(
                 depthClampEnable: false,
                 polygonMode: PolygonMode.Fill,
                 cullMode: CullModes.Back,
                 frontFace: FrontFace.Clockwise,
                 lineWidth: 1f
             );
-            var blending = new PipelineColorBlendStateCreateInfo
-            (
+            var blending = new PipelineColorBlendStateCreateInfo(
                 attachments: new [] 
                 { 
-                    new PipelineColorBlendAttachmentState
-                    (
+                    new PipelineColorBlendAttachmentState(
                         colorWriteMask: ColorComponents.All,
                         blendEnable: false
                     )
                 },
                 logicOpEnable: false
             );
-            var multisampleState = new PipelineMultisampleStateCreateInfo
-            (
+            var multisampleState = new PipelineMultisampleStateCreateInfo(
                 rasterizationSamples: SampleCounts.Count1,
                 sampleShadingEnable: false
             );
             
             //Create the pipeline
-            pipeline = logicalDevice.CreateGraphicsPipeline(new GraphicsPipelineCreateInfo
-            (
+            pipeline = logicalDevice.CreateGraphicsPipeline(new GraphicsPipelineCreateInfo(
                 layout: pipelineLayout,
                 renderPass: renderpass,
                 subpass: 0,
@@ -105,17 +103,23 @@ namespace HT.Engine.Rendering
             pipelineCreated = true;
         }
 
-        internal void Record(CommandBuffer commandbuffer, Framebuffer framebuffer, RenderPass renderpass, Int2 swapchainSize)
+        internal void Record(
+            CommandBuffer commandbuffer,
+            Framebuffer framebuffer,
+            RenderPass renderpass,
+            Int2 swapchainSize)
         {
-            if(!pipelineCreated)
-                throw new Exception($"[{nameof(RenderScene)}] Unable to record if we have no pipeline created");
+            if (!pipelineCreated)
+                throw new Exception(
+                    $"[{nameof(RenderScene)}] Unable to record if we have no pipeline created");
 
-            commandbuffer.CmdBeginRenderPass(new RenderPassBeginInfo
-            (
+            commandbuffer.CmdBeginRenderPass(new RenderPassBeginInfo(
                 renderPass: renderpass,
                 framebuffer: framebuffer,
                 renderArea: new Rect2D(x: 0, y: 0, width: swapchainSize.X, height: swapchainSize.Y),
-                clearValues: new ClearValue(new ClearColorValue(new ColorF4(clearColor.R, clearColor.G, clearColor.B, clearColor.A)))
+                clearValues: new ClearValue(
+                    new ClearColorValue(
+                        new ColorF4(clearColor.R, clearColor.G, clearColor.B, clearColor.A)))
             ));
 
             commandbuffer.CmdBindPipeline(PipelineBindPoint.Graphics, pipeline);
@@ -126,8 +130,9 @@ namespace HT.Engine.Rendering
 
         internal void DisposePipeline()
         {
-            if(!pipelineCreated)
-                throw new Exception($"[{nameof(RenderScene)}] Unable to dispose of the pipeline as we haven't created one");
+            if (!pipelineCreated)
+                throw new Exception(
+                    $"[{nameof(RenderScene)}] Unable to dispose of the pipeline as we haven't created one");
 
             pipelineLayout.Dispose();
             pipeline.Dispose();
@@ -137,8 +142,9 @@ namespace HT.Engine.Rendering
 
         ~RenderScene()
         {
-            if(pipelineCreated)
-                throw new Exception($"[{nameof(RenderScene)}] Scene was released without disposing the pipeline!");
+            if (pipelineCreated)
+                throw new Exception(
+                    $"[{nameof(RenderScene)}] Scene was released without disposing the pipeline!");
         }
     }
 }

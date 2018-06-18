@@ -40,7 +40,7 @@ namespace HT.Engine.Utils
             where T : IEquatable<T>
         {
             for (int i = 0; i < array.Length; i++)
-                if(array[i].Equals(element))
+                if (array[i].Equals(element))
                     return true;
             return false;
         }

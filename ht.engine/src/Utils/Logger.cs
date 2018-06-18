@@ -5,8 +5,9 @@ using System.Text;
 namespace HT.Engine.Utils
 {
     /// <summary>
-    /// Utility that can be used for logging messages, at the moment it just redirect to the console-output
-    /// but it in future it can be extended to write to a log-file, add severity etc..
+    /// Utility that can be used for logging messages, at the moment it just redirect to the
+    /// console-output but it in future it can be extended to write to a log-file,
+    /// add severity etc...
     /// </summary>
     public sealed class Logger
     {

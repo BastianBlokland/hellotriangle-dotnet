@@ -22,7 +22,11 @@ namespace HT.Engine.Rendering
         private readonly HostDevice[] hostDevices;
         private bool disposed;
 
-        public Host(Platform.INativeApp nativeApp, string applicationName, int applicationVersion, Logger logger = null)
+        public Host(
+            Platform.INativeApp nativeApp,
+            string applicationName,
+            int applicationVersion,
+            Logger logger = null)
         {
             this.nativeApp = nativeApp;
             this.logger = logger;
@@ -35,31 +39,31 @@ namespace HT.Engine.Rendering
             //Verify that all the required layers are available on this host
             var layersToEnable = new List<string>(GetRequiredLayers(nativeApp.SurfaceType));
             for (int i = 0; i < layersToEnable.Count; i++)
-                if(!IsLayerAvailable(layersToEnable[i]))
-                    throw new Exception($"[{nameof(Host)}] Required layer '{layersToEnable[i]}' is not available");
+                if (!IsLayerAvailable(layersToEnable[i]))
+                    throw new Exception(
+                        $"[{nameof(Host)}] Required layer '{layersToEnable[i]}' is not available");
 
             //Verify that all the required extensions are available on this host
             var extensionsToEnable = new List<string>(GetRequiredExtensions(nativeApp.SurfaceType));
             for (int i = 0; i < extensionsToEnable.Count; i++)
-                if(!IsExtensionAvailable(extensionsToEnable[i]))
-                    throw new Exception($"[{nameof(Host)}] Required extension '{extensionsToEnable[i]}' is not available");
+                if (!IsExtensionAvailable(extensionsToEnable[i]))
+                    throw new Exception(
+                        $"[{nameof(Host)}] Required extension '{extensionsToEnable[i]}' is not available");
 
             //Add any optional layers IF its supported by this host
             string[] optionalLayers = GetOptionalLayers(nativeApp.SurfaceType);
             for (int i = 0; i < optionalLayers.Length; i++)
-                if(IsLayerAvailable(optionalLayers[i]))
+                if (IsLayerAvailable(optionalLayers[i]))
                     layersToEnable.Add(optionalLayers[i]);
 
             //Add any optional extensions IF its supported by this host
             string[] optionalExtensions = GetOptionalExtensions(nativeApp.SurfaceType);
             for (int i = 0; i < optionalExtensions.Length; i++)
-                if(IsExtensionAvailable(optionalExtensions[i]))
+                if (IsExtensionAvailable(optionalExtensions[i]))
                     extensionsToEnable.Add(optionalExtensions[i]);
 
-            InstanceCreateInfo createInfo = new InstanceCreateInfo
-            (
-                appInfo: new ApplicationInfo
-                (
+            InstanceCreateInfo createInfo = new InstanceCreateInfo(
+                appInfo: new ApplicationInfo(
                     applicationName: applicationName,
                     applicationVersion: applicationVersion,
                     engineName: Info.NAME,
@@ -76,13 +80,13 @@ namespace HT.Engine.Rendering
             logger?.LogList(nameof(Host), "Enabled extensions:", extensionsToEnable);
 
             #if DEBUG
-            if(extensionsToEnable.Contains("VK_EXT_debug_report"))
+            if (extensionsToEnable.Contains("VK_EXT_debug_report"))
             {
-                debugCallback = instance.CreateDebugReportCallbackExt(new DebugReportCallbackCreateInfoExt
-                (
-                    flags: DebugReportFlagsExt.All & ~DebugReportFlagsExt.Information, //We want to handle everthing except for info reports
-                    callback: OnDebugReport
-                ));
+                debugCallback = instance.CreateDebugReportCallbackExt(
+                    new DebugReportCallbackCreateInfoExt(
+                        //We want to handle everthing except for info reports
+                        flags: DebugReportFlagsExt.All & ~DebugReportFlagsExt.Information,
+                        callback: OnDebugReport));
             }
             #else
                 debugCallback = null;
@@ -95,10 +99,16 @@ namespace HT.Engine.Rendering
                 hostDevices[i] = new HostDevice(physicalDevices[i], nativeApp.SurfaceType, logger);
         }
 
-        public Window CreateWindow(Int2 windowSize, RenderScene scene, bool preferDiscreteDevice = true)
+        public Window CreateWindow(
+            Int2 windowSize,
+            RenderScene scene,
+            bool preferDiscreteDevice = true)
         {
             ThrowIfDisposed();
-            INativeWindow nativeWindow = nativeApp.CreateWindow(windowSize, minSize: new Int2(150, 150), title: string.Empty);
+            INativeWindow nativeWindow = nativeApp.CreateWindow(
+                size: windowSize,
+                minSize: new Int2(150, 150),
+                title: string.Empty);
             SurfaceKhr surface = CreateSurface(nativeWindow);
             HostDevice graphicsDevice = FindSuitableDevice(surface, preferDiscreteDevice);
             return new Window(nativeWindow, surface, graphicsDevice, scene, logger);
@@ -106,7 +116,7 @@ namespace HT.Engine.Rendering
 
         public void Dispose()
         {
-            if(!disposed)
+            if (!disposed)
             {
                 debugCallback?.Dispose();
                 instance.Dispose();
@@ -118,12 +128,19 @@ namespace HT.Engine.Rendering
         private SurfaceKhr CreateSurface(INativeWindow nativeWindow)
         {
             ThrowIfDisposed();
-            switch(nativeApp.SurfaceType)
+            switch (nativeApp.SurfaceType)
             {
-                case SurfaceType.MvkMacOS: return instance.CreateMacOSSurfaceMvk(new MacOSSurfaceCreateInfoMvk(nativeWindow.OSViewHandle));
-                case SurfaceType.HkrWin32: return instance.CreateWin32SurfaceKhr(new Win32SurfaceCreateInfoKhr(nativeWindow.OSInstanceHandle, nativeWindow.OSViewHandle));
+                case SurfaceType.MvkMacOS:
+                    return instance.CreateMacOSSurfaceMvk(
+                        new MacOSSurfaceCreateInfoMvk(nativeWindow.OSViewHandle));
+                case SurfaceType.HkrWin32:
+                    return instance.CreateWin32SurfaceKhr(
+                        new Win32SurfaceCreateInfoKhr(
+                            nativeWindow.OSInstanceHandle,
+                            nativeWindow.OSViewHandle));
             }
-            throw new Exception($"[{nameof(Host)}] Unable to create surface for unknown surfaceType: {nativeApp.SurfaceType}");
+            throw new Exception(
+                $"[{nameof(Host)}] Unable to create surface for unknown surfaceType: {nativeApp.SurfaceType}");
         }
 
         private HostDevice FindSuitableDevice(SurfaceKhr surface, bool preferDiscreteDevice = true)
@@ -133,15 +150,15 @@ namespace HT.Engine.Rendering
 
             //Find all devices that support the given surface
             for (int i = 0; i < hostDevices.Length; i++)
-                if(hostDevices[i].IsSurfaceSupported(surface))
+                if (hostDevices[i].IsSurfaceSupported(surface))
                     supportedDevices.Add(hostDevices[i]);
 
-            if(supportedDevices.IsEmpty())
+            if (supportedDevices.IsEmpty())
                 throw new Exception($"[{nameof(Host)}] Unable to find a supported device");
 
             //If we have a supported discreate gpu and we prefer a discrete one then we pick that
             for (int i = 0; i < supportedDevices.Count; i++)
-                if(supportedDevices[i].IsDiscreteGPU == preferDiscreteDevice)
+                if (supportedDevices[i].IsDiscreteGPU == preferDiscreteDevice)
                     return supportedDevices[i];
 
             return supportedDevices[0];
@@ -150,7 +167,7 @@ namespace HT.Engine.Rendering
         private bool IsLayerAvailable(string layerName)
         {
             for (int i = 0; i < availableLayers.Length; i++)
-                if(availableLayers[i].LayerName == layerName)
+                if (availableLayers[i].LayerName == layerName)
                     return true;
             return false;
         }
@@ -158,7 +175,7 @@ namespace HT.Engine.Rendering
         private bool IsExtensionAvailable(string extensionName)
         {
             for (int i = 0; i < availbleExtensions.Length; i++)
-                if(availbleExtensions[i].ExtensionName == extensionName)
+                if (availbleExtensions[i].ExtensionName == extensionName)
                     return true;
             return false;
         }
@@ -173,13 +190,13 @@ namespace HT.Engine.Rendering
 
         private void ThrowIfDisposed()
         {
-            if(disposed)
+            if (disposed)
                 throw new Exception($"[{nameof(Host)}] Allready disposed");
         }
 
         private static string[] GetRequiredLayers(SurfaceType surfaceType)
         {
-            switch(surfaceType)
+            switch (surfaceType)
             {
                 case SurfaceType.HkrWin32: return new string[0];
                 case SurfaceType.MvkMacOS: return new [] { "MoltenVK" };
@@ -198,10 +215,12 @@ namespace HT.Engine.Rendering
 
         private static string[] GetRequiredExtensions(SurfaceType surfaceType)
         {
-            switch(surfaceType)
+            switch (surfaceType)
             {
-                case SurfaceType.HkrWin32: return new [] { "VK_KHR_surface", "VK_KHR_win32_surface" };
-                case SurfaceType.MvkMacOS: return new [] { "VK_KHR_surface", "VK_MVK_macos_surface" };
+                case SurfaceType.HkrWin32:
+                    return new [] { "VK_KHR_surface", "VK_KHR_win32_surface" };
+                case SurfaceType.MvkMacOS:
+                    return new [] { "VK_KHR_surface", "VK_MVK_macos_surface" };
             }
             throw new Exception($"[{nameof(Host)}] Unknown surfaceType: {surfaceType}");
         }

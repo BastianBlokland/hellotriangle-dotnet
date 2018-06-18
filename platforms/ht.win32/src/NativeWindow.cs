@@ -23,19 +23,24 @@ namespace HT.Win32
 
         [DllImport("user32.dll")]
         //Documentation: https://msdn.microsoft.com/en-us/library/windows/desktop/ms632667(v=vs.85).aspx
-        private static extern bool AdjustWindowRect(ref IntRect rect, WindowStyles style, bool menu, ExtendedWindowStyles extendedStyle);
+        private static extern bool AdjustWindowRect(
+            ref IntRect rect,
+            WindowStyles style,
+            bool menu,
+            ExtendedWindowStyles extendedStyle);
 
         [DllImport("user32.dll", EntryPoint = "CreateWindowExA", CharSet = CharSet.Ansi)]
         //Documentation: https://msdn.microsoft.com/en-us/library/windows/desktop/ms632680(v=vs.85).aspx
-        private static extern IntPtr CreateWindowEx(    ExtendedWindowStyles extendedStyle,
-                                                        IntPtr windowClassAtom,
-                                                        string windowName,
-                                                        WindowStyles style,
-                                                        int x, int y, int width, int height,
-                                                        IntPtr parent,
-                                                        IntPtr menu,
-                                                        IntPtr instance,
-                                                        IntPtr param);
+        private static extern IntPtr CreateWindowEx(
+            ExtendedWindowStyles extendedStyle,
+            IntPtr windowClassAtom,
+            string windowName,
+            WindowStyles style,
+            int x, int y, int width, int height,
+            IntPtr parent,
+            IntPtr menu,
+            IntPtr instance,
+            IntPtr param);
 
         [DllImport("user32.dll")]
         //Documentation: https://msdn.microsoft.com/en-us/library/windows/desktop/ms633548(v=vs.85).aspx
@@ -51,11 +56,20 @@ namespace HT.Win32
 
         [DllImport("user32.dll", EntryPoint = "DefWindowProcA", CharSet = CharSet.Ansi)]
         //Documentation: https://msdn.microsoft.com/en-us/library/windows/desktop/ms633572(v=vs.85).aspx
-        private static extern IntPtr DefWindowProc(IntPtr windowHandle, uint message, IntPtr wParam, IntPtr lParam);
+        private static extern IntPtr DefWindowProc(
+            IntPtr windowHandle,
+            uint message,
+            IntPtr wParam,
+            IntPtr lParam);
 
         [DllImport("user32.dll", EntryPoint = "PeekMessageA", CharSet = CharSet.Ansi)]
         //Documentation: https://msdn.microsoft.com/en-us/library/windows/desktop/ms644943(v=vs.85).aspx
-        private static extern bool PeekMessage(out WindowMessage message, IntPtr windowHandle, uint filterMin, uint filterMax, uint remove);
+        private static extern bool PeekMessage(
+            out WindowMessage message,
+            IntPtr windowHandle,
+            uint filterMin,
+            uint filterMax,
+            uint remove);
 
         [DllImport("user32.dll")]
         //Documentation: https://msdn.microsoft.com/en-us/library/windows/desktop/ms644955(v=vs.85).aspx
@@ -88,7 +102,7 @@ namespace HT.Win32
             get => title;
             set
             {
-                if(title != value)
+                if (title != value)
                 {
                     ThrowIfDisposed();
                     SetWindowText(nativeWindowHandle, value);
@@ -140,20 +154,26 @@ namespace HT.Win32
                 cursor: IntPtr.Zero,
                 backgroundBrush: IntPtr.Zero,
                 menuName: null,
-                className: nameof(NativeWindow) + Guid.NewGuid().ToString(), //Adding a guid here because the className needs to be unique
+                //Adding a guid here because the className needs to be unique
+                className: nameof(NativeWindow) + Guid.NewGuid().ToString(), 
                 iconSmall: IntPtr.Zero
             );
             nativeWindowClassAtom = new IntPtr(RegisterClassEx(ref windowClass));
-            if(nativeWindowClassAtom == IntPtr.Zero)
+            if (nativeWindowClassAtom == IntPtr.Zero)
                 throw new Exception($"[{nameof(NativeWindow)}] Failed to create a window-class");
             
             //Setup window styles
             windowStyle = WindowStyles.OverlappedWindow;
             extendedWindowStyle = ExtendedWindowStyles.AppWindow | ExtendedWindowStyles.WindowEdge;
 
-            //Need to adjust the rect here because we want to the requested size to be the client size so we need extra space for the top-bar
+            //Need to adjust the rect here because we want to the requested size to be the client 
+            //size so we need extra space for the top-bar
             IntRect windowRect = new IntRect(min: Int2.Zero, max: Int2.Max(size, minSize));
-            AdjustWindowRect(ref windowRect, style: windowStyle, menu: false, extendedStyle: extendedWindowStyle);
+            AdjustWindowRect(
+                ref windowRect,
+                style: windowStyle,
+                menu: false,
+                extendedStyle: extendedWindowStyle);
 
             //Create the actual window
             nativeWindowHandle = CreateWindowEx
@@ -171,7 +191,7 @@ namespace HT.Win32
                 instance: instanceHandle,
                 param: IntPtr.Zero
             );
-            if(nativeWindowHandle == IntPtr.Zero)
+            if (nativeWindowHandle == IntPtr.Zero)
                 throw new Exception($"[{nameof(NativeWindow)}] Failed to create a window-handle");
 
             const int SW_SHOW = 5;
@@ -188,27 +208,33 @@ namespace HT.Win32
             //Event loop: Process a event if one is available from the thread queue
             WindowMessage message;
             const int PM_REMOVE = 1;
-            if(PeekMessage(out message, nativeWindowHandle, filterMin: 0, filterMax: 0, remove: PM_REMOVE))
+            if (PeekMessage(
+                out message,
+                nativeWindowHandle,
+                filterMin: 0,
+                filterMax: 0,
+                remove: PM_REMOVE))
             {
                 TranslateMessage(ref message);
                 DispatchMessage(ref message);
             }
 
             //Invoke events that happened during this windowProcedure
-            //Why dont we just call these from the windowProcedure? Well then the call origin of those callbacks
-            //would actually be in the user32 dll and if then someone does something in the callbacks that changes 
-            //the window state then that would happen from within the user32 callback and it doesn't like that.
-            if(invokeCloseRequestedEvent)
+            //Why dont we just call these from the windowProcedure? Well then the call origin of 
+            //those callbacks would actually be in the user32 dll and if then someone does
+            //something in the callbacks that changes the window state then that would happen
+            //from within the user32 callback and it doesn't like that.
+            if (invokeCloseRequestedEvent)
             {
                 CloseRequested?.Invoke();
                 invokeCloseRequestedEvent = false;
             }
-            if(invokeResizedEvent)
+            if (invokeResizedEvent)
             {
                 Resized?.Invoke();
                 invokeResizedEvent = false;
             }
-            if(invokeMovedEvent)
+            if (invokeMovedEvent)
             {
                 Moved?.Invoke();
                 invokeMovedEvent = false;
@@ -217,7 +243,7 @@ namespace HT.Win32
         
         public void Dispose()
         {
-            if(!disposed)
+            if (!disposed)
             {
                 DestroyWindow(nativeWindowHandle);
                 UnregisterClass(nativeWindowClassAtom, instanceHandle);
@@ -226,9 +252,14 @@ namespace HT.Win32
             }
         }
 
-        private IntPtr WindowProcedure(IntPtr windowHandle, uint message, IntPtr wParam, IntPtr lParam)
+        private IntPtr WindowProcedure(
+            IntPtr windowHandle,
+            uint message,
+            IntPtr wParam,
+            IntPtr lParam)
         {
-            //Reference on these constants: https://msdn.microsoft.com/en-us/library/windows/desktop/ff468922(v=vs.85).aspx
+            //Reference on these constants:
+            //https://msdn.microsoft.com/en-us/library/windows/desktop/ff468922(v=vs.85).aspx
             const uint WM_CLOSE = 0x0010;
             const uint WM_ENTERSIZEMOVE = 0x0231;
             const uint WM_EXITSIZEMOVE = 0x0232;
@@ -236,23 +267,31 @@ namespace HT.Win32
             const uint WM_MOVE = 0x0003;
             const uint WM_GETMINMAXINFO = 0x0024;
 
-            switch(message)
+            switch (message)
             {
                 case WM_GETMINMAXINFO:
                     //This gets called when the window wants to know its min and max size
                     WindowMinMaxInfo info = Marshal.PtrToStructure<WindowMinMaxInfo>(lParam);
 
                     IntRect windowRect = new IntRect(min: Int2.Zero, max: minClientSize);
-                    //Adjust here so the size we clamp to is actually the clientSize and not the outer size (that includes the topbar)
-                    AdjustWindowRect(ref windowRect, style: windowStyle, menu: false, extendedStyle: extendedWindowStyle);
+                    //Adjust here so the size we clamp to is actually the clientSize and not 
+                    //the outer size (that includes the topbar)
+                    AdjustWindowRect(
+                        rect: ref windowRect,
+                        style: windowStyle,
+                        menu: false,
+                        extendedStyle: extendedWindowStyle);
 
                     info.MinTrackSize = windowRect.Size;
-                    Marshal.StructureToPtr(info, lParam, fDeleteOld: false); //No need for deleteOld because its plain data that doesn't hold references 
+
+                    //No need for deleteOld because its plain data that doesn't hold references 
+                    Marshal.StructureToPtr(info, lParam, fDeleteOld: false);
                     break;
 
                 case WM_SIZE:
                     //Constants that can apply to the 'wParam'
-                    //Documentation: https://msdn.microsoft.com/en-us/library/windows/desktop/ms632646(v=vs.85).aspx
+                    //Documentation:
+                    //https://msdn.microsoft.com/en-us/library/windows/desktop/ms632646(v=vs.85).aspx
                     const int SIZE_MAXIMIZED = 2;
                     const int SIZE_MINIMIZED = 1;
 
@@ -263,7 +302,9 @@ namespace HT.Win32
                     short width, height;
                     lParam.ToInt64().Split(out width, out height);
                     
-                    ClientRect = new IntRect(ClientRect.Min, ClientRect.Min + new Int2(width, height));
+                    ClientRect = new IntRect(
+                        ClientRect.Min,
+                        ClientRect.Min + new Int2(width, height));
                     invokeResizedEvent = true;
                     break;
 
@@ -295,7 +336,7 @@ namespace HT.Win32
 
         private void ThrowIfDisposed()
         {
-            if(disposed)
+            if (disposed)
                 throw new Exception($"[{nameof(NativeWindow)}] Allready disposed");
         }
     }

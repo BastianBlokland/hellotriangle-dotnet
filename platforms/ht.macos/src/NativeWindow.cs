@@ -43,18 +43,19 @@ namespace HT.MacOS
         private delegate void CloseRequestedDelegate();
 
         [DllImport("libmacwindow", CharSet = CharSet.Ansi)] 
-        private static extern IntPtr CreateWindow(	IntPtr appHandle,
-                                                    Int2 size, Int2 minSize,
-                                                    string title,
-                                                    [MarshalAs(UnmanagedType.FunctionPtr)]ResizedDelegate resizedCallback,
-                                                    [MarshalAs(UnmanagedType.FunctionPtr)]BeginResizeDelegate beginResizeCallback,
-                                                    [MarshalAs(UnmanagedType.FunctionPtr)]EndResizeDelegate endResizeCallback,
-                                                    [MarshalAs(UnmanagedType.FunctionPtr)]MovedDelegate movedCallback,
-                                                    [MarshalAs(UnmanagedType.FunctionPtr)]MinimizedDelegate minimizedCallback,
-                                                    [MarshalAs(UnmanagedType.FunctionPtr)]DeminimizedDelegate deminimizedDelegate,
-                                                    [MarshalAs(UnmanagedType.FunctionPtr)]MaximizedDelegate maximizedCallback,
-                                                    [MarshalAs(UnmanagedType.FunctionPtr)]DemaximizedDelegate demaximizedCallback,
-                                                    [MarshalAs(UnmanagedType.FunctionPtr)]CloseRequestedDelegate closeCallback);
+        private static extern IntPtr CreateWindow(
+            IntPtr appHandle,
+            Int2 size, Int2 minSize,
+            string title,
+            [MarshalAs(UnmanagedType.FunctionPtr)]ResizedDelegate resizedCallback,
+            [MarshalAs(UnmanagedType.FunctionPtr)]BeginResizeDelegate beginResizeCallback,
+            [MarshalAs(UnmanagedType.FunctionPtr)]EndResizeDelegate endResizeCallback,
+            [MarshalAs(UnmanagedType.FunctionPtr)]MovedDelegate movedCallback,
+            [MarshalAs(UnmanagedType.FunctionPtr)]MinimizedDelegate minimizedCallback,
+            [MarshalAs(UnmanagedType.FunctionPtr)]DeminimizedDelegate deminimizedDelegate,
+            [MarshalAs(UnmanagedType.FunctionPtr)]MaximizedDelegate maximizedCallback,
+            [MarshalAs(UnmanagedType.FunctionPtr)]DemaximizedDelegate demaximizedCallback,
+            [MarshalAs(UnmanagedType.FunctionPtr)]CloseRequestedDelegate closeCallback);
 
         [DllImport("libmacwindow")] 
         private static extern IntPtr CreateMetalView(IntPtr windowPointer);
@@ -76,7 +77,7 @@ namespace HT.MacOS
             get => title;
             set
             {
-                if(title != value)
+                if (title != value)
                 {
                     ThrowIfDisposed();
                     SetTitle(nativeWindowHandle, value);
@@ -133,20 +134,21 @@ namespace HT.MacOS
         {
             ThrowIfDisposed();
 
-            //Invoke events that happened in the native-callbacks. Why dont we just call these directly?
-            //basically if we call then directly then the call origin would be in the os event loop and if you
-            //then try to change the window from within that event-loop it doesn't like that
-            if(invokeCloseRequestedEvent)
+            //Invoke events that happened in the native-callbacks. Why dont we just call these
+            //directly? basically if we call then directly then the call origin would be in the os
+            //event loop and if you then try to change the window from within that event-loop it
+            //doesn't like that
+            if (invokeCloseRequestedEvent)
             {
                 CloseRequested?.Invoke();
                 invokeCloseRequestedEvent = false;
             }
-            if(invokeResizedEvent)
+            if (invokeResizedEvent)
             {
                 Resized?.Invoke();
                 invokeResizedEvent = false;
             }
-            if(invokeMovedEvent)
+            if (invokeMovedEvent)
             {
                 Moved?.Invoke();
                 invokeMovedEvent = false;
@@ -155,7 +157,7 @@ namespace HT.MacOS
 
         public void Dispose()
         {
-            if(!disposed)
+            if (!disposed)
             {
                 DisposeWindow(nativeWindowHandle);
                 disposed = true;
@@ -191,7 +193,7 @@ namespace HT.MacOS
 
         private void ThrowIfDisposed()
         {
-            if(disposed)
+            if (disposed)
                 throw new Exception($"[{nameof(NativeWindow)}] Allready disposed");
         }
     }

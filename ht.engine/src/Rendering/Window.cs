@@ -71,8 +71,7 @@ namespace HT.Engine.Rendering
             waitFences[nextImage].Reset();
 
             //Once we have acquired an image we submit a commandbuffer for writing to it
-            graphicsQueue.Submit
-            (
+            graphicsQueue.Submit(
                 waitSemaphore: imageAvailableSemaphore,
                 waitDstStageMask: PipelineStages.ColorAttachmentOutput,
                 commandBuffer: commandbuffers[nextImage],
@@ -81,12 +80,13 @@ namespace HT.Engine.Rendering
             );
 
             //Once rendering to the framebuffer is done we can present it
-            presentQueue.PresentKhr(waitSemaphore: renderFinishedSemaphore, swapchain: swapchain, imageIndex: nextImage);
+            presentQueue.PresentKhr(
+                waitSemaphore: renderFinishedSemaphore, swapchain: swapchain, imageIndex: nextImage);
         }
 
         public void Dispose()
         {
-            if(!disposed)
+            if (!disposed)
             {
                 //Wait for all rendering to stop before we start disposing of resources
                 logicalDevice.WaitIdle();
@@ -138,11 +138,14 @@ namespace HT.Engine.Rendering
         {
             SurfaceCapabilitiesKhr capabilities = hostDevice.GetCurrentCapabilities(surface);
             //Clamp the size to within the min and max extends reported by the surface capabilities
-            swapchainSize = size.Clamp(new Int2(capabilities.MinImageExtent.Width, capabilities.MinImageExtent.Height), new Int2(capabilities.MaxImageExtent.Width, capabilities.MaxImageExtent.Height));
+            swapchainSize = size.Clamp(
+                new Int2(capabilities.MinImageExtent.Width, capabilities.MinImageExtent.Height),
+                new Int2(capabilities.MaxImageExtent.Width, capabilities.MaxImageExtent.Height));
 
-            //Choose the amount of swap-chain images (try 1 more then min to support triple buffering)
+            //Choose the amount of swap-chain images (try 1 more then min to support triple
+            //buffering) ('MaxImageCount' of 0 means no limit)
             int desiredImageCount = capabilities.MinImageCount + 1;
-            if(capabilities.MaxImageCount > 0 && desiredImageCount > capabilities.MaxImageCount) //'MaxImageCount' of 0 means no limit
+            if (capabilities.MaxImageCount > 0 && desiredImageCount > capabilities.MaxImageCount)
                 desiredImageCount = capabilities.MaxImageCount;
 
             //Gather info about the swapchain
@@ -156,9 +159,12 @@ namespace HT.Engine.Rendering
                 imageArrayLayers: 1,
                 imageUsage: ImageUsages.ColorAttachment,
 
-                //If the graphics and present queues are different we need to allow sharing the swapchain images
-                imageSharingMode: graphicsQueue.FamilyIndex == presentQueue.FamilyIndex ? SharingMode.Exclusive : SharingMode.Concurrent,
-                queueFamilyIndices: graphicsQueue.FamilyIndex == presentQueue.FamilyIndex ? null : new [] { graphicsQueue.FamilyIndex, presentQueue.FamilyIndex },
+                //If the graphics and present queues are different we need to allow sharing the
+                //swapchain images
+                imageSharingMode: graphicsQueue.FamilyIndex == presentQueue.FamilyIndex ?
+                    SharingMode.Exclusive : SharingMode.Concurrent,
+                queueFamilyIndices: graphicsQueue.FamilyIndex == presentQueue.FamilyIndex ?
+                    null : new [] { graphicsQueue.FamilyIndex, presentQueue.FamilyIndex },
 
                 preTransform: capabilities.CurrentTransform,
                 compositeAlpha: CompositeAlphasKhr.Opaque,
@@ -173,22 +179,37 @@ namespace HT.Engine.Rendering
             //Create the image views
             swapchainImageViews = new ImageView[swapchainImages.Length];
             for (int i = 0; i < swapchainImageViews.Length; i++)
-                swapchainImageViews[i] = swapchainImages[i].CreateView(new ImageViewCreateInfo
-                (
+                swapchainImageViews[i] = swapchainImages[i].CreateView(new ImageViewCreateInfo(
                     format: surfaceFormat,
                     viewType: ImageViewType.Image2D,
-                    components: new ComponentMapping(r: ComponentSwizzle.R, g: ComponentSwizzle.G, b: ComponentSwizzle.B, a: ComponentSwizzle.A),
-                    subresourceRange: new ImageSubresourceRange(ImageAspects.Color, baseMipLevel: 0, levelCount: 1, baseArrayLayer: 0, layerCount: 1)
+                    components: new ComponentMapping(
+                        r: ComponentSwizzle.R,
+                        g: ComponentSwizzle.G,
+                        b: ComponentSwizzle.B,
+                        a: ComponentSwizzle.A),
+                    subresourceRange: new ImageSubresourceRange(
+                        aspectMask: ImageAspects.Color,
+                        baseMipLevel: 0,
+                        levelCount: 1,
+                        baseArrayLayer: 0,
+                        layerCount: 1)
                 ));
             
-            logger?.Log(nameof(Window), $"Swapchain created (size: {swapchainSize}, imgCount: {swapchainImages.Length}, mode: {presentMode}, format: {surfaceFormat}, colorSpace: {surfaceColorspace})");
+            logger?.Log(nameof(Window), 
+$@"Swapchain created:
+{{
+    size: {swapchainSize},
+    imgCount: {swapchainImages.Length},
+    mode: {presentMode},
+    format: {surfaceFormat},
+    colorSpace: {surfaceColorspace}
+}}");
         }
 
         private void CreateRenderPass()
         {
             //Description of our frame-buffer attachment
-            var colorAttachment = new AttachmentDescription
-            (
+            var colorAttachment = new AttachmentDescription(
                 flags: AttachmentDescriptions.MayAlias,
                 format: surfaceFormat,
                 samples: SampleCounts.Count1,
@@ -200,8 +221,7 @@ namespace HT.Engine.Rendering
                 finalLayout: ImageLayout.PresentSrcKhr
             );
             //Dependency to wait on the framebuffer being loaded before we write to it
-            var attachmentAvailableDependency = new SubpassDependency
-            (
+            var attachmentAvailableDependency = new SubpassDependency(
                 srcSubpass: Constant.SubpassExternal, //Source is the implicit 'load' subpass
                 dstSubpass: 0, //Dest is our subpass
                 srcStageMask: PipelineStages.ColorAttachmentOutput,
@@ -210,14 +230,18 @@ namespace HT.Engine.Rendering
                 dstAccessMask: Accesses.ColorAttachmentRead | Accesses.ColorAttachmentWrite
             );
             //Create the renderpass with a single sub-pass that references the color-attachment
-            renderpass = logicalDevice.CreateRenderPass(new RenderPassCreateInfo
-            (
+            renderpass = logicalDevice.CreateRenderPass(new RenderPassCreateInfo(
                 subpasses: new [] 
                 {
                     new SubpassDescription
                     (
                         flags: SubpassDescriptionFlags.None,
-                        colorAttachments: new [] { new AttachmentReference(attachment: 0, layout: ImageLayout.ColorAttachmentOptimal) }
+                        colorAttachments: new []
+                        {
+                            new AttachmentReference(
+                                attachment: 0,
+                                layout: ImageLayout.ColorAttachmentOptimal)
+                        }
                     )
                 },
                 attachments: new [] { colorAttachment },
@@ -230,20 +254,18 @@ namespace HT.Engine.Rendering
             framebuffers = new Framebuffer[swapchainImages.Length];
             for (int i = 0; i < framebuffers.Length; i++)
             {
-                framebuffers[i] = renderpass.CreateFramebuffer(new FramebufferCreateInfo
-                (
-                    attachments: new [] { swapchainImageViews[i] },
-                    width: swapchainSize.X,
-                    height: swapchainSize.Y,
-                    layers: 1
-                ));
+                framebuffers[i] = renderpass.CreateFramebuffer(
+                    new FramebufferCreateInfo(
+                        attachments: new [] { swapchainImageViews[i] },
+                        width: swapchainSize.X,
+                        height: swapchainSize.Y,
+                        layers: 1));
             }
         }
 
         private void CreateCommandPool()
         {
-            commandPool = logicalDevice.CreateCommandPool(new CommandPoolCreateInfo
-            (
+            commandPool = logicalDevice.CreateCommandPool(new CommandPoolCreateInfo(
                 queueFamilyIndex: graphicsQueue.FamilyIndex,
                 flags: CommandPoolCreateFlags.None
             ));
@@ -251,8 +273,7 @@ namespace HT.Engine.Rendering
 
         private void CreateCommandBuffers()
         {
-            commandbuffers = commandPool.AllocateBuffers(new CommandBufferAllocateInfo
-            (
+            commandbuffers = commandPool.AllocateBuffers(new CommandBufferAllocateInfo(
                 level: CommandBufferLevel.Primary,
                 count: framebuffers.Length
             ));
@@ -260,7 +281,8 @@ namespace HT.Engine.Rendering
             //Record the command-buffers
             for (int i = 0; i < commandbuffers.Length; i++)
             {
-                commandbuffers[i].Begin(new CommandBufferBeginInfo(flags: CommandBufferUsages.SimultaneousUse));
+                commandbuffers[i].Begin(
+                    new CommandBufferBeginInfo(flags: CommandBufferUsages.SimultaneousUse));
 
                 scene?.Record(commandbuffers[i], framebuffers[i], renderpass, swapchainSize);
 
@@ -274,7 +296,8 @@ namespace HT.Engine.Rendering
             renderFinishedSemaphore = logicalDevice.CreateSemaphore();
             waitFences = new Fence[swapchainImages.Length];
             for (int i = 0; i < waitFences.Length; i++)
-                waitFences[i] = logicalDevice.CreateFence(new FenceCreateInfo(FenceCreateFlags.Signaled));
+                waitFences[i] = logicalDevice.CreateFence(
+                    new FenceCreateInfo(FenceCreateFlags.Signaled));
         }
 
         private void OnNativeWindowResized() => RecreateRenderSetup();
