@@ -1,27 +1,27 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-  
-    <Authors>discosultan</Authors>
-    <Description>Vulkan bindings for .NET Standard</Description>
-    
-    <PackageIconUrl>https://raw.githubusercontent.com/discosultan/VulkanCore/master/Doc/Vulkan64.png</PackageIconUrl>
-    <PackageLicenseUrl>https://raw.githubusercontent.com/discosultan/VulkanCore/master/LICENSE</PackageLicenseUrl>
-    <PackageProjectUrl>https://github.com/discosultan/VulkanCore</PackageProjectUrl>
-    <PackageReleaseNotes>https://github.com/discosultan/VulkanCore/releases</PackageReleaseNotes>
-    <RepositoryUrl>https://github.com/discosultan/VulkanCore</RepositoryUrl>
-    <Version>1.0.0-alpha36</Version>
+    <PropertyGroup>
 
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <RootNamespace>VulkanCore</RootNamespace>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <Authors>discosultan</Authors>
+        <Description>Vulkan bindings for .NET Standard</Description>
 
-  </PropertyGroup>
+        <PackageIconUrl>https://raw.githubusercontent.com/discosultan/VulkanCore/master/Doc/Vulkan64.png</PackageIconUrl>
+        <PackageLicenseUrl>https://raw.githubusercontent.com/discosultan/VulkanCore/master/LICENSE</PackageLicenseUrl>
+        <PackageProjectUrl>https://github.com/discosultan/VulkanCore</PackageProjectUrl>
+        <PackageReleaseNotes>https://github.com/discosultan/VulkanCore/releases</PackageReleaseNotes>
+        <RepositoryUrl>https://github.com/discosultan/VulkanCore</RepositoryUrl>
+        <Version>1.0.0-alpha36</Version>
 
-  <ItemGroup>
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.4.0" />
-  </ItemGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <RootNamespace>VulkanCore</RootNamespace>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.4.0" />
+    </ItemGroup>
 
 </Project>

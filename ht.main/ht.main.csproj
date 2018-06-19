@@ -1,24 +1,25 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-  
-    <Authors>Bastian Blokland</Authors>
-    <Description>Main application logic</Description>
+    <PropertyGroup>
 
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <RootNamespace>HT.Main</RootNamespace>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <Authors>Bastian Blokland</Authors>
+        <Description>Main application logic</Description>
 
-  </PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <RootNamespace>HT.Main</RootNamespace>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
-  <ItemGroup>
-    <ProjectReference Include="../ht.engine/ht.engine.csproj"/>
+    </PropertyGroup>
 
-    <None Include="shaders/bin/*.spv">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <ItemGroup>
 
-  </ItemGroup>
+        <ProjectReference Include="../ht.engine/ht.engine.csproj"/>
+
+        <None Include="shaders/bin/*.spv">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        
+    </ItemGroup>
 
 </Project>

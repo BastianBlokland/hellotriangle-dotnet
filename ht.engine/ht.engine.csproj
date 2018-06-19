@@ -1,19 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
+    <PropertyGroup>
 
-    <Authors>Bastian Blokland</Authors>
-    <Description>Generic engine logic</Description>
+        <Authors>Bastian Blokland</Authors>
+        <Description>Generic engine logic</Description>
 
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <RootNamespace>HT.Engine</RootNamespace>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <RootNamespace>HT.Engine</RootNamespace>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
-  </PropertyGroup>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="../vulkancore/vulkancore.csproj"/>
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="../vulkancore/vulkancore.csproj"/>
+    </ItemGroup>
 
 </Project>

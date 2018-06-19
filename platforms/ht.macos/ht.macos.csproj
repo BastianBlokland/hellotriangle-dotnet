@@ -1,22 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
+    <PropertyGroup>
 
-    <Authors>Bastian Blokland</Authors>
-    <Description>Wrapper for MacOS platform code</Description>
+        <Authors>Bastian Blokland</Authors>
+        <Description>Wrapper for MacOS platform code</Description>
 
-    <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
-    <RootNamespace>HT.MacOS</RootNamespace>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>netcoreapp2.1</TargetFramework>
+        <RootNamespace>HT.MacOS</RootNamespace>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
-  </PropertyGroup>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="../../ht.engine/ht.engine.csproj"/>
-    <ProjectReference Include="../../ht.main/ht.main.csproj"/>
-    <None Include="lib/**" CopyToOutputDirectory="PreserveNewest" Link="%(Filename)%(Extension)"/>
-  </ItemGroup>
+    <ItemGroup>
+
+        <ProjectReference Include="../../ht.engine/ht.engine.csproj"/>
+        <ProjectReference Include="../../ht.main/ht.main.csproj"/>
+        <None Include="lib/**" CopyToOutputDirectory="PreserveNewest" Link="%(Filename)%(Extension)"/>
+        
+    </ItemGroup>
 
 </Project>
