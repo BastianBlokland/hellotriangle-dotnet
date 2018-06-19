@@ -66,8 +66,17 @@ namespace HT.Engine.Rendering
             presentMode = hostDevice.GetPresentMode(surface);
             (surfaceFormat, surfaceColorspace) = hostDevice.GetSurfaceFormat(surface);
 
+            //Create a command-pool attached to this device
+            commandPool = logicalDevice.CreateCommandPool(new CommandPoolCreateInfo(
+                queueFamilyIndex: graphicsQueue.FamilyIndex,
+                flags: CommandPoolCreateFlags.None
+            ));
+
+            //Initialize the scene (so it can create its renderpass and pipelines etc)
+            scene.Initialize(logicalDevice, surfaceFormat);
+
             //Initialize the entire setup
-            CreateRenderSetup();
+            CreateSwapchainSetup();
         }
 
         public void Draw()
@@ -99,34 +108,33 @@ namespace HT.Engine.Rendering
                 //Wait for all rendering to stop before we start disposing of resources
                 logicalDevice.WaitIdle();
 
-                DisposeRenderSetup();
+                DisposeSwapchainSetup();
 
+                scene.Deinitialize();
+                commandPool.Dispose();
                 logicalDevice.Dispose();
                 nativeWindow.Dispose();
                 disposed = true;
             }
         }
 
-        private void CreateRenderSetup()
+        private void CreateSwapchainSetup()
         {
-            CreateSwapChain(nativeWindow.ClientRect.Size);
-            scene.Initialize(logicalDevice, surfaceFormat);
-            CreateFrameBuffers();
-            CreateCommandPool();
-            CreateCommandBuffers();
+            CreateSwapchain(nativeWindow.ClientRect.Size);
+            CreateFramebuffers();
+            CreateCommandbuffers();
             CreateSynchronizationObjects();
 
             nativeWindow.Title = $"{hostDevice.Name} - {nativeWindow.ClientRect.Size}";
         }
 
-        private void DisposeRenderSetup()
+        private void DisposeSwapchainSetup()
         {
             imageAvailableSemaphore.Dispose();
             renderFinishedSemaphore.Dispose();
             waitFences.DisposeAll();
-            commandPool.Dispose();
+            commandPool.Reset(CommandPoolResetFlags.ReleaseResources);
             framebuffers.DisposeAll();
-            scene.Deinitialize();
             swapchainImageViews.DisposeAll();
             swapchain.Dispose();
         }
@@ -136,11 +144,11 @@ namespace HT.Engine.Rendering
             //Wait for all rendering to stop
             logicalDevice.WaitIdle();
 
-            DisposeRenderSetup();
-            CreateRenderSetup();
+            DisposeSwapchainSetup();
+            CreateSwapchainSetup();
         }
 
-        private void CreateSwapChain(Int2 size)
+        private void CreateSwapchain(Int2 size)
         {
             SurfaceCapabilitiesKhr capabilities = hostDevice.GetCurrentCapabilities(surface);
             //Clamp the size to within the min and max extends reported by the surface capabilities
@@ -212,7 +220,7 @@ $@"Swapchain created:
 }}");
         }
 
-        private void CreateFrameBuffers()
+        private void CreateFramebuffers()
         {
             framebuffers = new Framebuffer[swapchainImages.Length];
             for (int i = 0; i < framebuffers.Length; i++)
@@ -226,15 +234,7 @@ $@"Swapchain created:
             }
         }
 
-        private void CreateCommandPool()
-        {
-            commandPool = logicalDevice.CreateCommandPool(new CommandPoolCreateInfo(
-                queueFamilyIndex: graphicsQueue.FamilyIndex,
-                flags: CommandPoolCreateFlags.None
-            ));
-        }
-
-        private void CreateCommandBuffers()
+        private void CreateCommandbuffers()
         {
             commandbuffers = commandPool.AllocateBuffers(new CommandBufferAllocateInfo(
                 level: CommandBufferLevel.Primary,
