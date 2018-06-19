@@ -127,6 +127,9 @@ namespace HT.Win32
         private Int2 minClientSize;
         private bool disposed;
 
+        private bool initialSizeSet;
+        private bool initialPosSet;
+
         private bool invokeCloseRequestedEvent;
         private bool invokeResizedEvent;
         private bool invokeMovedEvent;
@@ -305,7 +308,11 @@ namespace HT.Win32
                     ClientRect = new IntRect(
                         ClientRect.Min,
                         ClientRect.Min + new Int2(width, height));
-                    invokeResizedEvent = true;
+
+                    //Invoke the 'Resized' event only if this was not the initial size set,
+                    //this way we don't get resized events when the window just opens 
+                    invokeResizedEvent = initialSizeSet;
+                    initialSizeSet = true;
                     break;
 
                 case WM_MOVE:
@@ -314,7 +321,11 @@ namespace HT.Win32
                     
                     Int2 pos = new Int2(x, y);
                     ClientRect = new IntRect(pos, pos + ClientRect.Size);
-                    invokeMovedEvent = true;
+
+                    //Invoke the 'Moved' event only if this was not the initial pos set,
+                    //this way we don't get moved events when the window just opens 
+                    invokeMovedEvent = initialPosSet;
+                    initialPosSet = true;
                     break;
 
                 case WM_ENTERSIZEMOVE:
