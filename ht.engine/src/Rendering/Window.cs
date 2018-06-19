@@ -246,11 +246,10 @@ $@"Swapchain created:
                 count: framebuffers.Length
             ));
 
-            //Record the command-buffers
+            //Record the primary command-buffers
             for (int i = 0; i < commandbuffers.Length; i++)
             {
-                commandbuffers[i].Begin(
-                    new CommandBufferBeginInfo(flags: CommandBufferUsages.SimultaneousUse));
+                commandbuffers[i].Begin(new CommandBufferBeginInfo(flags: CommandBufferUsages.None));
 
                 scene.Record(commandbuffers[i], framebuffers[i], swapchainSize);
 
