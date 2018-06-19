@@ -11,10 +11,11 @@ namespace HT.Engine.Rendering
         private readonly ShaderProgram vertProg;
         private readonly ShaderProgram fragProg;
 
+        private bool initialized;
+        private RenderPass renderpass;
         private PipelineLayout pipelineLayout;
         private Pipeline pipeline;
-        private bool pipelineCreated;
-
+        
         public RenderScene(Float4 clearColor, ShaderProgram vertProg, ShaderProgram fragProg)
         {
             this.clearColor = clearColor;
@@ -22,12 +23,113 @@ namespace HT.Engine.Rendering
             this.fragProg = fragProg;
         }
 
-        internal void CreatePipeline(Device logicalDevice, RenderPass renderpass)
+        internal void Initialize(Device logicalDevice, Format surfaceFormat)
         {
-            if (pipelineCreated)
+            if (initialized)
                 throw new Exception(
-                    $"[{nameof(RenderScene)}] Unable to create a pipeline before disposing of the previous pipeline");
+                    $"[{nameof(RenderScene)}] Allready initialized");
 
+            CreateRenderpass(logicalDevice, surfaceFormat);
+            CreatePipeline(logicalDevice);
+
+            initialized = true;
+        }
+
+        internal Framebuffer CreateFramebuffer(FramebufferCreateInfo createInfo)
+        {
+            ThrowIfNotInitialized();
+            return renderpass.CreateFramebuffer(createInfo);
+        }
+
+        internal void Record(
+            CommandBuffer commandbuffer,
+            Framebuffer framebuffer,
+            Int2 swapchainSize)
+        {
+            ThrowIfNotInitialized();
+
+            commandbuffer.CmdBeginRenderPass(new RenderPassBeginInfo(
+                renderPass: renderpass,
+                framebuffer: framebuffer,
+                renderArea: new Rect2D(x: 0, y: 0, width: swapchainSize.X, height: swapchainSize.Y),
+                clearValues: new ClearValue(
+                    new ClearColorValue(
+                        new ColorF4(clearColor.R, clearColor.G, clearColor.B, clearColor.A)))
+            ));
+
+            //Set viewport and scissor-rect dynamically to avoid the pipelines depending on
+            //swapchain size (and thus having to be recreated on resize)
+            commandbuffer.CmdSetViewport(
+                new Viewport(
+                    x: 0f, y: 0f, width: swapchainSize.X, height: swapchainSize.Y,
+                    minDepth: 0f, maxDepth: 1f));
+            commandbuffer.CmdSetScissor(
+                new Rect2D(x: 0, y: 0, width: swapchainSize.X, height: swapchainSize.Y));
+
+            //Draw our pipeline
+            commandbuffer.CmdBindPipeline(PipelineBindPoint.Graphics, pipeline);
+            commandbuffer.CmdDraw(vertexCount: 4, instanceCount: 1, firstVertex: 0, firstInstance: 0);
+
+            commandbuffer.CmdEndRenderPass();
+        }
+
+        internal void Deinitialize()
+        {
+            if (!initialized)
+                throw new Exception(
+                    $"[{nameof(RenderScene)}] Unable to deinitialize as we haven't initialized");
+
+            renderpass.Dispose();
+            pipelineLayout.Dispose();
+            pipeline.Dispose();
+            initialized = false;
+        }
+
+        private void CreateRenderpass(Device logicalDevice, Format surfaceFormat)
+        {
+            //Description of our frame-buffer attachment
+            var colorAttachment = new AttachmentDescription(
+                flags: AttachmentDescriptions.MayAlias,
+                format: surfaceFormat,
+                samples: SampleCounts.Count1,
+                loadOp: AttachmentLoadOp.Clear,
+                storeOp: AttachmentStoreOp.Store,
+                stencilLoadOp: AttachmentLoadOp.DontCare,
+                stencilStoreOp: AttachmentStoreOp.DontCare,
+                initialLayout: ImageLayout.Undefined,
+                finalLayout: ImageLayout.PresentSrcKhr
+            );
+            //Dependency to wait on the framebuffer being loaded before we write to it
+            var attachmentAvailableDependency = new SubpassDependency(
+                srcSubpass: Constant.SubpassExternal, //Source is the implicit 'load' subpass
+                dstSubpass: 0, //Dest is our subpass
+                srcStageMask: PipelineStages.ColorAttachmentOutput,
+                srcAccessMask: 0,
+                dstStageMask: PipelineStages.ColorAttachmentOutput,
+                dstAccessMask: Accesses.ColorAttachmentRead | Accesses.ColorAttachmentWrite
+            );
+            //Create the renderpass with a single sub-pass that references the color-attachment
+            renderpass = logicalDevice.CreateRenderPass(new RenderPassCreateInfo(
+                subpasses: new [] 
+                {
+                    new SubpassDescription
+                    (
+                        flags: SubpassDescriptionFlags.None,
+                        colorAttachments: new []
+                        {
+                            new AttachmentReference(
+                                attachment: 0,
+                                layout: ImageLayout.ColorAttachmentOptimal)
+                        }
+                    )
+                },
+                attachments: new [] { colorAttachment },
+                dependencies: new [] { attachmentAvailableDependency }
+            ));
+        }
+
+        private void CreatePipeline(Device logicalDevice)
+        {
             //Create the pipeline layout (empty atm as we have no dynamic state yet)
             pipelineLayout = logicalDevice.CreatePipelineLayout(new PipelineLayoutCreateInfo());
 
@@ -101,62 +203,19 @@ namespace HT.Engine.Rendering
             //After pipeline creation we no longer need the shader modules
             vertModule.Dispose();
             fragModule.Dispose();
-
-            pipelineCreated = true;
         }
 
-        internal void Record(
-            CommandBuffer commandbuffer,
-            Framebuffer framebuffer,
-            RenderPass renderpass,
-            Int2 swapchainSize)
+        private void ThrowIfNotInitialized()
         {
-            if (!pipelineCreated)
-                throw new Exception(
-                    $"[{nameof(RenderScene)}] Unable to record if we have no pipeline created");
-
-            commandbuffer.CmdBeginRenderPass(new RenderPassBeginInfo(
-                renderPass: renderpass,
-                framebuffer: framebuffer,
-                renderArea: new Rect2D(x: 0, y: 0, width: swapchainSize.X, height: swapchainSize.Y),
-                clearValues: new ClearValue(
-                    new ClearColorValue(
-                        new ColorF4(clearColor.R, clearColor.G, clearColor.B, clearColor.A)))
-            ));
-
-            //Set viewport and scissor-rect dynamically to avoid the pipelines depending on
-            //swapchain size (and thus having to be recreated on resize)
-            commandbuffer.CmdSetViewport(
-                new Viewport(
-                    x: 0f, y: 0f, width: swapchainSize.X, height: swapchainSize.Y,
-                    minDepth: 0f, maxDepth: 1f));
-            commandbuffer.CmdSetScissor(
-                new Rect2D(x: 0, y: 0, width: swapchainSize.X, height: swapchainSize.Y));
-
-            //Draw our pipeline
-            commandbuffer.CmdBindPipeline(PipelineBindPoint.Graphics, pipeline);
-            commandbuffer.CmdDraw(vertexCount: 4, instanceCount: 1, firstVertex: 0, firstInstance: 0);
-
-            commandbuffer.CmdEndRenderPass();
-        }
-
-        internal void DisposePipeline()
-        {
-            if (!pipelineCreated)
-                throw new Exception(
-                    $"[{nameof(RenderScene)}] Unable to dispose of the pipeline as we haven't created one");
-
-            pipelineLayout.Dispose();
-            pipeline.Dispose();
-
-            pipelineCreated = false;
+            if (!initialized)
+                throw new Exception($"[{nameof(RenderScene)}] Not yet initialized");
         }
 
         ~RenderScene()
         {
-            if (pipelineCreated)
+            if (initialized)
                 throw new Exception(
-                    $"[{nameof(RenderScene)}] Scene was released without disposing the pipeline!");
+                    $"[{nameof(RenderScene)}] Scene was released without deinitializing first");
         }
     }
 }

@@ -20,15 +20,17 @@
     //White-listed words for the 'Code spell checker' plugin
     "cSpell.words": [
         "Cdecl",
+        "Deinitialize",
+        "Deinitializing",
         "Demaximized",
         "Deminimized",
         "LUNARG",
         "Rasterization",
         "Rect",
         "Vulkan",
-        "macos",
-        "moltenvk",
-        "rasterizer",
-        "vulkancore"
+        "Macos",
+        "Moltenvk",
+        "Rasterizer",
+        "Vulkancore"
     ]
 }

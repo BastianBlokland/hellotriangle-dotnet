@@ -28,7 +28,6 @@ namespace HT.Engine.Rendering
         private Int2 swapchainSize;
         private Image[] swapchainImages;
         private ImageView[] swapchainImageViews;
-        private RenderPass renderpass;
         private Framebuffer[] framebuffers;
         private CommandPool commandPool;
         private CommandBuffer[] commandbuffers;
@@ -102,9 +101,8 @@ namespace HT.Engine.Rendering
         private void CreateRenderSetup()
         {
             CreateSwapChain(nativeWindow.ClientRect.Size);
-            CreateRenderPass();
+            scene.Initialize(logicalDevice, surfaceFormat);
             CreateFrameBuffers();
-            scene?.CreatePipeline(logicalDevice, renderpass);
             CreateCommandPool();
             CreateCommandBuffers();
             CreateSynchronizationObjects();
@@ -118,9 +116,8 @@ namespace HT.Engine.Rendering
             renderFinishedSemaphore.Dispose();
             waitFences.DisposeAll();
             commandPool.Dispose();
-            scene?.DisposePipeline();
             framebuffers.DisposeAll();
-            renderpass.Dispose();
+            scene.Deinitialize();
             swapchainImageViews.DisposeAll();
             swapchain.Dispose();
         }
@@ -206,55 +203,12 @@ $@"Swapchain created:
 }}");
         }
 
-        private void CreateRenderPass()
-        {
-            //Description of our frame-buffer attachment
-            var colorAttachment = new AttachmentDescription(
-                flags: AttachmentDescriptions.MayAlias,
-                format: surfaceFormat,
-                samples: SampleCounts.Count1,
-                loadOp: AttachmentLoadOp.Clear,
-                storeOp: AttachmentStoreOp.Store,
-                stencilLoadOp: AttachmentLoadOp.DontCare,
-                stencilStoreOp: AttachmentStoreOp.DontCare,
-                initialLayout: ImageLayout.Undefined,
-                finalLayout: ImageLayout.PresentSrcKhr
-            );
-            //Dependency to wait on the framebuffer being loaded before we write to it
-            var attachmentAvailableDependency = new SubpassDependency(
-                srcSubpass: Constant.SubpassExternal, //Source is the implicit 'load' subpass
-                dstSubpass: 0, //Dest is our subpass
-                srcStageMask: PipelineStages.ColorAttachmentOutput,
-                srcAccessMask: 0,
-                dstStageMask: PipelineStages.ColorAttachmentOutput,
-                dstAccessMask: Accesses.ColorAttachmentRead | Accesses.ColorAttachmentWrite
-            );
-            //Create the renderpass with a single sub-pass that references the color-attachment
-            renderpass = logicalDevice.CreateRenderPass(new RenderPassCreateInfo(
-                subpasses: new [] 
-                {
-                    new SubpassDescription
-                    (
-                        flags: SubpassDescriptionFlags.None,
-                        colorAttachments: new []
-                        {
-                            new AttachmentReference(
-                                attachment: 0,
-                                layout: ImageLayout.ColorAttachmentOptimal)
-                        }
-                    )
-                },
-                attachments: new [] { colorAttachment },
-                dependencies: new [] { attachmentAvailableDependency }
-            ));
-        }
-
         private void CreateFrameBuffers()
         {
             framebuffers = new Framebuffer[swapchainImages.Length];
             for (int i = 0; i < framebuffers.Length; i++)
             {
-                framebuffers[i] = renderpass.CreateFramebuffer(
+                framebuffers[i] = scene.CreateFramebuffer(
                     new FramebufferCreateInfo(
                         attachments: new [] { swapchainImageViews[i] },
                         width: swapchainSize.X,
@@ -284,7 +238,7 @@ $@"Swapchain created:
                 commandbuffers[i].Begin(
                     new CommandBufferBeginInfo(flags: CommandBufferUsages.SimultaneousUse));
 
-                scene?.Record(commandbuffers[i], framebuffers[i], renderpass, swapchainSize);
+                scene.Record(commandbuffers[i], framebuffers[i], swapchainSize);
 
                 commandbuffers[i].End();
             }
