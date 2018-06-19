@@ -15,8 +15,10 @@
 
     <ItemGroup>
 
-        <ProjectReference Include="../../ht.engine/ht.engine.csproj"/>
-        <ProjectReference Include="../../ht.main/ht.main.csproj"/>
+        <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="1.0.0-alpha-*" />
+
+        <ProjectReference Include="../../ht.engine/ht.engine.csproj" />
+        <ProjectReference Include="../../ht.main/ht.main.csproj" />
         
     </ItemGroup>
 
