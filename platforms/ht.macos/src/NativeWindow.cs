@@ -99,6 +99,9 @@ namespace HT.MacOS
         private string title;
         private bool disposed;
 
+        private bool initialSizeSet;
+        private bool initialPosSet;
+
         private bool invokeCloseRequestedEvent;
         private bool invokeResizedEvent;
         private bool invokeMovedEvent;
@@ -168,7 +171,11 @@ namespace HT.MacOS
         private void OnResized(Int2 size)
         {
             ClientRect = new IntRect(ClientRect.Min, ClientRect.Min + size);
-            invokeResizedEvent = true;
+            
+            //Invoke the 'Resized' event only if this was not the initial size set,
+            //this way we don't get resized events when the window just opens
+            invokeResizedEvent = initialSizeSet;
+            initialSizeSet = true;
         }
 
         private void OnBeginResize() => IsMovingOrResizing = true;
@@ -178,7 +185,11 @@ namespace HT.MacOS
         private void OnMoved(Int2 pos)
         {
             ClientRect = new IntRect(pos, pos + ClientRect.Size);
-            invokeMovedEvent = true;
+            
+            //Invoke the 'Moved' event only if this was not the initial pos set,
+            //this way we don't get moved events when the window just opens 
+            invokeMovedEvent = initialPosSet;
+            initialPosSet = true;
         }
 
         private void OnMinimized() => Minimized = true;

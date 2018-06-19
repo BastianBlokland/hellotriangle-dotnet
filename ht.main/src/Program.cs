@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 
 using HT.Engine.Platform;
 using HT.Engine.Rendering;
@@ -32,7 +33,10 @@ namespace HT.Main
                 while(running)
                 {
                     nativeApp.Update();
-                    window.Draw();
+                    
+                    bool hasDrawn = window.Draw();
+                    if(!hasDrawn)
+                        Thread.Sleep(100);
                 }
             }
         }

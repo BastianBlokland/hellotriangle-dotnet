@@ -79,8 +79,11 @@ namespace HT.Engine.Rendering
             CreateSwapchainSetup();
         }
 
-        public void Draw()
+        public bool Draw()
         {
+            if(nativeWindow.Minimized)
+                return false;
+
             int nextImage = swapchain.AcquireNextImage(semaphore: imageAvailableSemaphore);
 
             //Wait for the previous submit of this buffer to be done
@@ -99,6 +102,8 @@ namespace HT.Engine.Rendering
             //Once rendering to the framebuffer is done we can present it
             presentQueue.PresentKhr(
                 waitSemaphore: renderFinishedSemaphore, swapchain: swapchain, imageIndex: nextImage);
+
+            return true;
         }
 
         public void Dispose()
@@ -263,7 +268,11 @@ $@"Swapchain created:
                     new FenceCreateInfo(FenceCreateFlags.Signaled));
         }
 
-        private void OnNativeWindowResized() => RecreateRenderSetup();
+        private void OnNativeWindowResized()
+        {
+            if(!nativeWindow.Minimized)
+                RecreateRenderSetup();
+        }
         private void OnNativeWindowCloseRequested() => CloseRequested?.Invoke();
     }
 }

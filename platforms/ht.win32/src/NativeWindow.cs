@@ -310,7 +310,7 @@ namespace HT.Win32
                         ClientRect.Min + new Int2(width, height));
 
                     //Invoke the 'Resized' event only if this was not the initial size set,
-                    //this way we don't get resized events when the window just opens 
+                    //this way we don't get resized events when the window just opens
                     invokeResizedEvent = initialSizeSet;
                     initialSizeSet = true;
                     break;
