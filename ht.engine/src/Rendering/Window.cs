@@ -36,12 +36,21 @@ namespace HT.Engine.Rendering
         private Fence[] waitFences;
         private bool disposed;
 
-        internal Window(    INativeWindow nativeWindow, 
-                            SurfaceKhr surface, 
-                            HostDevice hostDevice, 
-                            RenderScene scene, 
-                            Logger logger = null)
+        internal Window(
+            INativeWindow nativeWindow,
+            SurfaceKhr surface,
+            HostDevice hostDevice,
+            RenderScene scene,
+            Logger logger = null)
         {
+            if (nativeWindow == null)
+                throw new ArgumentNullException(nameof(nativeWindow));
+            if (surface == null)
+                throw new ArgumentNullException(nameof(surface));
+            if (hostDevice == null)
+                throw new ArgumentNullException(nameof(hostDevice));
+            if (scene == null)
+                throw new ArgumentNullException(nameof(scene));
             this.nativeWindow = nativeWindow;
             this.surface = surface;
             this.hostDevice = hostDevice;

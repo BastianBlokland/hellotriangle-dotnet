@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 
 using HT.Engine.Platform;
@@ -12,6 +13,8 @@ namespace HT.Engine.Rendering
 
         public ShaderProgram(INativeApp nativeApp, string sourceFilename)
         {
+            if (nativeApp == null)
+                throw new ArgumentNullException(nameof(nativeApp));
             string binFileName = Path.Combine("shaders", "bin", $"{sourceFilename}.spv");
             using(var file = nativeApp.ReadFile(binFileName))
             {

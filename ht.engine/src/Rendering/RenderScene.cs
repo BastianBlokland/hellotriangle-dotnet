@@ -18,6 +18,11 @@ namespace HT.Engine.Rendering
         
         public RenderScene(Float4 clearColor, ShaderProgram vertProg, ShaderProgram fragProg)
         {
+            if (vertProg == null)
+                throw new ArgumentNullException(nameof(vertProg));
+            if (fragProg == null)
+                throw new ArgumentNullException(nameof(fragProg));
+                
             this.clearColor = clearColor;
             this.vertProg = vertProg;
             this.fragProg = fragProg;

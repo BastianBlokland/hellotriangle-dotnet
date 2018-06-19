@@ -28,6 +28,8 @@ namespace HT.Engine.Rendering
             int applicationVersion,
             Logger logger = null)
         {
+            if (nativeApp == null)
+                throw new ArgumentNullException(nameof(nativeApp));
             this.nativeApp = nativeApp;
             this.logger = logger;
 

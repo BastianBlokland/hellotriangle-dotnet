@@ -21,16 +21,18 @@ namespace HT.Engine.Rendering
         private readonly QueueFamilyProperties[] queueFamilies;
 
         internal HostDevice(
-            PhysicalDevice vulkanPhysicalDevice,
+            PhysicalDevice vulkanPhysicaldevice,
             SurfaceType surfaceType,
             Logger logger = null)
         {
-            this.physicalDevice = vulkanPhysicalDevice;
+            if (vulkanPhysicaldevice == null)
+                throw new ArgumentNullException(nameof(vulkanPhysicaldevice));
+            this.physicalDevice = vulkanPhysicaldevice;
             this.surfaceType = surfaceType;
             this.logger = logger;
-            this.properties = vulkanPhysicalDevice.GetProperties();
-            this.availableExtensions = vulkanPhysicalDevice.EnumerateExtensionProperties();
-            this.queueFamilies = vulkanPhysicalDevice.GetQueueFamilyProperties();
+            this.properties = vulkanPhysicaldevice.GetProperties();
+            this.availableExtensions = vulkanPhysicaldevice.EnumerateExtensionProperties();
+            this.queueFamilies = vulkanPhysicaldevice.GetQueueFamilyProperties();
 
             logger?.Log(nameof(HostDevice), $"Found device: {Name}");
             logger?.LogList(nameof(HostDevice), $"{Name} available extensions:", availableExtensions);
