@@ -33,6 +33,13 @@ namespace HT.Engine.Math
             Z = z;
         }
 
+        public void Deconstruct(out float x, out float y, out float z)
+        {
+            x = X;
+            y = Y;
+            z = Z;
+        }
+
         public static Float3 operator +(Float3 left, Float3 right)
             => new Float3(left.X + right.X, left.Y + right.Y, left.Z + right.Z);
 

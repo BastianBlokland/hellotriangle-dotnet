@@ -24,6 +24,12 @@ namespace HT.Engine.Math
             Y = y;
         }
 
+        public void Deconstruct(out int x, out int y)
+        {
+            x = X;
+            y = Y;
+        }
+
         public Int2 Clamp(Int2 min, Int2 max)
             => new Int2(X.Clamp(min.X, max.X), Y.Clamp(min.Y, max.Y));
 

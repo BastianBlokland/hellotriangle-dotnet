@@ -28,6 +28,12 @@ namespace HT.Engine.Math
             Y = y;
         }
 
+        public void Deconstruct(out float x, out float y)
+        {
+            x = X;
+            y = Y;
+        }
+
         public static Float2 Max(Float2 left, Float2 right)
             => new Float2(System.Math.Max(left.X, right.X), System.Math.Max(left.Y, right.Y));
 

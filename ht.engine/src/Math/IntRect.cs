@@ -31,6 +31,12 @@ namespace HT.Engine.Math
             Max = max;
         }
 
+        public void Deconstruct(out Int2 min, out Int2 max)
+        {
+            min = Min;
+            max = Max;
+        }
+
         public static bool operator ==(IntRect a, IntRect b) => a.Equals(b);
 
         public static bool operator !=(IntRect a, IntRect b) => !a.Equals(b);

@@ -30,6 +30,14 @@ namespace HT.Engine.Math
             W = w;
         }
 
+        public void Deconstruct(out float x, out float y, out float z, out float w)
+        {
+            x = X;
+            y = Y;
+            z = Z;
+            w = W;
+        }
+
         public static Float4 operator +(Float4 left, Float4 right)
             => new Float4(left.X + right.X, left.Y + right.Y, left.Z + right.Z, left.W + right.W);
 

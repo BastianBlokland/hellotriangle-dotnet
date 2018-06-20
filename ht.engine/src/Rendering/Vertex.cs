@@ -20,6 +20,12 @@ namespace HT.Engine.Rendering
             Color = color;
         }
 
+        public void Deconstruct(out Float3 position, out Float4 color)
+        {
+            position = Position;
+            color = Color;
+        }
+
         public static bool operator ==(Vertex a, Vertex b) => a.Equals(b);
 
         public static bool operator !=(Vertex a, Vertex b) => !a.Equals(b);
