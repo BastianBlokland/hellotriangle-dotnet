@@ -109,7 +109,7 @@ namespace HT.Engine.Rendering
             ThrowIfDisposed();
             INativeWindow nativeWindow = nativeApp.CreateWindow(
                 size: windowSize,
-                minSize: new Int2(150, 150),
+                minSize: (x: 150, y: 150),
                 title: string.Empty);
             SurfaceKhr surface = CreateSurface(nativeWindow);
             HostDevice graphicsDevice = FindSuitableDevice(surface, preferDiscreteDevice);

@@ -69,5 +69,8 @@ namespace HT.Engine.Math
         public override int GetHashCode() => X.GetHashCode() ^ Y.GetHashCode() ^ Z.GetHashCode();
 
         public override string ToString() => $"(X: {X}, Y: {Y}, Z: {Z})";
+
+        public static implicit operator Float3((float x, float y, float z) tuple)
+            => new Float3(tuple.x, tuple.y, tuple.z);
     }
 }

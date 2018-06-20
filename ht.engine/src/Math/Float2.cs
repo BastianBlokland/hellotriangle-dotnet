@@ -70,6 +70,10 @@ namespace HT.Engine.Math
 
         public override string ToString() => $"(X: {X}, Y: {Y})";
 
-        public static explicit operator Float2(Int2 other) => new Float2(other.X, other.Y);
+        public static explicit operator Float2(Int2 other)
+            => new Float2(other.X, other.Y);
+            
+        public static implicit operator Float2((float x, float y) tuple)
+            => new Float2(tuple.x, tuple.y);
     }
 }

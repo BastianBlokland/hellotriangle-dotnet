@@ -75,5 +75,8 @@ namespace HT.Engine.Math
             W.GetHashCode();
 
         public override string ToString() => $"(X: {X}, Y: {Y}, Z: {Z}, W: {W})";
+
+        public static implicit operator Float4((float x, float y, float z, float w) tuple)
+            => new Float4(tuple.x, tuple.y, tuple.z, tuple.w);
     }
 }

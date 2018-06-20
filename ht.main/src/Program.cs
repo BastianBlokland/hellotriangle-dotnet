@@ -21,7 +21,7 @@ namespace HT.Main
                 applicationVersion: 1,
                 logger: logger))
             using(var window = host.CreateWindow(
-                windowSize: new Int2(800, 600),
+                windowSize: (x: 800, y: 600),
                 scene: new RenderScene(
                     clearColor: ColorUtils.Black,
                     renderobjects: new [] 
