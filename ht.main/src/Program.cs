@@ -24,8 +24,10 @@ namespace HT.Main
                 windowSize: new Int2(800, 600),
                 scene: new RenderScene(
                     clearColor: ColorUtils.Black,
-                    vertProg: vert,
-                    fragProg: frag)))
+                    renderobjects: new [] 
+                    { 
+                        new RenderObject(vert, frag)
+                    })))
             {
                 bool running = true;
                 window.CloseRequested += () => running = false;
