@@ -3,9 +3,11 @@ using System.Runtime.InteropServices;
 
 namespace HT.Engine.Math
 {
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, Size = SIZE)]
     public struct IntRect : IEquatable<IntRect>
     {
+        public const int SIZE = Int2.SIZE * 2;
+
         public static readonly IntRect Zero = new IntRect();
 
         public Int2 Size => new Int2(Width, Height);

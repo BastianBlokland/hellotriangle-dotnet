@@ -3,9 +3,11 @@ using System.Runtime.InteropServices;
 
 namespace HT.Engine.Math
 {
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, Size = SIZE)]
     public struct Float4 : IEquatable<Float4>
     {
+        public const int SIZE = sizeof(float) * 4;
+
         public static readonly Float4 Zero = new Float4(x: 0f, y: 0f, z: 0f, w: 0f);
         public static readonly Float4 One = new Float4(x: 1f, y: 1f, z: 1f, w: 1f);
 
