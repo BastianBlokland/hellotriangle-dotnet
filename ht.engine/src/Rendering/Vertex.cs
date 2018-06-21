@@ -7,7 +7,7 @@ using VulkanCore;
 namespace HT.Engine.Rendering
 {
     [StructLayout(LayoutKind.Sequential, Size = SIZE)]
-    public struct Vertex : IEquatable<Vertex>
+    internal struct Vertex : IEquatable<Vertex>
     {
         public const int SIZE = Float3.SIZE + Float4.SIZE;
 

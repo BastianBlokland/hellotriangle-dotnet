@@ -14,6 +14,7 @@ namespace HT.Engine.Rendering
         private bool initialized;
         private Memory.Copier copier;
         private Memory.Pool vertexMemoryPool;
+        private Memory.Pool indexMemoryPool;
         private RenderPass renderpass;
         
         public RenderScene(Float4 clearColor, RenderObject[] renderobjects)
@@ -45,12 +46,19 @@ namespace HT.Engine.Rendering
             copier = new Memory.Copier(logicalDevice, transferQueueFamilyIndex);
             vertexMemoryPool = new Memory.Pool(
                 logicalDevice, hostDevice, copier, BufferUsages.VertexBuffer);
+            indexMemoryPool = new Memory.Pool(
+                logicalDevice, hostDevice, copier, BufferUsages.IndexBuffer);
 
             CreateRenderpass(logicalDevice, surfaceFormat);
 
             //Initialize all the renderobjects
             for (int i = 0; i < renderobjects.Length; i++)
-                renderobjects[i].Initialize(logicalDevice, hostDevice, renderpass, vertexMemoryPool);
+                renderobjects[i].Initialize(
+                    logicalDevice,
+                    hostDevice,
+                    renderpass,
+                    vertexMemoryPool,
+                    indexMemoryPool);
             
             initialized = true;
         }
@@ -99,6 +107,7 @@ namespace HT.Engine.Rendering
                 throw new Exception(
                     $"[{nameof(RenderScene)}] Unable to deinitialize as we haven't initialized");
 
+            indexMemoryPool.Dispose();
             vertexMemoryPool.Dispose();
             copier.Dispose();
             renderobjects.DisposeAll();

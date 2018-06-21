@@ -10,10 +10,13 @@ namespace HT.Engine.Rendering
         private readonly ShaderProgram vertProg;
         private readonly ShaderProgram fragProg;
         private readonly Vertex[] vertices;
+        private readonly UInt16[] indices;
 
         private bool initialized;
         private Memory.Pool vertexMemoryPool;
         private Memory.Region vertexMemoryRegion;
+        private Memory.Pool indexMemoryPool;
+        private Memory.Region indexMemoryRegion;
         private PipelineLayout pipelineLayout;
         private Pipeline pipeline;
 
@@ -34,10 +37,12 @@ namespace HT.Engine.Rendering
                 z: 0f);
             this.vertices = new []
             {
-                new Vertex(position: pos + (-.1f, .1f, 0f), color: ColorUtils.GetColor(rng.Next())),
-                new Vertex(position: pos + (0f, -.1f, 0f), color: ColorUtils.GetColor(rng.Next())),
+                new Vertex(position: pos + (-.1f, -.1f, 0f), color: ColorUtils.GetColor(rng.Next())),
+                new Vertex(position: pos + (.1f, -.1f, 0f), color: ColorUtils.GetColor(rng.Next())),
                 new Vertex(position: pos + (.1f, .1f, 0f), color: ColorUtils.GetColor(rng.Next())),
+                new Vertex(position: pos + (-.1f, .1f, 0f), color: ColorUtils.GetColor(rng.Next())),
             };
+            this.indices = new UInt16[] { 0, 1, 2, 2, 3, 0 };
         }
 
         public void Dispose()
@@ -50,15 +55,18 @@ namespace HT.Engine.Rendering
             Device logicalDevice,
             HostDevice hostDevice,
             RenderPass renderpass,
-            Memory.Pool vertexPool)
+            Memory.Pool vertexPool,
+            Memory.Pool indexPool)
         {
             if (initialized)
                 throw new Exception(
                     $"[{nameof(RenderObject)}] Allready initialized");
 
-            //Upload the vertices to the gpu
+            //Upload the data to the gpu
             vertexMemoryPool = vertexPool;
             vertexMemoryRegion = vertexPool.Allocate(vertices);
+            indexMemoryPool = indexPool;
+            indexMemoryRegion = indexPool.Allocate(indices);
 
             //Create the pipeline
             CreatePipeline(logicalDevice, renderpass);
@@ -68,13 +76,23 @@ namespace HT.Engine.Rendering
 
         internal void Record(CommandBuffer commandbuffer)
         {
-            commandbuffer.CmdBindVertexBuffer(vertexMemoryPool.Buffer, vertexMemoryRegion.Offset);
+            //Dind data
+            commandbuffer.CmdBindVertexBuffer(
+                vertexMemoryPool.Buffer,
+                vertexMemoryRegion.Offset);
+            commandbuffer.CmdBindIndexBuffer(
+                indexMemoryPool.Buffer,
+                indexMemoryRegion.Offset,
+                IndexType.UInt16);
+
+            //Bind pipeline
             commandbuffer.CmdBindPipeline(PipelineBindPoint.Graphics, pipeline);
 
-            commandbuffer.CmdDraw(
-                vertexCount: vertices.Length,
+            //Draw
+            commandbuffer.CmdDrawIndexed(
+                indexCount: indices.Length,
                 instanceCount: 1,
-                firstVertex: 0,
+                firstIndex: 0,
                 firstInstance: 0);
         }
 
