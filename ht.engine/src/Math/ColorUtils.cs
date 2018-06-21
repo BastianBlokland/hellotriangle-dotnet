@@ -18,5 +18,14 @@ namespace HT.Engine.Math
         public static readonly Float4 Navy = new Float4(0f, 0f, .5f, 1f);
         public static readonly Float4 Fuchsia = new Float4(1f, 0f, 1f, 1f);
         public static readonly Float4 Purple = new Float4(.5f, 0f, .5f, 1f);
+
+        private static readonly Float4[] colors = new []
+        {
+            White, Silver, Gray, Black, Red, Maroon, Yellow, Olive, Lime, Green, Aqua, Teal,
+            Blue, Navy, Fuchsia, Purple
+        };
+
+        public static Float4 GetColor(int hash)
+            => colors[System.Math.Abs(hash % colors.Length)];
     }
 }

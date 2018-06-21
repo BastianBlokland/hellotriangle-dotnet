@@ -15,7 +15,7 @@ namespace HT.Engine.Rendering
         private Memory.Pool vertexMemoryPool;
         private Memory.Region vertexMemoryRegion;
         private PipelineLayout pipelineLayout;
-        private Pipeline pipeline;        
+        private Pipeline pipeline;
 
         public RenderObject(ShaderProgram vertProg, ShaderProgram fragProg)
         {
@@ -26,12 +26,17 @@ namespace HT.Engine.Rendering
 
             this.vertProg = vertProg;
             this.fragProg = fragProg;
+
+            var rng = new Random();
+            Float3 pos = (
+                x: (float)(rng.NextDouble() - .5) * 2f, 
+                y: (float)(rng.NextDouble() - .5) * 2f, 
+                z: 0f);
             this.vertices = new []
             {
-                new Vertex(position: (-.9f, .9f, 0f), color: ColorUtils.Green),
-                new Vertex(position: (-.9f, -.9f, 0f), color: ColorUtils.Red),
-                new Vertex(position: (.9f, .9f, 0f), color: ColorUtils.Aqua),
-                new Vertex(position: (.9f, -.9f, 0f), color: ColorUtils.Fuchsia)
+                new Vertex(position: pos + (-.1f, .1f, 0f), color: ColorUtils.GetColor(rng.Next())),
+                new Vertex(position: pos + (0f, -.1f, 0f), color: ColorUtils.GetColor(rng.Next())),
+                new Vertex(position: pos + (.1f, .1f, 0f), color: ColorUtils.GetColor(rng.Next())),
             };
         }
 
@@ -104,7 +109,7 @@ namespace HT.Engine.Rendering
                 vertexAttributeDescriptions: Vertex.GetAttributeDescriptions() 
             );
             var inputAssembly = new PipelineInputAssemblyStateCreateInfo(
-                topology: PrimitiveTopology.TriangleStrip,
+                topology: PrimitiveTopology.TriangleList,
                 primitiveRestartEnable: false
             );
             var rasterizer = new PipelineRasterizationStateCreateInfo(

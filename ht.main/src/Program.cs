@@ -15,6 +15,10 @@ namespace HT.Main
             ShaderProgram vert = new ShaderProgram(nativeApp, "test.vert");
             ShaderProgram frag = new ShaderProgram(nativeApp, "test.frag");
 
+            var objects = new RenderObject[100];
+            for (int i = 0; i < objects.Length; i++)
+                objects[i] = new RenderObject(vert, frag);
+
             using(var host = new Host(
                 nativeApp: nativeApp,
                 applicationName: "Test",
@@ -24,10 +28,7 @@ namespace HT.Main
                 windowSize: (x: 800, y: 600),
                 scene: new RenderScene(
                     clearColor: ColorUtils.Black,
-                    renderobjects: new [] 
-                    { 
-                        new RenderObject(vert, frag)
-                    })))
+                    renderobjects: objects)))
             {
                 bool running = true;
                 window.CloseRequested += () => running = false;
