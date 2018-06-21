@@ -12,6 +12,8 @@ namespace HT.Engine.Rendering
         private readonly RenderObject[] renderobjects;
 
         private bool initialized;
+        private Memory.Copier copier;
+        private Memory.Pool vertexMemoryPool;
         private RenderPass renderpass;
         
         public RenderScene(Float4 clearColor, RenderObject[] renderobjects)
@@ -29,17 +31,26 @@ namespace HT.Engine.Rendering
                 Deinitialize();
         }
 
-        internal void Initialize(Device logicalDevice, HostDevice hostDevice, Format surfaceFormat)
+        internal void Initialize(
+            Device logicalDevice,
+            HostDevice hostDevice,
+            Format surfaceFormat,
+            int transferQueueFamilyIndex)
         {
             if (initialized)
                 throw new Exception(
                     $"[{nameof(RenderScene)}] Allready initialized");
 
+            //Allocate gpu memory
+            copier = new Memory.Copier(logicalDevice, transferQueueFamilyIndex);
+            vertexMemoryPool = new Memory.Pool(
+                logicalDevice, hostDevice, copier, BufferUsages.VertexBuffer);
+
             CreateRenderpass(logicalDevice, surfaceFormat);
 
             //Initialize all the renderobjects
             for (int i = 0; i < renderobjects.Length; i++)
-                renderobjects[i].Initialize(logicalDevice, hostDevice, renderpass);
+                renderobjects[i].Initialize(logicalDevice, hostDevice, renderpass, vertexMemoryPool);
             
             initialized = true;
         }
@@ -88,6 +99,8 @@ namespace HT.Engine.Rendering
                 throw new Exception(
                     $"[{nameof(RenderScene)}] Unable to deinitialize as we haven't initialized");
 
+            vertexMemoryPool.Dispose();
+            copier.Dispose();
             renderobjects.DisposeAll();
             renderpass.Dispose();
             initialized = false;
