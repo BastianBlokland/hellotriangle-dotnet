@@ -66,8 +66,8 @@ namespace HT.Engine.Rendering.Memory
         {
             ThrowIfDisposed();
 
-            commandPool.Dispose();
             copyCommandBuffer.Dispose();
+            commandPool.Dispose();
             copyFence.Dispose();
             disposed = true;
         }
