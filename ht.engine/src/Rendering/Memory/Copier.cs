@@ -60,6 +60,7 @@ namespace HT.Engine.Rendering.Memory
 
             //Wait for transfer to be complete
             copyFence.Wait();
+            copyFence.Reset();
         }
 
         public void Dispose()
