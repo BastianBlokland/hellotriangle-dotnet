@@ -47,7 +47,7 @@ namespace HT.Engine.Rendering
 
         public void Dispose()
         {
-            if(initialized)
+            if (initialized)
                 Deinitialize();
         }
 
@@ -58,6 +58,16 @@ namespace HT.Engine.Rendering
             Memory.Pool vertexPool,
             Memory.Pool indexPool)
         {
+            if (logicalDevice == null)
+                throw new ArgumentNullException(nameof(logicalDevice));
+            if (hostDevice == null)
+                throw new ArgumentNullException(nameof(hostDevice));
+            if (renderpass == null)
+                throw new ArgumentNullException(nameof(renderpass));
+            if (vertexPool == null)
+                throw new ArgumentNullException(nameof(vertexPool));
+            if (indexPool == null)
+                throw new ArgumentNullException(nameof(indexPool));
             if (initialized)
                 throw new Exception(
                     $"[{nameof(RenderObject)}] Allready initialized");

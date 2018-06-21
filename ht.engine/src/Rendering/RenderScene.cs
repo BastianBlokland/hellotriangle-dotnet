@@ -28,7 +28,7 @@ namespace HT.Engine.Rendering
 
         public void Dispose()
         {
-            if(initialized)
+            if (initialized)
                 Deinitialize();
         }
 

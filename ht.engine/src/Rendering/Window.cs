@@ -83,7 +83,7 @@ namespace HT.Engine.Rendering
 
         public bool Draw()
         {
-            if(nativeWindow.Minimized)
+            if (nativeWindow.Minimized)
                 return false;
 
             int nextImage = swapchain.AcquireNextImage(semaphore: imageAvailableSemaphore);
@@ -271,7 +271,7 @@ $@"Swapchain created:
 
         private void OnNativeWindowResized()
         {
-            if(!nativeWindow.Minimized)
+            if (!nativeWindow.Minimized)
                 RecreateRenderSetup();
         }
         private void OnNativeWindowCloseRequested() => CloseRequested?.Invoke();

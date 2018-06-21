@@ -38,7 +38,7 @@ namespace HT.Main
                     nativeApp.Update();
                     
                     bool hasDrawn = window.Draw();
-                    if(!hasDrawn)
+                    if (!hasDrawn)
                         Thread.Sleep(100);
                 }
             }

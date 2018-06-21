@@ -62,6 +62,8 @@ namespace HT.Engine.Rendering.Memory
         public Region Allocate<T>(T[] data)
             where T : struct
         {
+            ThrowIfDisposed();
+
             if (data == null)
                 throw new ArgumentNullException(nameof(data));
             if (data.Length == 0)

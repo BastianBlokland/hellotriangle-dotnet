@@ -44,7 +44,7 @@ namespace HT.Engine.Rendering
         {
             for (int i = 0; i < deviceMemoryProperties.MemoryTypes.Length; i++)
             {
-                if((supportedTypesBits & (1 << i)) > 0 &&
+                if ((supportedTypesBits & (1 << i)) > 0 &&
                     (deviceMemoryProperties.MemoryTypes[i].PropertyFlags & properties) == properties)
                     return i;
             }
