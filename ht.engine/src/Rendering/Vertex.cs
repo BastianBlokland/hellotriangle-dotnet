@@ -38,13 +38,13 @@ namespace HT.Engine.Rendering
 
         public override string ToString() => $"(Position: {Position}, Color: {Color})";
 
-        internal VertexInputBindingDescription GetBindingDescription()
+        internal static VertexInputBindingDescription GetBindingDescription()
             => new VertexInputBindingDescription(
                 binding: 0,
                 stride: SIZE,
                 inputRate: VertexInputRate.Vertex);
 
-        internal VertexInputAttributeDescription[] GetAttributeDescriptions()
+        internal static VertexInputAttributeDescription[] GetAttributeDescriptions()
             => new []
             {
                 new VertexInputAttributeDescription(

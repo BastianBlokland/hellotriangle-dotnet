@@ -17,6 +17,7 @@ namespace HT.Engine.Rendering
         private readonly SurfaceType surfaceType;
         private readonly Logger logger;
         private readonly PhysicalDeviceProperties properties;
+        private readonly PhysicalDeviceMemoryProperties deviceMemoryProperties;
         private readonly ExtensionProperties[] availableExtensions;
         private readonly QueueFamilyProperties[] queueFamilies;
 
@@ -31,11 +32,24 @@ namespace HT.Engine.Rendering
             this.surfaceType = surfaceType;
             this.logger = logger;
             this.properties = vulkanPhysicaldevice.GetProperties();
+            this.deviceMemoryProperties = vulkanPhysicaldevice.GetMemoryProperties();
             this.availableExtensions = vulkanPhysicaldevice.EnumerateExtensionProperties();
             this.queueFamilies = vulkanPhysicaldevice.GetQueueFamilyProperties();
 
             logger?.Log(nameof(HostDevice), $"Found device: {Name}");
             logger?.LogList(nameof(HostDevice), $"{Name} available extensions:", availableExtensions);
+        }
+
+        internal int GetMemoryType(int supportedTypesBits, MemoryProperties properties)
+        {
+            for (int i = 0; i < deviceMemoryProperties.MemoryTypes.Length; i++)
+            {
+                if((supportedTypesBits & (1 << i)) > 0 &&
+                    (deviceMemoryProperties.MemoryTypes[i].PropertyFlags & properties) == properties)
+                    return i;
+            }
+            throw new Exception(
+                $"[{nameof(HostDevice)}] Device {Name} has no memory-type that fits requirements");
         }
 
         internal SurfaceCapabilitiesKhr GetCurrentCapabilities(SurfaceKhr surface)

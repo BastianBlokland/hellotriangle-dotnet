@@ -73,7 +73,7 @@ namespace HT.Engine.Rendering
             ));
 
             //Initialize the scene (so it can create its renderpass and pipelines etc)
-            scene.Initialize(logicalDevice, surfaceFormat);
+            scene.Initialize(logicalDevice, hostDevice, surfaceFormat);
 
             //Initialize the entire setup
             CreateSwapchainSetup();

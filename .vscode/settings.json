@@ -25,12 +25,13 @@
         "Demaximized",
         "Deminimized",
         "LUNARG",
-        "Rasterization",
-        "Rect",
-        "Vulkan",
         "Macos",
         "Moltenvk",
+        "Rasterization",
         "Rasterizer",
+        "Rect",
+        "Unmap",
+        "Vulkan",
         "Vulkancore"
     ]
 }

@@ -29,7 +29,7 @@ namespace HT.Engine.Rendering
                 Deinitialize();
         }
 
-        internal void Initialize(Device logicalDevice, Format surfaceFormat)
+        internal void Initialize(Device logicalDevice, HostDevice hostDevice, Format surfaceFormat)
         {
             if (initialized)
                 throw new Exception(
@@ -39,7 +39,7 @@ namespace HT.Engine.Rendering
 
             //Initialize all the renderobjects
             for (int i = 0; i < renderobjects.Length; i++)
-                renderobjects[i].Initialize(logicalDevice, renderpass);
+                renderobjects[i].Initialize(logicalDevice, hostDevice, renderpass);
             
             initialized = true;
         }
