@@ -1,6 +1,8 @@
 using System;
 using System.Runtime.InteropServices;
 
+using static System.Math;
+
 namespace HT.Engine.Math
 {
     [StructLayout(LayoutKind.Sequential, Size = SIZE)]
@@ -20,7 +22,7 @@ namespace HT.Engine.Math
 
         //Helper properties
         public float SquareMagnitude => X * X + Y * Y + Z * Z;
-        public float Magnitude => (float)System.Math.Sqrt(SquareMagnitude);
+        public float Magnitude => (float)Sqrt(SquareMagnitude);
 
         //Component swizzling
         public Float2 XY => new Float2(X, Y);

@@ -1,6 +1,8 @@
 using System;
 using System.Runtime.InteropServices;
 
+using static System.Math;
+
 namespace HT.Engine.Math
 {
     [StructLayout(LayoutKind.Sequential, Size = SIZE)]
@@ -114,28 +116,16 @@ namespace HT.Engine.Math
         /// Based on:
         /// https://gamedev.stackexchange.com/questions/120338/what-does-a-perspective-projection-matrix-look-like-in-opengl
         /// </summary>
-        public static Float4x4 CreatePerspectiveProjection(
-            float verticalFieldOfView,
-            float aspectRatio,
-            float nearDistance,
-            float farDistance)
+        public static Float4x4 CreatePerspectiveProjection(Frustum frustum)
         {
-            //Check if fov is not negative or more then 180 degrees
-            if (verticalFieldOfView <= 0f || verticalFieldOfView >= System.Math.PI)
-                throw new ArgumentOutOfRangeException(nameof(verticalFieldOfView));
-            if (nearDistance <= 0f || nearDistance >= farDistance)
-                throw new ArgumentOutOfRangeException(nameof(nearDistance));
-            if (farDistance <= 0f)
-                throw new ArgumentOutOfRangeException(nameof(farDistance));
-
-            float yScale = 1f / (float)System.Math.Tan(verticalFieldOfView * .5f);
-            float xScale = yScale / aspectRatio;
-            float negFarPlane = farDistance / (nearDistance - farDistance);
+            float yScale = 1f / (float)Tan(frustum.VerticalAngle * .5f);
+            float xScale = 1f / (float)Tan(frustum.HorizontalAngle * .5f);;
+            float negFarPlane = frustum.FarDistance / (frustum.NearDistance - frustum.FarDistance);
 
             return Float4x4.CreateFromRows(
                 row0: (xScale,  0f,     0f,          0f),
                 row1: (0f,      yScale, 0f,          0f),
-                row2: (0f,      0f,     negFarPlane, nearDistance * negFarPlane),
+                row2: (0f,      0f,     negFarPlane, frustum.NearDistance * negFarPlane),
                 row3: (0f,      0f,     -1f,         1f));
         }
 
@@ -186,9 +176,9 @@ namespace HT.Engine.Math
 
         public override string ToString() => 
 $@"(
-    Row0: {Row0} 
-    Row1: {Row1}
-    Row2: {Row2}
+    Row0: {Row0},
+    Row1: {Row1},
+    Row2: {Row2},
     Row3: {Row3}
 )";
     }
