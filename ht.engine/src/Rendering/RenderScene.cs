@@ -58,7 +58,10 @@ namespace HT.Engine.Rendering
             //Create a descriptor pool for the render-objects to create descriptor-sets from
             descriptorPool = logicalDevice.CreateDescriptorPool(new DescriptorPoolCreateInfo(
                 maxSets: renderobjects.Length,
-                poolSizes: new [] { new DescriptorPoolSize(DescriptorType.UniformBuffer, 1)},
+                poolSizes: new []
+                {
+                    new DescriptorPoolSize(DescriptorType.UniformBuffer, renderobjects.Length)
+                },
                 flags: DescriptorPoolCreateFlags.None));
 
             //Create the renderpass
