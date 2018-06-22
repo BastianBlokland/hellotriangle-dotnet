@@ -104,7 +104,16 @@ namespace HT.Engine.Math
                 row3: (0f,      0f,      0f,      1f));
         }
 
-        //Based on: https://gamedev.stackexchange.com/questions/120338/what-does-a-perspective-projection-matrix-look-like-in-opengl
+        /// <summary>
+        /// Matrix to transform from view-space into clip-space
+        /// Clip space is a cube going from -1 to 1 in all axis. Vertices that fall outside
+        /// of this range are discared. This method creates a matrix to transform from a 
+        /// perspective frustum (which can be calculated with the given parameters) to that clip-space
+        /// For example: items on the near-distance will get z of -1 in clip space.
+        /// 
+        /// Based on:
+        /// https://gamedev.stackexchange.com/questions/120338/what-does-a-perspective-projection-matrix-look-like-in-opengl
+        /// </summary>
         public static Float4x4 CreatePerspectiveProjection(
             float verticalFieldOfView,
             float aspectRatio,
@@ -122,7 +131,7 @@ namespace HT.Engine.Math
             float yScale = 1f / (float)System.Math.Tan(verticalFieldOfView * .5f);
             float xScale = yScale / aspectRatio;
             float negFarPlane = farDistance / (nearDistance - farDistance);
-            
+
             return Float4x4.CreateFromRows(
                 row0: (xScale,  0f,     0f,          0f),
                 row1: (0f,      yScale, 0f,          0f),
