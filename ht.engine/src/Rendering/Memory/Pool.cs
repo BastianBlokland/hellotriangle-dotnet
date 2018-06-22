@@ -15,6 +15,7 @@ namespace HT.Engine.Rendering.Memory
         private readonly BufferUsages usages;
         private readonly long maxPoolSize;
         private readonly long maxStagingSize;
+        private readonly long alignment;
 
         private readonly VulkanCore.Buffer poolBuffer;
         private readonly DeviceMemory poolMemory;
@@ -47,13 +48,13 @@ namespace HT.Engine.Rendering.Memory
             maxStagingSize = stagingSize;
             
             //Create a device-local buffer for use a a pool (need transferDest to copy into it)
-            (poolBuffer, poolMemory) = CreateBuffer(
+            (poolBuffer, poolMemory, alignment) = CreateBuffer(
                 size: poolSize, 
                 usages: usages | BufferUsages.TransferDst,
                 memoryProperties: MemoryProperties.DeviceLocal);
 
             //Create a host-visible staging buffer we can use to transfer to the pool
-            (stagingBuffer, stagingMemory) = CreateBuffer(
+            (stagingBuffer, stagingMemory, _) = CreateBuffer(
                 size: stagingSize, 
                 usages: usages | BufferUsages.TransferSrc,
                 memoryProperties: MemoryProperties.HostVisible | MemoryProperties.HostCoherent);
@@ -65,16 +66,21 @@ namespace HT.Engine.Rendering.Memory
             ThrowIfDisposed();
 
             long size = Unsafe.SizeOf<T>() * count;
-            if (size > maxStagingSize)
+            long alignedSize = Align(size);
+
+            if (alignedSize > maxStagingSize)
                 throw new Exception(
-                    $"[{nameof(Pool)}] Data of size '{size}' is too big for the staging-buffer");
-            if ((maxPoolSize - currentOffset) < size)
+                    $"[{nameof(Pool)}] Data with aligned-size '{alignedSize}' is too big for the staging-buffer");
+            if ((maxPoolSize - currentOffset) < alignedSize)
                 throw new Exception($"[{nameof(Pool)}] Not enough space left in the pool");
 
-            //Mark the space as used
-            currentOffset += size;
+            //Mark the space a used
+            currentOffset += alignedSize;
 
-            return new Region(offset: currentOffset - size, size: size);
+            return new Region(
+                offset: currentOffset - alignedSize,
+                size: alignedSize,
+                requestedSize: size);
         }
 
         public void Write<T>(T[] data, Region region)
@@ -122,7 +128,9 @@ namespace HT.Engine.Rendering.Memory
             disposed = true;
         }
 
-        private (VulkanCore.Buffer, DeviceMemory) CreateBuffer(
+        private long Align(long size) => (size / alignment + 1) * alignment;
+
+        private (VulkanCore.Buffer buffer, DeviceMemory memory, long alignment) CreateBuffer(
             long size,
             BufferUsages usages,
             MemoryProperties memoryProperties)
@@ -141,7 +149,7 @@ namespace HT.Engine.Rendering.Memory
                     properties: memoryProperties)
             ));
             buffer.BindMemory(deviceMemory, memoryOffset: 0);
-            return (buffer, deviceMemory);
+            return (buffer, deviceMemory, memRequirements.Alignment);
         } 
 
         private void ThrowIfDisposed()

@@ -182,7 +182,7 @@ namespace HT.Engine.Rendering
                     bufferInfo: new [] { new DescriptorBufferInfo(
                         buffer: transformationMemoryPool.Buffer,
                         offset: transformationMemoryRegion.Offset,
-                        range: transformationMemoryRegion.Size) })
+                        range: transformationMemoryRegion.RequestedSize) })
             }, descriptorCopies: null);
         }
 
