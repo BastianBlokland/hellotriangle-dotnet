@@ -94,6 +94,32 @@ namespace HT.Engine.Math
                 row3: (0f,      0f,      0f,      1f));
         }
 
+        //Arithmetic operators
+        public static Float4x4 operator *(Float4x4 left, Float4x4 right)
+        {
+            Float4 row0 =   left.Row0.X * right.Row0 +
+                            left.Row0.Y * right.Row1 +
+                            left.Row0.Z * right.Row2 +
+                            left.Row0.W * right.Row3;
+            
+            Float4 row1 =   left.Row1.X * right.Row0 +
+                            left.Row1.Y * right.Row1 +
+                            left.Row1.Z * right.Row2 +
+                            left.Row1.W * right.Row3;
+            
+            Float4 row2 =   left.Row2.X * right.Row0 +
+                            left.Row2.Y * right.Row1 +
+                            left.Row2.Z * right.Row2 +
+                            left.Row2.W * right.Row3;
+            
+            Float4 row3 =   left.Row3.X * right.Row0 +
+                            left.Row3.Y * right.Row1 +
+                            left.Row3.Z * right.Row2 +
+                            left.Row3.W * right.Row3;
+            
+            return CreateFromRows(row0, row1, row2, row3);
+        }
+
         //Equality
         public static bool operator ==(Float4x4 a, Float4x4 b) => a.Equals(b);
 
