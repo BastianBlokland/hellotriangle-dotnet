@@ -8,15 +8,22 @@ namespace HT.Engine.Math
     {
         public const int SIZE = sizeof(float) * 3;
 
-        public static readonly Float3 Zero = new Float3(x: 0f, y: 0f, z: 0f);
-        public static readonly Float3 One = new Float3(x: 1f, y: 1f, z: 1f);
-        public static readonly Float3 Up = new Float3(x: 0f, y: 1f, z: 0f);
-        public static readonly Float3 Down = new Float3(x: 0f, y: -1f, z: 0f);
-        public static readonly Float3 Right = new Float3(x: 1f, y: 0f, z: 0f);
-        public static readonly Float3 Left = new Float3(x: -1f, y: 0f, z: 0f);
-        public static readonly Float3 Forward = new Float3(x: 0f, y: 0f, z: 1f);
-        public static readonly Float3 Backward = new Float3(x: 0f, y: 0f, z: -1f);
+        //Presets
+        public static readonly Float3 Zero = new Float3(0f, 0f, 0f);
+        public static readonly Float3 One = new Float3(1f, 1f, 1f);
+        public static readonly Float3 Up = new Float3(0f, 1f, 0f);
+        public static readonly Float3 Down = new Float3(0f, -1f, 0f);
+        public static readonly Float3 Right = new Float3(1f, 0f, 0f);
+        public static readonly Float3 Left = new Float3(-1f, 0f, 0f);
+        public static readonly Float3 Forward = new Float3(0f, 0f, 1f);
+        public static readonly Float3 Backward = new Float3(0f, 0f, -1f);
 
+        //Component swizzling
+        public Float2 XY => new Float2(X, Y);
+        public Float2 XZ => new Float2(X, Z);
+        public Float4 XYZ1 => new Float4(X, Y, Z, 1f);
+
+        //Component index accessor
         public float this[int i]
         {
             get 
@@ -37,6 +44,7 @@ namespace HT.Engine.Math
         public float G => Y;
         public float B => Z;
 
+        //Data
         public readonly float X;
         public readonly float Y;
         public readonly float Z;
@@ -48,6 +56,7 @@ namespace HT.Engine.Math
             Z = z;
         }
 
+        //Tuple deconstruction syntax
         public void Deconstruct(out float x, out float y, out float z)
         {
             x = X;
@@ -55,6 +64,7 @@ namespace HT.Engine.Math
             z = Z;
         }
 
+        //Arithmetic operators
         public static Float3 operator +(Float3 left, Float3 right)
             => new Float3(left.X + right.X, left.Y + right.Y, left.Z + right.Z);
 
@@ -73,6 +83,7 @@ namespace HT.Engine.Math
         public static Float3 operator /(Float3 left, float right)
             => new Float3(left.X / right, left.Y / right, left.Z / right);
 
+        //Equality
         public static bool operator ==(Float3 a, Float3 b) => a.Equals(b);
 
         public static bool operator !=(Float3 a, Float3 b) => !a.Equals(b);
@@ -85,6 +96,7 @@ namespace HT.Engine.Math
 
         public override string ToString() => $"(X: {X}, Y: {Y}, Z: {Z})";
 
+        //Conversions
         public static implicit operator Float3((float x, float y, float z) tuple)
             => new Float3(tuple.x, tuple.y, tuple.z);
     }

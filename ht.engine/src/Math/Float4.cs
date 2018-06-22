@@ -8,9 +8,15 @@ namespace HT.Engine.Math
     {
         public const int SIZE = sizeof(float) * 4;
 
-        public static readonly Float4 Zero = new Float4(x: 0f, y: 0f, z: 0f, w: 0f);
-        public static readonly Float4 One = new Float4(x: 1f, y: 1f, z: 1f, w: 1f);
+        //Presets
+        public static readonly Float4 Zero = new Float4(0f, 0f, 0f, 0f);
+        public static readonly Float4 One = new Float4(1f, 1f, 1f, 1f);
 
+        //Component swizzling
+        public Float3 XYZ => new Float3(X, Y, Z);
+        public Float2 XY => new Float2(X, Y);
+
+        //Component index accessor
         public float this[int i]
         {
             get 
@@ -33,6 +39,7 @@ namespace HT.Engine.Math
         public float B => Z;
         public float A => W;
 
+        //Data
         public readonly float X;
         public readonly float Y;
         public readonly float Z;
@@ -46,6 +53,7 @@ namespace HT.Engine.Math
             W = w;
         }
 
+        //Tuple deconstruction syntax
         public void Deconstruct(out float x, out float y, out float z, out float w)
         {
             x = X;
@@ -54,6 +62,7 @@ namespace HT.Engine.Math
             w = W;
         }
 
+        //Arithmetic operators
         public static Float4 operator +(Float4 left, Float4 right)
             => new Float4(left.X + right.X, left.Y + right.Y, left.Z + right.Z, left.W + right.W);
 
@@ -72,6 +81,7 @@ namespace HT.Engine.Math
         public static Float4 operator /(Float4 left, float right)
             => new Float4(left.X / right, left.Y / right, left.Z / right, left.W / right);
 
+        //Equality
         public static bool operator ==(Float4 a, Float4 b) => a.Equals(b);
 
         public static bool operator !=(Float4 a, Float4 b) => !a.Equals(b);
@@ -92,6 +102,7 @@ namespace HT.Engine.Math
 
         public override string ToString() => $"(X: {X}, Y: {Y}, Z: {Z}, W: {W})";
 
+        //Conversions
         public static implicit operator Float4((float x, float y, float z, float w) tuple)
             => new Float4(tuple.x, tuple.y, tuple.z, tuple.w);
     }

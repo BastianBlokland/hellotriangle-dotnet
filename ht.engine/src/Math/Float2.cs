@@ -8,13 +8,19 @@ namespace HT.Engine.Math
     {
         public const int SIZE = sizeof(float) * 2;
 
-        public static readonly Float2 Zero = new Float2(x: 0f, y: 0f);
-        public static readonly Float2 One = new Float2(x: 1f, y: 1f);
-        public static readonly Float2 Up = new Float2(x: 0f, y: 1f);
-        public static readonly Float2 Down = new Float2(x: 0f, y: -1f);
-        public static readonly Float2 Right = new Float2(x: 1f, y: 0f);
-        public static readonly Float2 Left = new Float2(x: -1f, y: 0f);
+        //Presets
+        public static readonly Float2 Zero = new Float2(0f, 0f);
+        public static readonly Float2 One = new Float2(1f, 1f);
+        public static readonly Float2 Up = new Float2(0f, 1f);
+        public static readonly Float2 Down = new Float2(0f, -1f);
+        public static readonly Float2 Right = new Float2(1f, 0f);
+        public static readonly Float2 Left = new Float2(-1f, 0f);
 
+        //Component swizzling
+        public Float3 XY0 => new Float3(X, Y, 0f);
+        public Float3 X0Y => new Float3(X, 0f, Y);
+
+        //Component index accessor
         public float this[int i]
         {
             get 
@@ -33,6 +39,7 @@ namespace HT.Engine.Math
         public float R => X;
         public float G => Y;
 
+        //Data
         public readonly float X;
         public readonly float Y;
 
@@ -42,18 +49,21 @@ namespace HT.Engine.Math
             Y = y;
         }
 
+        //Tuple deconstruction syntax
         public void Deconstruct(out float x, out float y)
         {
             x = X;
             y = Y;
         }
 
+        //Arithmetic methods
         public static Float2 Max(Float2 left, Float2 right)
             => new Float2(System.Math.Max(left.X, right.X), System.Math.Max(left.Y, right.Y));
 
         public static Float2 Min(Float2 left, Float2 right)
             => new Float2(System.Math.Min(left.X, right.X), System.Math.Min(left.Y, right.Y));
 
+        //Arithmetic operators
         public static Float2 operator +(Float2 left, Float2 right)
             => new Float2(left.X + right.X, left.Y + right.Y);
 
@@ -72,6 +82,7 @@ namespace HT.Engine.Math
         public static Float2 operator /(Float2 left, float right)
             => new Float2(left.X / right, left.Y / right);
 
+        //Equality
         public static bool operator ==(Float2 a, Float2 b) => a.Equals(b);
 
         public static bool operator !=(Float2 a, Float2 b) => !a.Equals(b);
@@ -84,6 +95,7 @@ namespace HT.Engine.Math
 
         public override string ToString() => $"(X: {X}, Y: {Y})";
 
+        //Conversions
         public static explicit operator Float2(Int2 other)
             => new Float2(other.X, other.Y);
             

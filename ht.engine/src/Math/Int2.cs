@@ -8,13 +8,15 @@ namespace HT.Engine.Math
     {
         public const int SIZE = sizeof(int) * 2;
 
-        public static readonly Int2 Zero = new Int2(x: 0, y: 0);
-        public static readonly Int2 One = new Int2(x: 1, y: 1);
-        public static readonly Int2 Up = new Int2(x: 0, y: 1);
-        public static readonly Int2 Down = new Int2(x: 0, y: -1);
-        public static readonly Int2 Right = new Int2(x: 1, y: 0);
-        public static readonly Int2 Left = new Int2(x: -1, y: 0);
+        //Presets
+        public static readonly Int2 Zero = new Int2(0, 0);
+        public static readonly Int2 One = new Int2(1, 1);
+        public static readonly Int2 Up = new Int2(0, 1);
+        public static readonly Int2 Down = new Int2(0, -1);
+        public static readonly Int2 Right = new Int2(1, 0);
+        public static readonly Int2 Left = new Int2(-1, 0);
 
+        //Component index accessor
         public int this[int i]
         {
             get 
@@ -29,6 +31,7 @@ namespace HT.Engine.Math
             }
         }
 
+        //Data
         public readonly int X;
         public readonly int Y;
 
@@ -38,12 +41,14 @@ namespace HT.Engine.Math
             Y = y;
         }
 
+        //Tuple deconstruction syntax
         public void Deconstruct(out int x, out int y)
         {
             x = X;
             y = Y;
         }
 
+        //Arithmetic methods
         public Int2 Clamp(Int2 min, Int2 max)
             => new Int2(X.Clamp(min.X, max.X), Y.Clamp(min.Y, max.Y));
 
@@ -52,7 +57,8 @@ namespace HT.Engine.Math
 
         public static Int2 Min(Int2 left, Int2 right)
             => new Int2(System.Math.Min(left.X, right.X), System.Math.Min(left.Y, right.Y));
-        
+
+        //Arithmetic operators
         public static Int2 operator +(Int2 left, Int2 right)
             => new Int2(left.X + right.X, left.Y + right.Y);
 
@@ -71,6 +77,7 @@ namespace HT.Engine.Math
         public static Int2 operator /(Int2 left, int right)
             => new Int2(left.X / right, left.Y / right);
 
+        //Equality
         public static bool operator ==(Int2 a, Int2 b) => a.Equals(b);
 
         public static bool operator !=(Int2 a, Int2 b) => !a.Equals(b);
@@ -83,6 +90,7 @@ namespace HT.Engine.Math
 
         public override string ToString() => $"(X: {X}, Y: {Y})";
 
+        //Conversions
         public static explicit operator Int2(Float2 other) => new Int2((int)other.X, (int)other.Y);
 
         public static implicit operator Int2((int x, int y) tuple)
