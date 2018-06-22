@@ -77,6 +77,8 @@ namespace HT.Engine.Math
             float length = val.Magnitude;
             if(length <= 0f)
                 throw new Exception($"[{nameof(Float3)}] Length must be larger then 0");
+            if(length == 1f)
+                return val;
             return val / length;
         }
 
@@ -87,6 +89,8 @@ namespace HT.Engine.Math
             if(sqrLength <= 0f)
                 throw new Exception($"[{nameof(Float3)}] Length must be larger then 0");
             #endif
+            if(sqrLength == 1f)
+                return val;
             return val * FloatUtils.FastInverseSquareRoot(sqrLength, precision);
         }
 
