@@ -304,7 +304,7 @@ namespace HT.Win32
                     Maximized = sizeType == SIZE_MAXIMIZED;
                    
                     short width, height;
-                    lParam.ToInt64().Split(out width, out height);
+                    LongUtils.Split(lParam.ToInt64(), out width, out height);
                     
                     ClientRect = new IntRect(
                         ClientRect.Min,
@@ -318,7 +318,7 @@ namespace HT.Win32
 
                 case WM_MOVE:
                     short x, y;
-                    lParam.ToInt64().Split(out x, out y);
+                    LongUtils.Split(lParam.ToInt64(), out x, out y);
                     
                     Int2 pos = new Int2(x, y);
                     ClientRect = new IntRect(pos, pos + ClientRect.Size);

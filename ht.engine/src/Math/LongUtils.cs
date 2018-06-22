@@ -1,11 +1,11 @@
-namespace HT.Engine.Math.Extensions
+namespace HT.Engine.Math
 {
-    public static class LongExtensions
+    public static class LongUtils
     {
         /// <summary>
         /// Splits a 64 bit long into two 16 bit shorts (only first 32 bits used)
         /// </summary>
-        public static void Split(this long val, out short a, out short b)
+        public static void Split(long val, out short a, out short b)
         {
             a = (short)(val & 0xffff);
             b = (short)((val >> 16) & 0xffff);
@@ -14,7 +14,7 @@ namespace HT.Engine.Math.Extensions
         /// <summary>
         /// Splits a 64 bit long into four 16 bit shorts
         /// </summary>
-        public static void Split(this long val, out short a, out short b, out short c, out short d)
+        public static void Split(long val, out short a, out short b, out short c, out short d)
         {
             a = (short)(val & 0xffff);
             b = (short)((val >> 16) & 0xffff);

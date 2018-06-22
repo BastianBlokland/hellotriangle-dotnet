@@ -18,6 +18,10 @@ namespace HT.Engine.Math
         public static readonly Float3 Forward = new Float3(0f, 0f, 1f);
         public static readonly Float3 Backward = new Float3(0f, 0f, -1f);
 
+        //Helper properties
+        public float SquareMagnitude => X * X + Y * Y + Z * Z;
+        public float Magnitude => (float)System.Math.Sqrt(SquareMagnitude);
+
         //Component swizzling
         public Float2 XY => new Float2(X, Y);
         public Float2 XZ => new Float2(X, Z);
@@ -62,6 +66,25 @@ namespace HT.Engine.Math
             x = X;
             y = Y;
             z = Z;
+        }
+
+        //Arithmetic methods
+        public static Float3 Normalize(Float3 val)
+        {
+            float length = val.Magnitude;
+            if(length <= 0f)
+                throw new Exception($"[{nameof(Float3)}] Length must be larger then 0");
+            return val / length;
+        }
+
+        public static Float3 FastNormalize(Float3 val, int precision = 2)
+        {
+            float sqrLength = val.SquareMagnitude;
+            #if DEBUG
+            if(sqrLength <= 0f)
+                throw new Exception($"[{nameof(Float3)}] Length must be larger then 0");
+            #endif
+            return val * FloatUtils.FastInverseSquareRoot(sqrLength, precision);
         }
 
         //Arithmetic operators
