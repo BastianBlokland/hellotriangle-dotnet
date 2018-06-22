@@ -26,7 +26,7 @@ namespace HT.Engine.Math
             if (verticalAngle <= 0f || verticalAngle >= System.Math.PI)
                 throw new ArgumentOutOfRangeException(nameof(verticalAngle));
             if (horizontalAngle <= 0f || horizontalAngle >= System.Math.PI)
-                throw new ArgumentOutOfRangeException(nameof(verticalAngle));
+                throw new ArgumentOutOfRangeException(nameof(horizontalAngle));
             if (nearDistance <= 0f || nearDistance >= farDistance)
                 throw new ArgumentOutOfRangeException(nameof(nearDistance));
             if (farDistance <= 0f)
@@ -44,7 +44,7 @@ namespace HT.Engine.Math
             float nearDistance,
             float farDistance)
         {
-            float horizontalAngle = (float)Atan(Tan(verticalAngle) * aspect);
+            float horizontalAngle = (float)Atan(Tan(verticalAngle * .5f) * aspect) * 2f;
             return new Frustum(
                 verticalAngle: verticalAngle,
                 horizontalAngle: horizontalAngle,
@@ -58,7 +58,7 @@ namespace HT.Engine.Math
             float nearDistance,
             float farDistance)
         {
-            float verticalAngle = (float)Atan(Tan(horizontalAngle) / aspect);
+            float verticalAngle = (float)Atan(Tan(horizontalAngle * .5f) / aspect) * 2f;
             return new Frustum(
                 verticalAngle: verticalAngle,
                 horizontalAngle: horizontalAngle,
