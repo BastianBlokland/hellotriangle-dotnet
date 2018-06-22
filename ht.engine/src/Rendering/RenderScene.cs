@@ -53,7 +53,7 @@ namespace HT.Engine.Rendering
             indexMemoryPool = new Memory.Pool(
                 logicalDevice, hostDevice, copier, BufferUsages.IndexBuffer);
             transformationPool = new Memory.Pool(
-                logicalDevice, hostDevice, copier, BufferUsages.IndexBuffer);
+                logicalDevice, hostDevice, copier, BufferUsages.UniformBuffer);
 
             //Create a descriptor pool for the render-objects to create descriptor-sets from
             descriptorPool = logicalDevice.CreateDescriptorPool(new DescriptorPoolCreateInfo(
