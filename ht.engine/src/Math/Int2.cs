@@ -79,6 +79,8 @@ namespace HT.Engine.Math
         public static Int2 operator /(Int2 left, int right)
             => new Int2(left.X / right, left.Y / right);
 
+        public static Int2 operator -(Int2 val) => new Int2(-val.X, -val.Y);
+
         //Equality
         public static bool operator ==(Int2 a, Int2 b) => a.Equals(b);
 

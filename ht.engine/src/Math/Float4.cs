@@ -81,6 +81,8 @@ namespace HT.Engine.Math
         public static Float4 operator /(Float4 left, float right)
             => new Float4(left.X / right, left.Y / right, left.Z / right, left.W / right);
 
+        public static Float4 operator -(Float4 val) => new Float4(-val.X, -val.Y, -val.Z, -val.W);
+
         //Equality
         public static bool operator ==(Float4 a, Float4 b) => a.Equals(b);
 

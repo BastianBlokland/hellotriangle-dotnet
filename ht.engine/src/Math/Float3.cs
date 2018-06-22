@@ -116,6 +116,8 @@ namespace HT.Engine.Math
         public static Float3 operator /(Float3 left, float right)
             => new Float3(left.X / right, left.Y / right, left.Z / right);
 
+        public static Float3 operator -(Float3 val) => new Float3(-val.X, -val.Y, -val.Z);
+
         //Equality
         public static bool operator ==(Float3 a, Float3 b) => a.Equals(b);
 
