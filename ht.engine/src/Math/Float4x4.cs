@@ -104,6 +104,32 @@ namespace HT.Engine.Math
                 row3: (0f,      0f,      0f,      1f));
         }
 
+        //Based on: https://gamedev.stackexchange.com/questions/120338/what-does-a-perspective-projection-matrix-look-like-in-opengl
+        public static Float4x4 CreatePerspectiveProjection(
+            float verticalFieldOfView,
+            float aspectRatio,
+            float nearDistance,
+            float farDistance)
+        {
+            //Check if fov is not negative or more then 180 degrees
+            if (verticalFieldOfView <= 0f || verticalFieldOfView >= System.Math.PI)
+                throw new ArgumentOutOfRangeException(nameof(verticalFieldOfView));
+            if (nearDistance <= 0f || nearDistance >= farDistance)
+                throw new ArgumentOutOfRangeException(nameof(nearDistance));
+            if (farDistance <= 0f)
+                throw new ArgumentOutOfRangeException(nameof(farDistance));
+
+            float yScale = 1f / (float)System.Math.Tan(verticalFieldOfView * .5f);
+            float xScale = yScale / aspectRatio;
+            float negFarPlane = farDistance / (nearDistance - farDistance);
+            
+            return Float4x4.CreateFromRows(
+                row0: (xScale,  0f,     0f,          0f),
+                row1: (0f,      yScale, 0f,          0f),
+                row2: (0f,      0f,     negFarPlane, nearDistance * negFarPlane),
+                row3: (0f,      0f,     -1f,         1f));
+        }
+
         //Arithmetic operators
         public static Float4x4 operator *(Float4x4 left, Float4x4 right)
         {
