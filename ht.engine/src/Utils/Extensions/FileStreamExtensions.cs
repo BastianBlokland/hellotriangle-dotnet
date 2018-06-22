@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace HT.Engine.Utils
+namespace HT.Engine.Utils.Extensions
 {
     public static class FileStreamExtensions
     {

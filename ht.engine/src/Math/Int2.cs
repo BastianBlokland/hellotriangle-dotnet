@@ -1,6 +1,8 @@
 using System;
 using System.Runtime.InteropServices;
 
+using HT.Engine.Math.Extensions;
+
 namespace HT.Engine.Math
 {
     [StructLayout(LayoutKind.Sequential, Size = SIZE)]

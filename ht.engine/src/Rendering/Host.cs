@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using HT.Engine.Math;
 using HT.Engine.Platform;
 using HT.Engine.Utils;
+using HT.Engine.Utils.Extensions;
 using VulkanCore;
 using VulkanCore.Mvk;
 using VulkanCore.Khr;

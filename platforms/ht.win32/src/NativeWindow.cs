@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 
 using HT.Engine.Math;
+using HT.Engine.Math.Extensions;
 using HT.Engine.Rendering;
 using HT.Engine.Utils;
 using HT.Engine.Platform;

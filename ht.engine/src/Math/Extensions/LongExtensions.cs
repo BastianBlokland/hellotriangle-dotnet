@@ -1,4 +1,4 @@
-namespace HT.Engine.Math
+namespace HT.Engine.Math.Extensions
 {
     public static class LongExtensions
     {
