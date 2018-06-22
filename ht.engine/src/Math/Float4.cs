@@ -11,6 +11,22 @@ namespace HT.Engine.Math
         public static readonly Float4 Zero = new Float4(x: 0f, y: 0f, z: 0f, w: 0f);
         public static readonly Float4 One = new Float4(x: 1f, y: 1f, z: 1f, w: 1f);
 
+        public float this[int i]
+        {
+            get 
+            {
+                switch(i)
+                {
+                    case 0: return X;
+                    case 1: return Y;
+                    case 2: return Z;
+                    case 3: return W;
+                }
+                throw new ArgumentOutOfRangeException(
+                    $"[{nameof(Float4)}] No component at: {i}", nameof(i));
+            }
+        }
+        
         //Alternative names to the components
         public float R => X;
         public float G => Y;

@@ -15,6 +15,20 @@ namespace HT.Engine.Math
         public static readonly Float2 Right = new Float2(x: 1f, y: 0f);
         public static readonly Float2 Left = new Float2(x: -1f, y: 0f);
 
+        public float this[int i]
+        {
+            get 
+            {
+                switch(i)
+                {
+                    case 0: return X;
+                    case 1: return Y;
+                }
+                throw new ArgumentOutOfRangeException(
+                    $"[{nameof(Float2)}] No component at: {i}", nameof(i));
+            }
+        }
+
         //Alternative names to the components
         public float R => X;
         public float G => Y;

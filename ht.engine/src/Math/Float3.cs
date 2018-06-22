@@ -17,6 +17,21 @@ namespace HT.Engine.Math
         public static readonly Float3 Forward = new Float3(x: 0f, y: 0f, z: 1f);
         public static readonly Float3 Backward = new Float3(x: 0f, y: 0f, z: -1f);
 
+        public float this[int i]
+        {
+            get 
+            {
+                switch(i)
+                {
+                    case 0: return X;
+                    case 1: return Y;
+                    case 2: return Z;
+                }
+                throw new ArgumentOutOfRangeException(
+                    $"[{nameof(Float3)}] No component at: {i}", nameof(i));
+            }
+        }
+
         //Alternative names to the components
         public float R => X;
         public float G => Y;

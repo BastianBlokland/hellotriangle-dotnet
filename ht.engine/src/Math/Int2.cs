@@ -15,6 +15,20 @@ namespace HT.Engine.Math
         public static readonly Int2 Right = new Int2(x: 1, y: 0);
         public static readonly Int2 Left = new Int2(x: -1, y: 0);
 
+        public int this[int i]
+        {
+            get 
+            {
+                switch(i)
+                {
+                    case 0: return X;
+                    case 1: return Y;
+                }
+                throw new ArgumentOutOfRangeException(
+                    $"[{nameof(Int2)}] No component at: {i}", nameof(i));
+            }
+        }
+
         public readonly int X;
         public readonly int Y;
 
