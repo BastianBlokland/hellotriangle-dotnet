@@ -11,6 +11,7 @@ namespace HT.Engine.Rendering
     {
         public const int SIZE = Float3.SIZE + Float4.SIZE;
 
+        //Data
         public readonly Float3 Position;
         public readonly Float4 Color;
 
@@ -20,12 +21,14 @@ namespace HT.Engine.Rendering
             Color = color;
         }
 
+        //Tuple deconstruction
         public void Deconstruct(out Float3 position, out Float4 color)
         {
             position = Position;
             color = Color;
         }
 
+        //Equality
         public static bool operator ==(Vertex a, Vertex b) => a.Equals(b);
 
         public static bool operator !=(Vertex a, Vertex b) => !a.Equals(b);
@@ -38,6 +41,7 @@ namespace HT.Engine.Rendering
 
         public override string ToString() => $"(Position: {Position}, Color: {Color})";
 
+        //Shader bindings
         internal static VertexInputBindingDescription GetBindingDescription()
             => new VertexInputBindingDescription(
                 binding: 0,

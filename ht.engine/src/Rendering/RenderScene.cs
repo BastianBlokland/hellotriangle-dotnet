@@ -16,7 +16,10 @@ namespace HT.Engine.Rendering
         private Memory.Copier copier;
         private Memory.Pool vertexMemoryPool;
         private Memory.Pool indexMemoryPool;
+        private Memory.Pool transformationPool;
+        private DescriptorPool descriptorPool;
         private RenderPass renderpass;
+        private Int2 currentSwapchainSize;
         
         public RenderScene(Float4 clearColor, RenderObject[] renderobjects)
         {
@@ -49,7 +52,16 @@ namespace HT.Engine.Rendering
                 logicalDevice, hostDevice, copier, BufferUsages.VertexBuffer);
             indexMemoryPool = new Memory.Pool(
                 logicalDevice, hostDevice, copier, BufferUsages.IndexBuffer);
+            transformationPool = new Memory.Pool(
+                logicalDevice, hostDevice, copier, BufferUsages.IndexBuffer);
 
+            //Create a descriptor pool for the render-objects to create descriptor-sets from
+            descriptorPool = logicalDevice.CreateDescriptorPool(new DescriptorPoolCreateInfo(
+                maxSets: renderobjects.Length,
+                poolSizes: new [] { new DescriptorPoolSize(DescriptorType.UniformBuffer, 1)},
+                flags: DescriptorPoolCreateFlags.None));
+
+            //Create the renderpass
             CreateRenderpass(logicalDevice, surfaceFormat);
 
             //Initialize all the renderobjects
@@ -57,9 +69,11 @@ namespace HT.Engine.Rendering
                 renderobjects[i].Initialize(
                     logicalDevice,
                     hostDevice,
+                    descriptorPool,
                     renderpass,
                     vertexMemoryPool,
-                    indexMemoryPool);
+                    indexMemoryPool,
+                    transformationPool);
             
             initialized = true;
         }
@@ -76,6 +90,7 @@ namespace HT.Engine.Rendering
             Int2 swapchainSize)
         {
             ThrowIfNotInitialized();
+            currentSwapchainSize = swapchainSize;
 
             commandbuffer.CmdBeginRenderPass(new RenderPassBeginInfo(
                 renderPass: renderpass,
@@ -102,17 +117,35 @@ namespace HT.Engine.Rendering
             commandbuffer.CmdEndRenderPass();
         }
 
+        internal void Update()
+        {
+            ThrowIfNotInitialized();
+
+            Float4x4 viewMatrix = Float4x4.CreateTranslation((x: 0f, y: 0f, z: -2));
+            Float4x4 projectionMatrix = Float4x4.CreatePerspectiveProjection(
+                Frustum.CreateFromVerticalAngleAndAspect(
+                    verticalAngle: FloatUtils.DegreesToRadians(45f),
+                    aspect: (float)currentSwapchainSize.X / currentSwapchainSize.Y,
+                    nearDistance: 1f,
+                    farDistance: 100f));
+            
+            for (int i = 0; i < renderobjects.Length; i++)
+                renderobjects[i].Update(viewMatrix, projectionMatrix);
+        }
+
         internal void Deinitialize()
         {
             if (!initialized)
                 throw new Exception(
                     $"[{nameof(RenderScene)}] Unable to deinitialize as we haven't initialized");
 
+            transformationPool.Dispose();
             indexMemoryPool.Dispose();
             vertexMemoryPool.Dispose();
             copier.Dispose();
             renderobjects.DisposeAll();
             renderpass.Dispose();
+            descriptorPool.Dispose();
             initialized = false;
         }
 

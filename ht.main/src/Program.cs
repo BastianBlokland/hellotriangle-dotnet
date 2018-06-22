@@ -37,6 +37,7 @@ namespace HT.Main
                 {
                     nativeApp.Update();
                     
+                    window.Update();
                     bool hasDrawn = window.Draw();
                     if (!hasDrawn)
                         Thread.Sleep(100);

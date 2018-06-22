@@ -4,6 +4,11 @@ namespace HT.Engine.Math
 {
     public static class FloatUtils
     {
+        //Note: constant is: PI / 180;
+        public static float DegreesToRadians(float degrees) => degrees * 0.0174532924f;
+        //Note: constant is: 180 / PI
+        public static float RadiansToDegrees(float radians) => radians * 57.29578f;
+
         public static float Clamp(this float val, float min, float max)
             => val < min ? min : (val > max ? max : val);
 

@@ -77,9 +77,9 @@ namespace HT.Engine.Math
         public static Float3 Normalize(Float3 val)
         {
             float length = val.Magnitude;
-            if(length <= 0f)
+            if (length <= 0f)
                 throw new Exception($"[{nameof(Float3)}] Length must be larger then 0");
-            if(length == 1f)
+            if (length == 1f)
                 return val;
             return val / length;
         }
@@ -88,10 +88,10 @@ namespace HT.Engine.Math
         {
             float sqrLength = val.SquareMagnitude;
             #if DEBUG
-            if(sqrLength <= 0f)
+            if (sqrLength <= 0f)
                 throw new Exception($"[{nameof(Float3)}] Length must be larger then 0");
             #endif
-            if(sqrLength == 1f)
+            if (sqrLength == 1f)
                 return val;
             return val * FloatUtils.FastInverseSquareRoot(sqrLength, precision);
         }

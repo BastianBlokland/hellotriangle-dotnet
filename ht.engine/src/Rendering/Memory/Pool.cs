@@ -59,7 +59,25 @@ namespace HT.Engine.Rendering.Memory
                 memoryProperties: MemoryProperties.HostVisible | MemoryProperties.HostCoherent);
         }
 
-        public Region Allocate<T>(T[] data)
+        public Region Allocate<T>(int count)
+            where T : struct
+        {
+            ThrowIfDisposed();
+
+            long size = Unsafe.SizeOf<T>() * count;
+            if (size > maxStagingSize)
+                throw new Exception(
+                    $"[{nameof(Pool)}] Data of size '{size}' is too big for the staging-buffer");
+            if ((maxPoolSize - currentOffset) < size)
+                throw new Exception($"[{nameof(Pool)}] Not enough space left in the pool");
+
+            //Mark the space as used
+            currentOffset += size;
+
+            return new Region(offset: currentOffset - size, size: size);
+        }
+
+        public void Write<T>(T[] data, Region region)
             where T : struct
         {
             ThrowIfDisposed();
@@ -69,20 +87,18 @@ namespace HT.Engine.Rendering.Memory
             if (data.Length == 0)
                 throw new ArgumentException(
                     $"[{nameof(Pool)}] Given data-array is empty", nameof(data));
-            
-            long size = Unsafe.SizeOf<T>() * data.Length;
-            if (size > maxStagingSize)
-                throw new Exception(
-                    $"[{nameof(Pool)}] Data of size '{size}' is too big for the staging-buffer");
-            if ((maxPoolSize - currentOffset) < size)
-                throw new Exception($"[{nameof(Pool)}] Not enough space left in the pool");
-            
+
+            int dataSize = Unsafe.SizeOf<T>() * data.Length;
+            if(dataSize > region.Size)
+                throw new ArgumentException(
+                    $"[{nameof(Pool)}] Data does not fit in given region", nameof(data));
+
             //Copy the data into the staging buffer
             unsafe
             {
-                void* stagingPointer = stagingMemory.Map(offset: 0, size: size).ToPointer();
+                void* stagingPointer = stagingMemory.Map(offset: 0, size: dataSize).ToPointer();
                 void* dataPointer = Unsafe.AsPointer(ref data[0]);
-                System.Buffer.MemoryCopy(dataPointer, stagingPointer, size, size);
+                System.Buffer.MemoryCopy(dataPointer, stagingPointer, dataSize, dataSize);
                 stagingMemory.Unmap();
             }
 
@@ -91,13 +107,8 @@ namespace HT.Engine.Rendering.Memory
                 source: stagingBuffer, 
                 sourceOffset: 0,
                 destination: poolBuffer,
-                destinationOffset: currentOffset,
-                size: size);
-
-            //Mark the space as used
-            currentOffset += size;
-
-            return new Region(offset: currentOffset - size, size: size);
+                destinationOffset: region.Offset,
+                size: dataSize);
         }
 
         public void Dispose()

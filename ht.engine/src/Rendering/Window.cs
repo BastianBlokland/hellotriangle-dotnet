@@ -82,8 +82,16 @@ namespace HT.Engine.Rendering
             CreateSwapchainSetup();
         }
 
+        public void Update()
+        {
+            ThrowIfDisposed();
+            scene.Update();
+        }
+
         public bool Draw()
         {
+            ThrowIfDisposed();
+
             if (nativeWindow.Minimized)
                 return false;
 
@@ -276,5 +284,11 @@ $@"Swapchain created:
                 RecreateRenderSetup();
         }
         private void OnNativeWindowCloseRequested() => CloseRequested?.Invoke();
+
+        private void ThrowIfDisposed()
+        {
+            if (disposed)
+                throw new Exception($"[{nameof(Window)}] Allready disposed");
+        }
     }
 }
