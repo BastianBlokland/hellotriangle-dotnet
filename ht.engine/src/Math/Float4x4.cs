@@ -75,6 +75,13 @@ namespace HT.Engine.Math
             row2: (0f,      0f,      scale.Z, 0f),
             row3: (0f,      0f,      0f,      1f));
 
+        public static Float4x4 CreateScale(Float3 scale, Float3 centerPoint) => CreateFromRows(
+            //Note: This also does translation to match the centerPoint
+            row0: (scale.X, 0f,      0f,      centerPoint.X * (1 - scale.X)),
+            row1: (0f,      scale.Y, 0f,      centerPoint.Y * (1 - scale.Y)),
+            row2: (0f,      0f,      scale.Z, centerPoint.Z * (1 - scale.Z)),
+            row3: (0f,      0f,      0f,      1f));
+
         //Equality
         public static bool operator ==(Float4x4 a, Float4x4 b) => a.Equals(b);
 
