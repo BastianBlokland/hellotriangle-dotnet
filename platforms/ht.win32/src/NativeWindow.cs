@@ -119,6 +119,7 @@ namespace HT.Win32
         public IntPtr OSInstanceHandle => instanceHandle;
         public IntPtr OSViewHandle => nativeWindowHandle;
 
+        private WindowProcedure windowProcedure;
         private IntPtr instanceHandle;
         private IntPtr nativeWindowClassAtom;
         private IntPtr nativeWindowHandle;
@@ -146,11 +147,16 @@ namespace HT.Win32
             //Gets a handle to our process
             instanceHandle = System.Diagnostics.Process.GetCurrentProcess().Handle;
 
+            //Create a delegate pointing to our callback
+            //NOTE: Its important to keep a reference to this delegate in the class because
+            //otherwise it will be garbage collected but the win-api still has a pointer to it
+            windowProcedure = new WindowProcedure(OnWindowProcedure);
+
             //Create the 'WindowClass' that this window will be bound to
             WindowClassEx windowClass = new WindowClassEx
             (
                 style: Flags.WindowClassStyles.HRedraw | Flags.WindowClassStyles.VRedraw,
-                windowProcedure: WindowProcedure,
+                windowProcedure: windowProcedure,
                 classExtraBytes: 0,
                 windowExtraBytes: 0,
                 instance: instanceHandle,
@@ -256,7 +262,7 @@ namespace HT.Win32
             }
         }
 
-        private IntPtr WindowProcedure(
+        private IntPtr OnWindowProcedure(
             IntPtr windowHandle,
             uint message,
             IntPtr wParam,
