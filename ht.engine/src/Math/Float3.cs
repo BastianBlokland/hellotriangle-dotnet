@@ -69,6 +69,9 @@ namespace HT.Engine.Math
         }
 
         //Arithmetic methods
+        public static float SquareDistance(Float3 a, Float3 b) => (b - a).SquareMagnitude;
+        public static float Distance(Float3 a, Float3 b) => (b - a).Magnitude;
+
         public static Float3 Normalize(Float3 val)
         {
             float length = val.Magnitude;
@@ -86,6 +89,13 @@ namespace HT.Engine.Math
             #endif
             return val * FloatUtils.FastInverseSquareRoot(sqrLength, precision);
         }
+
+        public static Float3 Cross(Float3 a, Float3 b) => new Float3(
+            x: a.Y * b.Z - a.Z * b.Y,
+            y: a.Z * b.X - a.X * b.Z,
+            z: a.X * b.Y - a.Y * b.X);
+
+        public static float Dot(Float3 a, Float3 b) => a.X * b.X + a.Y * b.Y + a.Z * b.Z;
 
         //Arithmetic operators
         public static Float3 operator +(Float3 left, Float3 right)
