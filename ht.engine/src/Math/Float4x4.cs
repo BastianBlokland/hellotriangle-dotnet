@@ -55,6 +55,16 @@ namespace HT.Engine.Math
             Column3 = column3;
         }
 
+        //Tranformations
+        public Float3 TransformVector(Float3 vector)
+            => new Float3(
+                x: vector.X * Column0.X + vector.Y * Column1.X + vector.Z * Column2.X,
+                y: vector.X * Column0.Y + vector.Y * Column1.Y + vector.Z * Column2.Y,
+                z: vector.X * Column0.Z + vector.Y * Column1.Z + vector.Z * Column2.Z);
+
+        public Float3 TransformPoint(Float3 point)
+            => TransformVector(point) + Translation;
+
         //Creation
         public static Float4x4 CreateFromRows(Float4 row0, Float4 row1, Float4 row2, Float4 row3)
             => new Float4x4(
