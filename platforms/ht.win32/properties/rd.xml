@@ -1,0 +1,6 @@
+<!-- For use by the CoreRT compiler -->
+<Directives>
+    <Application>
+        <Assembly Name="HT.Win32" MarshalStructure="All" MarshalDelegate="All" />
+    </Application>
+</Directives>

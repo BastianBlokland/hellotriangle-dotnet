@@ -17,11 +17,12 @@
         
         <!-- 
         CoreRT native compiler
-        Note: Disabled for now as it is lacking some of the support we need (for example getting a 
-        handle to the current process)
-        <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="1.0.0-alpha-*" /> 
+        Note: Disabled for now as its still lacking some marshalling support. I'm tracking 
+        this: 'https://github.com/dotnet/corert/issues/5374' issue which seems similar
+        <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="1.0.0-alpha-*" />
+        <RdXmlFile Include="./properties/rd.xml" />
         -->
-
+       
         <ProjectReference Include="../../ht.engine/ht.engine.csproj" />
         <ProjectReference Include="../../ht.main/ht.main.csproj" />
         
