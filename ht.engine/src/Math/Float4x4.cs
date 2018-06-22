@@ -9,7 +9,7 @@ namespace HT.Engine.Math
         public const int SIZE = Float4.SIZE * 4;
 
         //Presets
-        public static readonly Float4x4 Identity = Float4x4.FromRows(
+        public static readonly Float4x4 Identity = Float4x4.CreateFromRows(
             row0: (1f, 0f, 0f, 0f),
             row1: (0f, 1f, 0f, 0f),
             row2: (0f, 0f, 1f, 0f),
@@ -56,12 +56,24 @@ namespace HT.Engine.Math
         }
 
         //Creation
-        public static Float4x4 FromRows(Float4 row0, Float4 row1, Float4 row2, Float4 row3)
+        public static Float4x4 CreateFromRows(Float4 row0, Float4 row1, Float4 row2, Float4 row3)
             => new Float4x4(
                 column0: (row0.X, row1.X, row2.X, row3.X),
                 column1: (row0.Y, row1.Y, row2.Y, row3.Y),
                 column2: (row0.Z, row1.Z, row2.Z, row3.Z),
                 column3: (row0.W, row1.W, row2.W, row3.W));
+
+        public static Float4x4 CreateTranslation(Float3 translation) => CreateFromRows(
+            row0: (1f, 0f, 0f, translation.X),
+            row1: (0f, 1f, 0f, translation.Y),
+            row2: (0f, 0f, 1f, translation.Z),
+            row3: (0f, 0f, 0f, 1f));
+
+        public static Float4x4 CreateScale(Float3 scale) => CreateFromRows(
+            row0: (scale.X, 0f,      0f,      0f),
+            row1: (0f,      scale.Y, 0f,      0f),
+            row2: (0f,      0f,      scale.Z, 0f),
+            row3: (0f,      0f,      0f,      1f));
 
         //Equality
         public static bool operator ==(Float4x4 a, Float4x4 b) => a.Equals(b);
