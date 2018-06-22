@@ -82,6 +82,18 @@ namespace HT.Engine.Math
             row2: (0f,      0f,      scale.Z, centerPoint.Z * (1 - scale.Z)),
             row3: (0f,      0f,      0f,      1f));
 
+        public static Float4x4 CreateRotationFromAxis(Float3 forward, Float3 up)
+        {
+            Float3 zAxis = Float3.FastNormalize(-forward);
+            Float3 xAxis = Float3.FastNormalize(Float3.Cross(up, zAxis));
+            Float3 yAxis = Float3.Cross(zAxis, xAxis);
+            return CreateFromRows(
+                row0: (xAxis.X, yAxis.X, zAxis.X, 0f),
+                row1: (xAxis.Y, yAxis.Y, zAxis.Y, 0f),
+                row2: (xAxis.Z, yAxis.Z, zAxis.Z, 0f),
+                row3: (0f,      0f,      0f,      1f));
+        }
+
         //Equality
         public static bool operator ==(Float4x4 a, Float4x4 b) => a.Equals(b);
 
