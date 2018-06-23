@@ -9,15 +9,10 @@ namespace HT.Engine.Rendering
     {
         private readonly ShaderProgram vertProg;
         private readonly ShaderProgram fragProg;
-        private readonly Model.Vertex[] vertices;
-        private readonly UInt16[] indices;
+        private readonly Model.Mesh mesh;
         private readonly Float4x4 modelMatrix;
 
         private bool initialized;
-        private Memory.Pool vertexMemoryPool;
-        private Memory.Region vertexMemoryRegion;
-        private Memory.Pool indexMemoryPool;
-        private Memory.Region indexMemoryRegion;
         private Memory.Pool transformationMemoryPool;
         private Memory.Region transformationMemoryRegion;
         private DescriptorSetLayout descriptorSetLayout;
@@ -36,15 +31,17 @@ namespace HT.Engine.Rendering
             this.fragProg = fragProg;
 
             var rng = new Random();
-            this.vertices = new []
-            {
-                new Model.Vertex(position: (-.1f, -.1f, 0f), normal: ColorUtils.GetColor(rng.Next()).XYZ, uv: Float2.Zero),
-                new Model.Vertex(position: (.1f, -.1f, 0f), normal: ColorUtils.GetColor(rng.Next()).XYZ, uv: Float2.Zero),
-                new Model.Vertex(position: (.1f, .1f, 0f), normal: ColorUtils.GetColor(rng.Next()).XYZ, uv: Float2.Zero),
-                new Model.Vertex(position: (-.1f, .1f, 0f), normal: ColorUtils.GetColor(rng.Next()).XYZ, uv: Float2.Zero),
-            };
-            this.indices = new UInt16[] { 0, 1, 2, 2, 3, 0 };
-            this.modelMatrix = Float4x4.CreateTranslation(new Float3(
+            mesh = new Model.Mesh(
+                vertices: new []
+                {
+                    new Model.Vertex(position: (-.1f, -.1f, 0f), normal: ColorUtils.GetColor(rng.Next()).XYZ, uv: Float2.Zero),
+                    new Model.Vertex(position: (.1f, -.1f, 0f), normal: ColorUtils.GetColor(rng.Next()).XYZ, uv: Float2.Zero),
+                    new Model.Vertex(position: (.1f, .1f, 0f), normal: ColorUtils.GetColor(rng.Next()).XYZ, uv: Float2.Zero),
+                    new Model.Vertex(position: (-.1f, .1f, 0f), normal: ColorUtils.GetColor(rng.Next()).XYZ, uv: Float2.Zero),
+                },
+                indices: new UInt16[] { 0, 1, 2, 2, 3, 0 });
+            
+            modelMatrix = Float4x4.CreateTranslation(new Float3(
                 x: (float)(rng.NextDouble() - .5) * 2f, 
                 y: (float)(rng.NextDouble() - .5) * 2f, 
                 z: 0f));
@@ -61,8 +58,7 @@ namespace HT.Engine.Rendering
             HostDevice hostDevice,
             DescriptorPool descriptorPool,
             RenderPass renderpass,
-            Memory.Pool vertexPool,
-            Memory.Pool indexPool,
+            Memory.Pool meshPool,
             Memory.Pool tranformationPool)
         {
             if (logicalDevice == null)
@@ -73,25 +69,16 @@ namespace HT.Engine.Rendering
                 throw new ArgumentNullException(nameof(descriptorPool));
             if (renderpass == null)
                 throw new ArgumentNullException(nameof(renderpass));
-            if (vertexPool == null)
-                throw new ArgumentNullException(nameof(vertexPool));
-            if (indexPool == null)
-                throw new ArgumentNullException(nameof(indexPool));
+            if (meshPool == null)
+                throw new ArgumentNullException(nameof(meshPool));
             if (tranformationPool == null)
                 throw new ArgumentNullException(nameof(tranformationPool));
             if (initialized)
                 throw new Exception(
                     $"[{nameof(RenderObject)}] Allready initialized");
 
-            //Upload the vertices to the gpu
-            vertexMemoryPool = vertexPool;
-            vertexMemoryRegion = vertexPool.Allocate<Model.Vertex>(vertices.Length);
-            vertexPool.Write(vertices, vertexMemoryRegion);
-
-            //Upload the indices to the gpu
-            indexMemoryPool = indexPool;
-            indexMemoryRegion = indexPool.Allocate<UInt16>(indices.Length);
-            indexPool.Write(indices, indexMemoryRegion);
+            //Upload our mesh to the gpu
+            mesh.Upload(meshPool);
 
             //Allocate a region for our transformation
             transformationMemoryPool = tranformationPool;
@@ -107,14 +94,8 @@ namespace HT.Engine.Rendering
 
         internal void Record(CommandBuffer commandbuffer)
         {
-            //Dind data
-            commandbuffer.CmdBindVertexBuffer(
-                vertexMemoryPool.Buffer,
-                vertexMemoryRegion.Offset);
-            commandbuffer.CmdBindIndexBuffer(
-                indexMemoryPool.Buffer,
-                indexMemoryRegion.Offset,
-                IndexType.UInt16);
+            //Bind data
+            mesh.RecordBind(commandbuffer);
             commandbuffer.CmdBindDescriptorSet(
                 PipelineBindPoint.Graphics,
                 pipelineLayout,
@@ -124,11 +105,7 @@ namespace HT.Engine.Rendering
             commandbuffer.CmdBindPipeline(PipelineBindPoint.Graphics, pipeline);
 
             //Draw
-            commandbuffer.CmdDrawIndexed(
-                indexCount: indices.Length,
-                instanceCount: 1,
-                firstIndex: 0,
-                firstInstance: 0);
+            mesh.RecordDraw(commandbuffer);
         }
 
         internal void Update(Float4x4 viewMatrix, Float4x4 projectionMatrix)
@@ -202,14 +179,6 @@ namespace HT.Engine.Rendering
                 new PipelineShaderStageCreateInfo(
                     stage: ShaderStages.Fragment, module: fragModule, name: "main")
             };
-            var vertexInput = new PipelineVertexInputStateCreateInfo(
-                vertexBindingDescriptions: new [] { Model.Vertex.GetBindingDescription() }, 
-                vertexAttributeDescriptions: Model.Vertex.GetAttributeDescriptions() 
-            );
-            var inputAssembly = new PipelineInputAssemblyStateCreateInfo(
-                topology: PrimitiveTopology.TriangleList,
-                primitiveRestartEnable: false
-            );
             var rasterizer = new PipelineRasterizationStateCreateInfo(
                 depthClampEnable: false,
                 polygonMode: PolygonMode.Fill,
@@ -245,8 +214,8 @@ namespace HT.Engine.Rendering
                 renderPass: renderpass,
                 subpass: 0,
                 stages: shaderStages,
-                inputAssemblyState: inputAssembly,
-                vertexInputState: vertexInput,
+                inputAssemblyState: mesh.GetInputAssemblyStateInfo(),
+                vertexInputState: mesh.GetVertexInputStateInfo(),
                 rasterizationState: rasterizer,
                 tessellationState: null,
                 //Pass empty viewport and scissor-rect as we set them dynamically

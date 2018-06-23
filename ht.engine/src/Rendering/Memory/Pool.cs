@@ -8,6 +8,7 @@ namespace HT.Engine.Rendering.Memory
     internal sealed class Pool : IDisposable
     {
         public VulkanCore.Buffer Buffer => poolBuffer;
+        public BufferUsages Usages => usages;
 
         private readonly Device logicalDevice;
         private readonly HostDevice hostDevice;

@@ -14,8 +14,7 @@ namespace HT.Engine.Rendering
 
         private bool initialized;
         private Memory.Copier copier;
-        private Memory.Pool vertexMemoryPool;
-        private Memory.Pool indexMemoryPool;
+        private Memory.Pool meshMemoryPool;
         private Memory.Pool transformationPool;
         private DescriptorPool descriptorPool;
         private RenderPass renderpass;
@@ -48,10 +47,8 @@ namespace HT.Engine.Rendering
 
             //Allocate gpu memory
             copier = new Memory.Copier(logicalDevice, transferQueueFamilyIndex);
-            vertexMemoryPool = new Memory.Pool(
-                logicalDevice, hostDevice, copier, BufferUsages.VertexBuffer);
-            indexMemoryPool = new Memory.Pool(
-                logicalDevice, hostDevice, copier, BufferUsages.IndexBuffer);
+            meshMemoryPool = new Memory.Pool(
+                logicalDevice, hostDevice, copier, BufferUsages.VertexBuffer | BufferUsages.IndexBuffer);
             transformationPool = new Memory.Pool(
                 logicalDevice, hostDevice, copier, BufferUsages.UniformBuffer);
 
@@ -74,8 +71,7 @@ namespace HT.Engine.Rendering
                     hostDevice,
                     descriptorPool,
                     renderpass,
-                    vertexMemoryPool,
-                    indexMemoryPool,
+                    meshMemoryPool,
                     transformationPool);
             
             initialized = true;
@@ -143,8 +139,7 @@ namespace HT.Engine.Rendering
                     $"[{nameof(RenderScene)}] Unable to deinitialize as we haven't initialized");
 
             transformationPool.Dispose();
-            indexMemoryPool.Dispose();
-            vertexMemoryPool.Dispose();
+            meshMemoryPool.Dispose();
             copier.Dispose();
             renderobjects.DisposeAll();
             renderpass.Dispose();
