@@ -40,6 +40,11 @@ namespace HT.Engine.Rendering.Model
             Normal.GetHashCode() ^
             Uv.GetHashCode();
 
+        public bool Approx(Vertex other) =>
+            Position.Approx(other.Position) &&
+            Normal.Approx(other.Normal) &&
+            Uv.Approx(other.Uv);
+
         public override string ToString() => 
             $"(Position: {Position}, Normal: {Normal}, Uv: {Uv})";
 

@@ -1,6 +1,8 @@
 using System;
 using System.Runtime.InteropServices;
 
+using HT.Engine.Math.Extensions;
+
 namespace HT.Engine.Math
 {
     [StructLayout(LayoutKind.Sequential, Size = SIZE)]
@@ -101,6 +103,12 @@ namespace HT.Engine.Math
             Y.GetHashCode() ^
             Z.GetHashCode() ^
             W.GetHashCode();
+
+        public bool Approx(Float4 other, float maxDifference = .0001f) =>
+            X.Approx(other.X, maxDifference) && 
+            Y.Approx(other.Y, maxDifference) && 
+            Z.Approx(other.Z, maxDifference) &&
+            W.Approx(other.W, maxDifference);
 
         public override string ToString() => $"(X: {X}, Y: {Y}, Z: {Z}, W: {W})";
 

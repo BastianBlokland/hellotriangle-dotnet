@@ -94,8 +94,8 @@ namespace HT.Engine.Parsing
 
         protected override Mesh Construct()
         {
-            ResizeArray<Vertex> vertices = new ResizeArray<Vertex>();
-            ResizeArray<UInt16> indices = new ResizeArray<UInt16>();
+            MeshBuilder meshBuilder = new MeshBuilder();
+
             for (int i = 0; i < faces.Count; i++)
             for (int j = 0; j < faces.Data[i].Elements.Length; j++)
             {
@@ -115,17 +115,9 @@ namespace HT.Engine.Parsing
                 else
                     uv = Float2.Zero;
 
-                //Add to our indices set. Currently all vertices have a unique index
-                //TODO: Filter out identical vertices
-                if (vertices.Count >= UInt16.MaxValue)
-                    throw new Exception(
-                        $"[{nameof(WavefrontObjParser)}] Only '{UInt16.MaxValue}' indices are supported");
-                indices.Add((UInt16)vertices.Count);
-
-                //Add to our vertices set
-                vertices.Add(new Vertex(pos, normal, uv));
+                meshBuilder.PushVertex(new Vertex(pos, normal, uv));
             }
-            return new Mesh(vertices.ToArray(), indices.ToArray());
+            return meshBuilder.ToMesh();
         }
 
         private FaceElement ConsumeFaceElement()

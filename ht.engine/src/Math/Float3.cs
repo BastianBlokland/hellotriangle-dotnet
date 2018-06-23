@@ -1,6 +1,8 @@
 using System;
 using System.Runtime.InteropServices;
 
+using HT.Engine.Math.Extensions;
+
 using static System.Math;
 
 namespace HT.Engine.Math
@@ -134,6 +136,11 @@ namespace HT.Engine.Math
         public bool Equals(Float3 other) => other.X == X && other.Y == Y && other.Z == Z;
 
         public override int GetHashCode() => X.GetHashCode() ^ Y.GetHashCode() ^ Z.GetHashCode();
+
+        public bool Approx(Float3 other, float maxDifference = .0001f) =>
+            X.Approx(other.X, maxDifference) && 
+            Y.Approx(other.Y, maxDifference) && 
+            Z.Approx(other.Z, maxDifference);
 
         public override string ToString() => $"(X: {X}, Y: {Y}, Z: {Z})";
 

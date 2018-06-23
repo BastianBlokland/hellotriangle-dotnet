@@ -1,6 +1,8 @@
 using System;
 using System.Runtime.InteropServices;
 
+using HT.Engine.Math.Extensions;
+
 using static System.Math;
 
 namespace HT.Engine.Math
@@ -204,6 +206,12 @@ namespace HT.Engine.Math
             Column1.GetHashCode() ^
             Column2.GetHashCode() ^
             Column3.GetHashCode();
+
+        public bool Approx(Float4x4 other, float maxDifference = .0001f) =>
+            Column0.Approx(other.Column0, maxDifference) && 
+            Column1.Approx(other.Column1, maxDifference) && 
+            Column2.Approx(other.Column2, maxDifference) &&
+            Column3.Approx(other.Column3, maxDifference);
 
         public override string ToString() => 
 $@"(

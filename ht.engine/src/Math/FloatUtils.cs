@@ -1,16 +1,21 @@
 using HT.Engine.Math.Extensions;
 
+using static System.Math;
+
 namespace HT.Engine.Math
 {
     public static class FloatUtils
     {
         public const float PI = 3.14159265359f;
-		public const float DEG_TO_RAD = PI / 180f;
-		public const float RAD_TO_DEG = 180f / PI;
+        public const float DEG_TO_RAD = PI / 180f;
+        public const float RAD_TO_DEG = 180f / PI;
 
         public static float DegreesToRadians(float degrees) => degrees * DEG_TO_RAD;
 
         public static float RadiansToDegrees(float radians) => radians * RAD_TO_DEG;
+
+        public static bool Approx(float a, float b, float maxDifference = .0001f)
+            => Abs(b - a) < maxDifference;
 
         public static float Clamp(this float val, float min, float max)
             => val < min ? min : (val > max ? max : val);
