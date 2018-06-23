@@ -141,25 +141,23 @@ namespace HT.Engine.Math
 
         /// <summary>
         /// Matrix to transform from view-space into clip-space
-        /// Clip space is a cube going from -1 to 1 in all axis. Vertices that fall outside
-        /// of this range are discared. This method creates a matrix to transform from a 
-        /// perspective frustum (which can be calculated with the given parameters) to that clip-space
-        /// For example: items on the near-distance will get z of -1 in clip space.
-        /// 
-        /// Based on:
-        /// https://gamedev.stackexchange.com/questions/120338/what-does-a-perspective-projection-matrix-look-like-in-opengl
+        /// Clip space:
+        /// TopLeft: -1,-1
+        /// BottomRight: 1,1
+        /// MinDepth: 0,
+        /// MaxDepth: 1
         /// </summary>
         public static Float4x4 CreatePerspectiveProjection(Frustum frustum)
         {
             float yScale = 1f / (float)Tan(frustum.VerticalAngle * .5f);
             float xScale = 1f / (float)Tan(frustum.HorizontalAngle * .5f);;
-            float negFarPlane = frustum.FarDistance / (frustum.NearDistance - frustum.FarDistance);
-
+            float far = frustum.FarDistance;
+            float near = frustum.NearDistance;
             return Float4x4.CreateFromRows(
-                row0: (xScale,  0f,      0f,          0f),
-                row1: (0f,      -yScale, 0f,          0f),
-                row2: (0f,      0f,      negFarPlane, frustum.NearDistance * negFarPlane),
-                row3: (0f,      0f,      -1f,         1f));
+                row0: (xScale,  0f,      0f,                 0f),
+                row1: (0f,      -yScale, 0f,                 0f),
+                row2: (0f,      0f,      far / (near - far), (near * far) / (near - far)),
+                row3: (0f,      0f,      -1f,                0f));
         }
 
         //Arithmetic operators

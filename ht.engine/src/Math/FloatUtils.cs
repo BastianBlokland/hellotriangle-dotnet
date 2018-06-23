@@ -20,7 +20,7 @@ namespace HT.Engine.Math
         public static float Lerp(float a, float b, float t) => a + (b - a) * t;
 
         public static float UnLerp(float value, float a, float b)
-            => (a == b) ? 0f : Clamp01((value - a) / (b - a));
+            => (a == b) ? 0f : (value - a) / (b - a);
 
         //Implementation based on: https://en.wikipedia.org/wiki/Fast_inverse_square_root
         public static float FastInverseSquareRoot(float number, int precision = 2)
