@@ -9,7 +9,7 @@ namespace HT.Engine.Rendering
     {
         private readonly ShaderProgram vertProg;
         private readonly ShaderProgram fragProg;
-        private readonly Vertex[] vertices;
+        private readonly Model.Vertex[] vertices;
         private readonly UInt16[] indices;
         private readonly Float4x4 modelMatrix;
 
@@ -38,10 +38,10 @@ namespace HT.Engine.Rendering
             var rng = new Random();
             this.vertices = new []
             {
-                new Vertex(position: (-.1f, -.1f, 0f), color: ColorUtils.GetColor(rng.Next())),
-                new Vertex(position: (.1f, -.1f, 0f), color: ColorUtils.GetColor(rng.Next())),
-                new Vertex(position: (.1f, .1f, 0f), color: ColorUtils.GetColor(rng.Next())),
-                new Vertex(position: (-.1f, .1f, 0f), color: ColorUtils.GetColor(rng.Next())),
+                new Model.Vertex(position: (-.1f, -.1f, 0f), normal: ColorUtils.GetColor(rng.Next()).XYZ, uv: Float2.Zero),
+                new Model.Vertex(position: (.1f, -.1f, 0f), normal: ColorUtils.GetColor(rng.Next()).XYZ, uv: Float2.Zero),
+                new Model.Vertex(position: (.1f, .1f, 0f), normal: ColorUtils.GetColor(rng.Next()).XYZ, uv: Float2.Zero),
+                new Model.Vertex(position: (-.1f, .1f, 0f), normal: ColorUtils.GetColor(rng.Next()).XYZ, uv: Float2.Zero),
             };
             this.indices = new UInt16[] { 0, 1, 2, 2, 3, 0 };
             this.modelMatrix = Float4x4.CreateTranslation(new Float3(
@@ -85,7 +85,7 @@ namespace HT.Engine.Rendering
 
             //Upload the vertices to the gpu
             vertexMemoryPool = vertexPool;
-            vertexMemoryRegion = vertexPool.Allocate<Vertex>(vertices.Length);
+            vertexMemoryRegion = vertexPool.Allocate<Model.Vertex>(vertices.Length);
             vertexPool.Write(vertices, vertexMemoryRegion);
 
             //Upload the indices to the gpu
@@ -203,8 +203,8 @@ namespace HT.Engine.Rendering
                     stage: ShaderStages.Fragment, module: fragModule, name: "main")
             };
             var vertexInput = new PipelineVertexInputStateCreateInfo(
-                vertexBindingDescriptions: new [] { Vertex.GetBindingDescription() }, 
-                vertexAttributeDescriptions: Vertex.GetAttributeDescriptions() 
+                vertexBindingDescriptions: new [] { Model.Vertex.GetBindingDescription() }, 
+                vertexAttributeDescriptions: Model.Vertex.GetAttributeDescriptions() 
             );
             var inputAssembly = new PipelineInputAssemblyStateCreateInfo(
                 topology: PrimitiveTopology.TriangleList,

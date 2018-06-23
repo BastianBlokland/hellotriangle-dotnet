@@ -10,7 +10,8 @@ layout(binding = 0) uniform Transformation
 } trans;
 
 layout(location = 0) in vec3 vertPosition;
-layout(location = 1) in vec4 vertColor;
+layout(location = 0) in vec3 vertNormal;
+layout(location = 1) in vec2 vertUv;
 
 //Output
 out gl_PerVertex
@@ -22,5 +23,5 @@ layout(location = 0) out vec4 fragColor;
 void main()
 {
     gl_Position = trans.projection * trans.view * trans.model * vec4(vertPosition, 1.0);
-    fragColor = vertColor;
+    fragColor = vec4(vertNormal, 1);
 }
