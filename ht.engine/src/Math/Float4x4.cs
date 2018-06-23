@@ -106,6 +106,39 @@ namespace HT.Engine.Math
                 row3: (0f,      0f,      0f,      1f));
         }
 
+        public static Float4x4 CreateRotationFromXAngle(float xAngle)
+        {
+            float cos = (float)Cos(xAngle);
+            float sin = (float)Sin(xAngle);
+            return CreateFromRows(
+                row0: (1f, 0f,  0f,   0f),
+                row1: (0f, cos, -sin, 0f),
+                row2: (0f, sin, cos,  0f),
+                row3: (0f, 0f,  0f,  1f));
+        }
+
+        public static Float4x4 CreateRotationFromYAngle(float yAngle)
+        {
+            float cos = (float)Cos(yAngle);
+            float sin = (float)Sin(yAngle);
+            return CreateFromRows(
+                row0: (cos,  0f, sin, 0f),
+                row1: (0f,   1f, 0f,  0f),
+                row2: (-sin, 0f, cos, 0f),
+                row3: (0f,   0f, 0f,  1f));
+        }
+
+        public static Float4x4 CreateRotationFromZAngle(float zAngle)
+        {
+            float cos = (float)Cos(zAngle);
+            float sin = (float)Sin(zAngle);
+            return CreateFromRows(
+                row0: (cos, -sin, 0f, 0f),
+                row1: (sin, cos,  0f,  0f),
+                row2: (0f,  0f,   1f, 0f),
+                row3: (0f,  0f,   0f,  1f));
+        }
+
         /// <summary>
         /// Matrix to transform from view-space into clip-space
         /// Clip space is a cube going from -1 to 1 in all axis. Vertices that fall outside
