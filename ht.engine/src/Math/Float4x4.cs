@@ -156,10 +156,10 @@ namespace HT.Engine.Math
             float negFarPlane = frustum.FarDistance / (frustum.NearDistance - frustum.FarDistance);
 
             return Float4x4.CreateFromRows(
-                row0: (xScale,  0f,     0f,          0f),
-                row1: (0f,      yScale, 0f,          0f),
-                row2: (0f,      0f,     negFarPlane, frustum.NearDistance * negFarPlane),
-                row3: (0f,      0f,     -1f,         1f));
+                row0: (xScale,  0f,      0f,          0f),
+                row1: (0f,      -yScale, 0f,          0f),
+                row2: (0f,      0f,      negFarPlane, frustum.NearDistance * negFarPlane),
+                row3: (0f,      0f,      -1f,         1f));
         }
 
         //Arithmetic operators
