@@ -4,13 +4,23 @@ namespace HT.Engine.Math
 {
     public static class FloatUtils
     {
-        //Note: constant is: PI / 180;
-        public static float DegreesToRadians(float degrees) => degrees * 0.0174532924f;
-        //Note: constant is: 180 / PI
-        public static float RadiansToDegrees(float radians) => radians * 57.29578f;
+        public const float PI = 3.14159265359f;
+		public const float DEG_TO_RAD = PI / 180f;
+		public const float RAD_TO_DEG = 180f / PI;
+
+        public static float DegreesToRadians(float degrees) => degrees * DEG_TO_RAD;
+
+        public static float RadiansToDegrees(float radians) => radians * RAD_TO_DEG;
 
         public static float Clamp(this float val, float min, float max)
             => val < min ? min : (val > max ? max : val);
+
+        public static float Clamp01(float value) => Clamp(value, 0f, 1f);
+
+        public static float Lerp(float a, float b, float t) => a + (b - a) * t;
+
+        public static float UnLerp(float value, float a, float b)
+            => (a == b) ? 0f : Clamp01((value - a) / (b - a));
 
         //Implementation based on: https://en.wikipedia.org/wiki/Fast_inverse_square_root
         public static float FastInverseSquareRoot(float number, int precision = 2)
