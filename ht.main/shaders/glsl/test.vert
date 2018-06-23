@@ -10,8 +10,8 @@ layout(binding = 0) uniform Transformation
 } trans;
 
 layout(location = 0) in vec3 vertPosition;
-layout(location = 0) in vec3 vertNormal;
-layout(location = 1) in vec2 vertUv;
+layout(location = 1) in vec3 vertNormal;
+layout(location = 2) in vec2 vertUv;
 
 //Output
 out gl_PerVertex
