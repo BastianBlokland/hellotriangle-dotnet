@@ -71,5 +71,12 @@ namespace HT.Engine.Utils
         }
 
         public void Clear() => count = 0;
+
+        public T[] ToArray()
+        {
+            var ret = new T[Count];
+            Array.Copy(data, ret, Count);
+            return ret;
+        }
     }
 }
