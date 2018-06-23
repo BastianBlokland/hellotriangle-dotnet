@@ -25,7 +25,7 @@ namespace HT.Engine.Math
         {
             get 
             {
-                switch(i)
+                switch (i)
                 {
                     case 0: return Column0;
                     case 1: return Column1;
