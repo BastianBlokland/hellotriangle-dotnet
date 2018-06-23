@@ -30,6 +30,8 @@
         "Rasterization",
         "Rasterizer",
         "Rect",
+        "Texcoord",
+        "Texcoords",
         "Unmap",
         "Vulkan",
         "Vulkancore"

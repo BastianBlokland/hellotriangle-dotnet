@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading;
 
 using HT.Engine.Platform;
@@ -12,23 +13,24 @@ namespace HT.Main
     {
         public static void Run(INativeApp nativeApp, Logger logger = null)
         {
+            HT.Engine.Rendering.Model.Mesh mesh;
+            using (var parser = new HT.Engine.Parsing.WavefrontObjParser(nativeApp.ReadFile(Path.Combine("models", "spaceship.obj"))))
+            {
+                mesh = parser.Parse();
+            }
             ShaderProgram vert = new ShaderProgram(nativeApp, "test.vert");
             ShaderProgram frag = new ShaderProgram(nativeApp, "test.frag");
 
-            var objects = new RenderObject[100];
-            for (int i = 0; i < objects.Length; i++)
-                objects[i] = new RenderObject(vert, frag);
-
-            using(var host = new Host(
+            using (var host = new Host(
                 nativeApp: nativeApp,
                 applicationName: "Test",
                 applicationVersion: 1,
                 logger: logger))
-            using(var window = host.CreateWindow(
+            using (var window = host.CreateWindow(
                 windowSize: (x: 800, y: 600),
                 scene: new RenderScene(
                     clearColor: ColorUtils.Black,
-                    renderobjects: objects)))
+                    renderobjects: new [] { new RenderObject(mesh, vert, frag) })))
             {
                 bool running = true;
                 window.CloseRequested += () => running = false;

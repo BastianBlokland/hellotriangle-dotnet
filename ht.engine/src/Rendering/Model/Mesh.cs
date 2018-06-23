@@ -6,6 +6,8 @@ namespace HT.Engine.Rendering.Model
 {
     public sealed class Mesh
     {
+        internal bool Uploaded => uploaded;
+
         private readonly Vertex[] vertices;
         private readonly UInt16[] indices;
 
@@ -79,6 +81,8 @@ namespace HT.Engine.Rendering.Model
             => new PipelineInputAssemblyStateCreateInfo(
                 topology: PrimitiveTopology.TriangleList,
                 primitiveRestartEnable: false);
+
+        internal FrontFace GetFrontFace() => FrontFace.Clockwise;
 
         private void ThrowIfNotUploaded()
         {

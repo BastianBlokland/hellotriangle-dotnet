@@ -38,8 +38,8 @@ namespace HT.Engine.Parsing
                         $"[{nameof(WavefrontObjParser)}] Only works on triangles");
                 //Positions of the vertices that make up this face
                 var pos1 = positions.Data[Elements[0].PositionIndex];
-                var pos2 = positions.Data[Elements[0].PositionIndex];
-                var pos3 = positions.Data[Elements[0].PositionIndex];
+                var pos2 = positions.Data[Elements[1].PositionIndex];
+                var pos3 = positions.Data[Elements[2].PositionIndex];
                 //Take cross product of two edges in this triangle
                 var normal = Float3.Cross(pos2 - pos1, pos3 - pos1);
                 return Float3.FastNormalize(normal);

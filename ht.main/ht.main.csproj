@@ -16,7 +16,13 @@
 
         <ProjectReference Include="../ht.engine/ht.engine.csproj"/>
 
+        <!--Shaders (binary spr-v format-->
         <None Include="shaders/bin/*.spv">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+
+        <!--Models (text obj format-->
+        <None Include="models/*.obj">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         

@@ -7,10 +7,9 @@ namespace HT.Engine.Rendering
 {
     public sealed class RenderObject : IDisposable
     {
+        private readonly Model.Mesh mesh;
         private readonly ShaderProgram vertProg;
         private readonly ShaderProgram fragProg;
-        private readonly Model.Mesh mesh;
-        private readonly Float4x4 modelMatrix;
 
         private bool initialized;
         private Memory.Pool transformationMemoryPool;
@@ -19,32 +18,19 @@ namespace HT.Engine.Rendering
         private DescriptorSet descriptorSet;
         private PipelineLayout pipelineLayout;
         private Pipeline pipeline;
+        private float yAngle;
 
-        public RenderObject(ShaderProgram vertProg, ShaderProgram fragProg)
+        public RenderObject(Model.Mesh mesh, ShaderProgram vertProg, ShaderProgram fragProg)
         {
+            if (mesh == null)
+                throw new ArgumentNullException(nameof(mesh));
             if (vertProg == null)
                 throw new ArgumentNullException(nameof(vertProg));
             if (fragProg == null)
                 throw new ArgumentNullException(nameof(fragProg));
-
+            this.mesh = mesh;
             this.vertProg = vertProg;
             this.fragProg = fragProg;
-
-            var rng = new Random();
-            mesh = new Model.Mesh(
-                vertices: new []
-                {
-                    new Model.Vertex(position: (-.1f, -.1f, 0f), normal: ColorUtils.GetColor(rng.Next()).XYZ, uv: Float2.Zero),
-                    new Model.Vertex(position: (.1f, -.1f, 0f), normal: ColorUtils.GetColor(rng.Next()).XYZ, uv: Float2.Zero),
-                    new Model.Vertex(position: (.1f, .1f, 0f), normal: ColorUtils.GetColor(rng.Next()).XYZ, uv: Float2.Zero),
-                    new Model.Vertex(position: (-.1f, .1f, 0f), normal: ColorUtils.GetColor(rng.Next()).XYZ, uv: Float2.Zero),
-                },
-                indices: new UInt16[] { 0, 1, 2, 2, 3, 0 });
-            
-            modelMatrix = Float4x4.CreateTranslation(new Float3(
-                x: (float)(rng.NextDouble() - .5) * 2f, 
-                y: (float)(rng.NextDouble() - .5) * 2f, 
-                z: 0f));
         }
 
         public void Dispose()
@@ -78,7 +64,8 @@ namespace HT.Engine.Rendering
                     $"[{nameof(RenderObject)}] Allready initialized");
 
             //Upload our mesh to the gpu
-            mesh.Upload(meshPool);
+            if (!mesh.Uploaded)
+                mesh.Upload(meshPool);
 
             //Allocate a region for our transformation
             transformationMemoryPool = tranformationPool;
@@ -112,8 +99,9 @@ namespace HT.Engine.Rendering
         {
             ThrowIfNotInitialized();
 
+            yAngle += FloatUtils.DegreesToRadians(.5f);
             Transformation trans = new Transformation(
-                model: modelMatrix,
+                model: Float4x4.CreateRotationFromYAngle(yAngle),
                 view: viewMatrix,
                 projection: projectionMatrix);
             transformationMemoryPool.Write(new [] { trans }, transformationMemoryRegion);
@@ -183,7 +171,7 @@ namespace HT.Engine.Rendering
                 depthClampEnable: false,
                 polygonMode: PolygonMode.Fill,
                 cullMode: CullModes.Back,
-                frontFace: FrontFace.Clockwise,
+                frontFace: mesh.GetFrontFace(),
                 lineWidth: 1f
             );
             var blending = new PipelineColorBlendStateCreateInfo(
