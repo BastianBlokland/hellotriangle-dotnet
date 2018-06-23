@@ -14,7 +14,9 @@ namespace HT.Main
         public static void Run(INativeApp nativeApp, Logger logger = null)
         {
             HT.Engine.Rendering.Model.Mesh mesh;
-            using (var parser = new HT.Engine.Parsing.WavefrontObjParser(nativeApp.ReadFile(Path.Combine("models", "spaceship.obj"))))
+            using (var parser = new HT.Engine.Parsing.WavefrontObjParser(
+                inputStream: nativeApp.ReadFile(Path.Combine("models", "spaceship.obj")), 
+                scale: .05f))
             {
                 mesh = parser.Parse();
             }

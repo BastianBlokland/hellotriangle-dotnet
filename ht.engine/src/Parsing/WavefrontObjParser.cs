@@ -48,13 +48,15 @@ namespace HT.Engine.Parsing
             public Face(FaceElement[] elements) => Elements = elements;
         }
 
+        private readonly float scale;
         private readonly ResizeArray<Float3> positions = new ResizeArray<Float3>();
         private readonly ResizeArray<Float3> normals = new ResizeArray<Float3>();
         private readonly ResizeArray<Float2> texcoords = new ResizeArray<Float2>();
         private readonly ResizeArray<Face> faces = new ResizeArray<Face>();
         private readonly ResizeArray<FaceElement> elementCache = new ResizeArray<FaceElement>();
 
-        public WavefrontObjParser(Stream inputStream) : base(inputStream) { }
+        public WavefrontObjParser(Stream inputStream, float scale = 1f) : base(inputStream) 
+            => this.scale = scale;
 
         protected override void ConsumeToken()
         {
@@ -63,7 +65,7 @@ namespace HT.Engine.Parsing
             ConsumeWhitespace(); //Ignore whitespace after the id
             switch (id)
             {
-                case "v": positions.Add(ConsumeFloat3()); break;
+                case "v": positions.Add(ConsumeFloat3() * scale); break;
                 case "vn": normals.Add(ConsumeFloat3()); break;
                 case "vt": texcoords.Add(ConsumeFloat2()); break;
                 case "f":

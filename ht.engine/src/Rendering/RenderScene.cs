@@ -125,7 +125,7 @@ namespace HT.Engine.Rendering
                 Frustum.CreateFromVerticalAngleAndAspect(
                     verticalAngle: FloatUtils.DegreesToRadians(45f),
                     aspect: (float)currentSwapchainSize.X / currentSwapchainSize.Y,
-                    nearDistance: 1f,
+                    nearDistance: .1f,
                     farDistance: 100f));
             
             for (int i = 0; i < renderobjects.Length; i++)
