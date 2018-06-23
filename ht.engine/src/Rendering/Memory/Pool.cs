@@ -96,7 +96,7 @@ namespace HT.Engine.Rendering.Memory
                     $"[{nameof(Pool)}] Given data-array is empty", nameof(data));
 
             int dataSize = Unsafe.SizeOf<T>() * data.Length;
-            if(dataSize > region.Size)
+            if (dataSize > region.Size)
                 throw new ArgumentException(
                     $"[{nameof(Pool)}] Data does not fit in given region", nameof(data));
 

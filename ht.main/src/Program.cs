@@ -33,7 +33,7 @@ namespace HT.Main
                 bool running = true;
                 window.CloseRequested += () => running = false;
 
-                while(running)
+                while (running)
                 {
                     nativeApp.Update();
                     

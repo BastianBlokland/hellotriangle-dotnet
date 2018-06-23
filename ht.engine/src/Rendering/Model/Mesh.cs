@@ -23,14 +23,14 @@ namespace HT.Engine.Rendering.Model
         internal void Upload(Memory.Pool memoryPool)
         {
             //Sanity check that the given pool supports vertices and indices
-            if(!memoryPool.Usages.HasFlag(BufferUsages.VertexBuffer))
+            if (!memoryPool.Usages.HasFlag(BufferUsages.VertexBuffer))
                 throw new ArgumentException(
                     $"[{nameof(Mesh)}] Given pool cannot contain a vertex-buffer", nameof(memoryPool));
-            if(!memoryPool.Usages.HasFlag(BufferUsages.IndexBuffer))
+            if (!memoryPool.Usages.HasFlag(BufferUsages.IndexBuffer))
                 throw new ArgumentException(
                     $"[{nameof(Mesh)}] Given pool cannot contain a index-buffer", nameof(memoryPool));
             //Only upload to the gpu once
-            if(uploaded)
+            if (uploaded)
                 throw new Exception($"[{nameof(Mesh)}] Allready uploaded");
 
             //Save the pool so we know to what buffer we've uploaded the data
@@ -82,7 +82,7 @@ namespace HT.Engine.Rendering.Model
 
         private void ThrowIfNotUploaded()
         {
-            if(!uploaded)
+            if (!uploaded)
                 throw new Exception($"[{nameof(Mesh)}] Data has not been upload yet");
         }
     }
