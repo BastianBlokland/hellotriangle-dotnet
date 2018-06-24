@@ -105,7 +105,7 @@ namespace HT.Engine.Rendering
 
         internal void ClearUpload()
         {
-            if(uploaded)
+            if (uploaded)
             {
                 imageSampler.Dispose();
                 imageView.Dispose();

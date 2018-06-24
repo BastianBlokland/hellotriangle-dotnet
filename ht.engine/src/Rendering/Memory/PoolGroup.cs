@@ -55,7 +55,7 @@ namespace HT.Engine.Rendering.Memory
         {
             //Get existing pool
             for (int i = 0; i < pools.Count; i++)
-                if(pools[i].IsSupported(requirements))
+                if (pools[i].IsSupported(requirements))
                     return pools[i];
             
             //Create a new pool for this requirement

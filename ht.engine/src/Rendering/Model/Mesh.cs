@@ -52,7 +52,7 @@ namespace HT.Engine.Rendering.Model
 
         internal void ClearUpload()
         {
-            if(uploaded)
+            if (uploaded)
             {
                 vertexBuffer.Dispose();
                 indexBuffer.Dispose();

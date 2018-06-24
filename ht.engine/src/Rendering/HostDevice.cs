@@ -101,6 +101,19 @@ namespace HT.Engine.Rendering
             return PresentModeKhr.Fifo;
         }
 
+        internal bool IsFormatSupported(Format format, ImageTiling tiling, FormatFeatures features)
+        {
+            var properties = physicalDevice.GetFormatProperties(format);
+            switch(tiling)
+            {
+                case ImageTiling.Linear:
+                    return (properties.LinearTilingFeatures & features) == features;
+                case ImageTiling.Optimal:
+                    return (properties.OptimalTilingFeatures & features) == features;
+            }
+            return false;
+        }
+
         internal (Device logicalDevice, Queue graphicsQueue, Queue presentQueue) CreateLogicalDevice(
             SurfaceKhr surface, HostDeviceRequirements deviceRequirements)
         {
@@ -160,7 +173,7 @@ namespace HT.Engine.Rendering
 
         internal bool AreRequirementsMet(HostDeviceRequirements requirements)
         {
-            if(requirements.SamplerAnisotropy && !supportedFeatures.SamplerAnisotropy)
+            if (requirements.SamplerAnisotropy && !supportedFeatures.SamplerAnisotropy)
                 return false;
             return true;
         }

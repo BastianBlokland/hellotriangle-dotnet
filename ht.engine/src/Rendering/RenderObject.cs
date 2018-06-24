@@ -205,6 +205,13 @@ namespace HT.Engine.Rendering
                 new PipelineShaderStageCreateInfo(
                     stage: ShaderStages.Fragment, module: fragModule, name: "main")
             };
+            var depthTest = new PipelineDepthStencilStateCreateInfo {
+                DepthTestEnable = true,
+                DepthWriteEnable = true,
+                DepthCompareOp = CompareOp.Less,
+                DepthBoundsTestEnable = false,
+                StencilTestEnable = false
+            };
             var rasterizer = new PipelineRasterizationStateCreateInfo(
                 depthClampEnable: false,
                 polygonMode: PolygonMode.Fill,
@@ -247,7 +254,7 @@ namespace HT.Engine.Rendering
                 //Pass empty viewport and scissor-rect as we set them dynamically
                 viewportState: new PipelineViewportStateCreateInfo(new Viewport(), new Rect2D()),
                 multisampleState: multisampleState,
-                depthStencilState: null,
+                depthStencilState: depthTest,
                 colorBlendState: blending,
                 dynamicState: dynamicState,
                 flags: PipelineCreateFlags.None

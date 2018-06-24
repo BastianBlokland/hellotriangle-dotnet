@@ -66,7 +66,7 @@ namespace HT.Engine.Rendering.Memory
             BeginCopyRecord();
             {
                 //Transition the image into the transfer-destination layout
-                TransitionImageLayout(
+                RecordImageLayoutBarrier(
                     image: destination,
                     subresource: subresource,
                     oldLayout: ImageLayout.Undefined,
@@ -89,11 +89,26 @@ namespace HT.Engine.Rendering.Memory
                             depth: 1)});
                 
                 //Transition the image to the target layout
-                TransitionImageLayout(
+                RecordImageLayoutBarrier(
                     image: destination,
                     subresource: subresource,
                     oldLayout: ImageLayout.TransferDstOptimal,
                     newLayout: destinationLayout);
+            }
+            EndCopyRecord();
+        }
+
+        public void TransitionImageLayout(
+            Image image, 
+            ImageSubresourceLayers subresource,
+            ImageLayout oldLayout,
+            ImageLayout newLayout)
+        {
+            if (image == null)
+                throw new ArgumentNullException(nameof(image));
+            BeginCopyRecord();
+            {
+                RecordImageLayoutBarrier(image, subresource, oldLayout, newLayout);
             }
             EndCopyRecord();
         }
@@ -136,14 +151,13 @@ namespace HT.Engine.Rendering.Memory
             copyFence.Reset();
         }
 
-        private void TransitionImageLayout(
+        public void RecordImageLayoutBarrier(
             Image image, 
             ImageSubresourceLayers subresource,
             ImageLayout oldLayout,
             ImageLayout newLayout)
         {
             //Get where this transition has to wait and what has to wait for this transition
-            //At the moment only two cases are handle (undefined -> transfer) and (transfer -> shader-read)
             Accesses sourceAccess, destinationAccess;
             PipelineStages sourcePipelineStages, destinationPipelineStages;
             if (oldLayout == ImageLayout.Undefined && newLayout == ImageLayout.TransferDstOptimal)
@@ -152,6 +166,14 @@ namespace HT.Engine.Rendering.Memory
                 destinationAccess = Accesses.TransferWrite;
                 sourcePipelineStages = PipelineStages.TopOfPipe;
                 destinationPipelineStages = PipelineStages.Transfer;
+            }
+            else
+            if (oldLayout == ImageLayout.Undefined && newLayout == ImageLayout.DepthStencilAttachmentOptimal)
+            {
+                sourceAccess = Accesses.None;
+                destinationAccess = Accesses.DepthStencilAttachmentRead | Accesses.DepthStencilAttachmentWrite;
+                sourcePipelineStages = PipelineStages.TopOfPipe;
+                destinationPipelineStages = PipelineStages.EarlyFragmentTests;
             }
             else
             if (oldLayout == ImageLayout.TransferDstOptimal && newLayout == ImageLayout.ShaderReadOnlyOptimal)

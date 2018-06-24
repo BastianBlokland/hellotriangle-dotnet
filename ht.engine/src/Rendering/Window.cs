@@ -140,6 +140,7 @@ namespace HT.Engine.Rendering
         private void CreateSwapchainSetup()
         {
             CreateSwapchain(nativeWindow.ClientRect.Size);
+            scene.SetupSwapchain(swapchainSize);
             CreateFramebuffers();
             CreateCommandbuffers();
             CreateSynchronizationObjects();
@@ -243,14 +244,7 @@ $@"Swapchain created:
         {
             framebuffers = new Framebuffer[swapchainImages.Length];
             for (int i = 0; i < framebuffers.Length; i++)
-            {
-                framebuffers[i] = scene.CreateFramebuffer(
-                    new FramebufferCreateInfo(
-                        attachments: new [] { swapchainImageViews[i] },
-                        width: swapchainSize.X,
-                        height: swapchainSize.Y,
-                        layers: 1));
-            }
+                framebuffers[i] = scene.CreateFramebuffer(swapchainImageViews[i], swapchainSize);
         }
 
         private void CreateCommandbuffers()
@@ -265,7 +259,7 @@ $@"Swapchain created:
             {
                 commandbuffers[i].Begin(new CommandBufferBeginInfo(flags: CommandBufferUsages.None));
 
-                scene.Record(commandbuffers[i], framebuffers[i], swapchainSize);
+                scene.Record(commandbuffers[i], framebuffers[i]);
 
                 commandbuffers[i].End();
             }
