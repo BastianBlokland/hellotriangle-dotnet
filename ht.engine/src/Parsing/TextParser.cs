@@ -9,7 +9,7 @@ namespace HT.Engine.Parsing
     /// <summary>
     /// Base class for a single pass text parser
     /// </summary>
-    public abstract class TextParser<T> : IDisposable
+    public abstract class TextParser<T> : IParser<T>, IDisposable
     {
         protected struct Entry
         {
