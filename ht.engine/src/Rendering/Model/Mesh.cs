@@ -26,7 +26,7 @@ namespace HT.Engine.Rendering.Model
 
         internal void Upload(
             Device logicalDevice,
-            Memory.Pool memoryPool,
+            Memory.PoolGroup memoryGroup,
             Memory.StagingBuffer stagingBuffer)
         {
             if (logicalDevice == null)
@@ -35,7 +35,7 @@ namespace HT.Engine.Rendering.Model
             //Upload our vertices
             vertexBuffer = new Memory.DeviceBuffer(
                 logicalDevice: logicalDevice,
-                memoryPool: memoryPool,
+                memoryGroup: memoryGroup,
                 size: vertices.GetSize(),
                 usages: BufferUsages.VertexBuffer);
             stagingBuffer.Upload(vertices, vertexBuffer);
@@ -43,7 +43,7 @@ namespace HT.Engine.Rendering.Model
             //Upload our indices
             indexBuffer = new Memory.DeviceBuffer(
                 logicalDevice: logicalDevice,
-                memoryPool: memoryPool,
+                memoryGroup: memoryGroup,
                 size: indices.GetSize(),
                 usages: BufferUsages.IndexBuffer);
             stagingBuffer.Upload(indices, indexBuffer);

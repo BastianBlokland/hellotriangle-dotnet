@@ -7,6 +7,10 @@ namespace HT.Engine.Rendering.Memory
 {
     internal sealed class Pool : IDisposable
     {
+        //Helper properties
+        public DeviceMemory Memory => memory;
+
+        //Data
         private readonly long poolSize;
         private readonly int memoryTypeIndex;
         private readonly DeviceMemory memory;
@@ -14,7 +18,11 @@ namespace HT.Engine.Rendering.Memory
         private long currentOffset;
         private bool disposed;
 
-        internal Pool(Device logicalDevice, HostDevice hostDevice, long size = 67_108_864)
+        internal Pool(
+            Device logicalDevice,
+            HostDevice hostDevice,
+            int supportedMemoryTypesFilter,
+            long size = 134_217_728)
         {
             if (logicalDevice == null)
                 throw new ArgumentNullException(nameof(logicalDevice));
@@ -23,30 +31,17 @@ namespace HT.Engine.Rendering.Memory
             this.poolSize = size;
 
             //Find the memory type on the gpu to place this pool in
-            memoryTypeIndex = hostDevice.GetMemoryType(MemoryProperties.DeviceLocal);
+            memoryTypeIndex = hostDevice.GetMemoryType(
+                properties: MemoryProperties.DeviceLocal,
+                supportedTypesFilter: supportedMemoryTypesFilter);
             //Allocate the memory
             memory = logicalDevice.AllocateMemory(new MemoryAllocateInfo(
                 allocationSize: size,
                 memoryTypeIndex: memoryTypeIndex));
         }
 
-        public void AllocateAndBind(VulkanCore.Image image)
-        {
-            ThrowIfDisposed();
-
-            var memRequirements = image.GetMemoryRequirements();
-            var memRegion = Allocate(memRequirements);
-            image.BindMemory(memory, memRegion.Offset);
-        }
-
-        public void AllocateAndBind(VulkanCore.Buffer buffer)
-        {
-            ThrowIfDisposed();
-
-            var memRequirements = buffer.GetMemoryRequirements();
-            var memRegion = Allocate(memRequirements);
-            buffer.BindMemory(memory, memRegion.Offset);
-        }
+        public bool IsSupported(MemoryRequirements requirements)
+            => requirements.MemoryTypeBits.HasBitSet(memoryTypeIndex);
 
         public Region Allocate(MemoryRequirements requirements)
         {

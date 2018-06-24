@@ -52,7 +52,7 @@ namespace HT.Engine.Rendering
             HostDevice hostDevice,
             DescriptorPool descriptorPool,
             RenderPass renderpass,
-            Memory.Pool memoryPool,
+            Memory.PoolGroup memoryGroup,
             Memory.StagingBuffer stagingBuffer)
         {
             if (logicalDevice == null)
@@ -63,8 +63,8 @@ namespace HT.Engine.Rendering
                 throw new ArgumentNullException(nameof(descriptorPool));
             if (renderpass == null)
                 throw new ArgumentNullException(nameof(renderpass));
-            if (memoryPool == null)
-                throw new ArgumentNullException(nameof(memoryPool));
+            if (memoryGroup == null)
+                throw new ArgumentNullException(nameof(memoryGroup));
             if (stagingBuffer == null)
                 throw new ArgumentNullException(nameof(stagingBuffer));
             if (initialized)
@@ -75,16 +75,16 @@ namespace HT.Engine.Rendering
 
             //Upload our mesh to the gpu
             if (!mesh.Uploaded)
-                mesh.Upload(logicalDevice, memoryPool, stagingBuffer);
+                mesh.Upload(logicalDevice, memoryGroup, stagingBuffer);
 
             //Upload our texture to the gpu
             if (!texture.Uploaded)
-                texture.Upload(logicalDevice, memoryPool, stagingBuffer);
+                texture.Upload(logicalDevice, memoryGroup, stagingBuffer);
 
             //Allocate a buffer for our transformation
             transformationBuffer = new Memory.DeviceBuffer(
                 logicalDevice: logicalDevice,
-                memoryPool: memoryPool,
+                memoryGroup: memoryGroup,
                 size: Transformation.SIZE,
                 usages: BufferUsages.UniformBuffer);
 

@@ -16,7 +16,7 @@ namespace HT.Engine.Rendering
 
         private bool initialized;
         private Memory.Copier copier;
-        private Memory.Pool memoryPool;
+        private Memory.PoolGroup memoryGroup;
         private Memory.StagingBuffer stagingBuffer;
         private DescriptorPool descriptorPool;
         private RenderPass renderpass;
@@ -49,7 +49,7 @@ namespace HT.Engine.Rendering
 
             //Allocate gpu memory
             copier = new Memory.Copier(logicalDevice, transferQueueFamilyIndex);
-            memoryPool = new Memory.Pool(logicalDevice, hostDevice);
+            memoryGroup = new Memory.PoolGroup(logicalDevice, hostDevice);
             stagingBuffer = new Memory.StagingBuffer(logicalDevice, hostDevice, copier);
 
             //Create a descriptor pool for the render-objects to create descriptor-sets from
@@ -72,7 +72,7 @@ namespace HT.Engine.Rendering
                     hostDevice,
                     descriptorPool,
                     renderpass,
-                    memoryPool,
+                    memoryGroup,
                     stagingBuffer);
             
             initialized = true;
@@ -143,7 +143,7 @@ namespace HT.Engine.Rendering
             renderpass.Dispose();
             descriptorPool.Dispose();
             stagingBuffer.Dispose();
-            memoryPool.Dispose();
+            memoryGroup.Dispose();
             copier.Dispose();
             initialized = false;
         }
