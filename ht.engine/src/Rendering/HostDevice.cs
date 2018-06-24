@@ -19,6 +19,7 @@ namespace HT.Engine.Rendering
         private readonly Logger logger;
         private readonly PhysicalDeviceProperties properties;
         private readonly PhysicalDeviceMemoryProperties deviceMemoryProperties;
+        private readonly PhysicalDeviceFeatures supportedFeatures;
         private readonly ExtensionProperties[] availableExtensions;
         private readonly QueueFamilyProperties[] queueFamilies;
 
@@ -34,9 +35,10 @@ namespace HT.Engine.Rendering
             this.logger = logger;
             this.properties = vulkanPhysicaldevice.GetProperties();
             this.deviceMemoryProperties = vulkanPhysicaldevice.GetMemoryProperties();
+            this.supportedFeatures = vulkanPhysicaldevice.GetFeatures();
             this.availableExtensions = vulkanPhysicaldevice.EnumerateExtensionProperties();
             this.queueFamilies = vulkanPhysicaldevice.GetQueueFamilyProperties();
-
+            
             logger?.Log(nameof(HostDevice), $"Found device: {Name}");
             logger?.LogList(nameof(HostDevice), $"{Name} available extensions:", availableExtensions);
         }
@@ -100,8 +102,12 @@ namespace HT.Engine.Rendering
         }
 
         internal (Device logicalDevice, Queue graphicsQueue, Queue presentQueue) CreateLogicalDevice(
-            SurfaceKhr surface)
+            SurfaceKhr surface, HostDeviceRequirements deviceRequirements)
         {
+            if (!AreRequirementsMet(deviceRequirements))
+                throw new Exception(
+                    $"[{nameof(HostDevice)}] Device '{Name}' does not support all device-requirements");
+
             string[] requiredExtensions = GetRequiredExtensions(surfaceType);
             if (!AreExtensionsAvailable(requiredExtensions))
                 throw new Exception(
@@ -130,7 +136,7 @@ namespace HT.Engine.Rendering
             VulkanCore.DeviceCreateInfo createInfo = new VulkanCore.DeviceCreateInfo(
                 queueCreateInfos: queueCreateInfos.ToArray(),
                 enabledExtensionNames: requiredExtensions,
-                enabledFeatures: new PhysicalDeviceFeatures() //No special features required atm
+                enabledFeatures: deviceRequirements.GetRequiredFeatures()
             );
             Device logicalDevice = physicalDevice.CreateDevice(createInfo);
             Queue graphicsQueue = logicalDevice.GetQueue(graphicsQueueFamilyIndex.Value, queueIndex: 0);
@@ -150,6 +156,13 @@ namespace HT.Engine.Rendering
             }
 
             return (logicalDevice, graphicsQueue, presentQueue);
+        }
+
+        internal bool AreRequirementsMet(HostDeviceRequirements requirements)
+        {
+            if(requirements.SamplerAnisotropy && !supportedFeatures.SamplerAnisotropy)
+                return false;
+            return true;
         }
 
         internal bool IsSurfaceSupported(SurfaceKhr surface)

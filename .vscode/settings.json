@@ -19,6 +19,7 @@
 
     //White-listed words for the 'Code spell checker' plugin
     "cSpell.words": [
+        "Anisotropy",
         "Cdecl",
         "Deinitialize",
         "Deinitializing",
@@ -27,6 +28,7 @@
         "LUNARG",
         "Lerp",
         "Macos",
+        "Mipmap",
         "Moltenvk",
         "Rasterization",
         "Rasterizer",
@@ -34,6 +36,7 @@
         "Texcoord",
         "Texcoords",
         "Unmap",
+        "Unnormalized",
         "Vulkan",
         "Vulkancore",
         "bgra",

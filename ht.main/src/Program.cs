@@ -20,6 +20,12 @@ namespace HT.Main
             {
                 mesh = parser.Parse();
             }
+            HT.Engine.Rendering.Texture texture;
+            using (var parser = new HT.Engine.Parsing.TruevisionTgaParser(
+                inputStream: nativeApp.ReadFile(Path.Combine("textures", "spaceship_color.tga"))))
+            {
+                texture = parser.Parse();
+            }
             ShaderProgram vert = new ShaderProgram(nativeApp, "test.vert");
             ShaderProgram frag = new ShaderProgram(nativeApp, "test.frag");
 
@@ -32,7 +38,7 @@ namespace HT.Main
                 windowSize: (x: 800, y: 600),
                 scene: new RenderScene(
                     clearColor: ColorUtils.Black,
-                    renderobjects: new [] { new RenderObject(mesh, vert, frag) })))
+                    renderobjects: new [] { new RenderObject(mesh, texture, vert, frag) })))
             {
                 bool running = true;
                 window.CloseRequested += () => running = false;

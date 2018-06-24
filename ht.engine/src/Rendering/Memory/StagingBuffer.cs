@@ -54,7 +54,7 @@ namespace HT.Engine.Rendering.Memory
         }
 
         public void Upload<T>(T[] data, Image destination, ImageLayout destinationLayout,
-            ImageSubresourceLayers subResource,
+            ImageSubresourceLayers subresource,
             Int2 imageExtents)
             where T : struct
         {
@@ -68,7 +68,7 @@ namespace HT.Engine.Rendering.Memory
                 source: buffer,
                 destination: destination,
                 destinationLayout: destinationLayout,
-                subResource: subResource,
+                subresource: subresource,
                 imageExtents: imageExtents);
         }
 

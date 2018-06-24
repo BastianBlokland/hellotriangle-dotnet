@@ -62,8 +62,12 @@ namespace HT.Engine.Rendering
             nativeWindow.Resized += OnNativeWindowResized;
 
             //Create a logical device (and queues on the device)
-            (logicalDevice, graphicsQueue, presentQueue) = hostDevice.CreateLogicalDevice(surface);
+            (logicalDevice, graphicsQueue, presentQueue) = hostDevice.CreateLogicalDevice(
+                surface: surface, 
+                deviceRequirements: scene.DeviceRequirements);
+            //Get a presentmode to use
             presentMode = hostDevice.GetPresentMode(surface);
+            //Get the surfaceformat to use
             (surfaceFormat, surfaceColorspace) = hostDevice.GetSurfaceFormat(surface);
 
             //Create a command-pool attached to this device

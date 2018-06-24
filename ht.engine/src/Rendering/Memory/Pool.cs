@@ -30,6 +30,15 @@ namespace HT.Engine.Rendering.Memory
                 memoryTypeIndex: memoryTypeIndex));
         }
 
+        public void AllocateAndBind(VulkanCore.Image image)
+        {
+            ThrowIfDisposed();
+
+            var memRequirements = image.GetMemoryRequirements();
+            var memRegion = Allocate(memRequirements);
+            image.BindMemory(memory, memRegion.Offset);
+        }
+
         public void AllocateAndBind(VulkanCore.Buffer buffer)
         {
             ThrowIfDisposed();

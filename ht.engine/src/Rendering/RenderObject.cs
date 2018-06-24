@@ -8,6 +8,7 @@ namespace HT.Engine.Rendering
     public sealed class RenderObject : IDisposable
     {
         private readonly Model.Mesh mesh;
+        private readonly Texture texture;
         private readonly ShaderProgram vertProg;
         private readonly ShaderProgram fragProg;
 
@@ -20,15 +21,22 @@ namespace HT.Engine.Rendering
         private Pipeline pipeline;
         private float yAngle;
 
-        public RenderObject(Model.Mesh mesh, ShaderProgram vertProg, ShaderProgram fragProg)
+        public RenderObject(
+            Model.Mesh mesh,
+            Texture texture,
+            ShaderProgram vertProg,
+            ShaderProgram fragProg)
         {
             if (mesh == null)
                 throw new ArgumentNullException(nameof(mesh));
+            if (texture == null)
+                throw new ArgumentNullException(nameof(texture));
             if (vertProg == null)
                 throw new ArgumentNullException(nameof(vertProg));
             if (fragProg == null)
                 throw new ArgumentNullException(nameof(fragProg));
             this.mesh = mesh;
+            this.texture = texture;
             this.vertProg = vertProg;
             this.fragProg = fragProg;
         }
@@ -68,6 +76,10 @@ namespace HT.Engine.Rendering
             //Upload our mesh to the gpu
             if (!mesh.Uploaded)
                 mesh.Upload(logicalDevice, memoryPool, stagingBuffer);
+
+            //Upload our texture to the gpu
+            if (!texture.Uploaded)
+                texture.Upload(logicalDevice, memoryPool, stagingBuffer);
 
             //Allocate a buffer for our transformation
             transformationBuffer = new Memory.DeviceBuffer(
@@ -120,6 +132,7 @@ namespace HT.Engine.Rendering
             
             transformationBuffer.Dispose();
             mesh.ClearUpload();
+            texture.ClearUpload();
             descriptorSetLayout.Dispose();
             pipelineLayout.Dispose();
             pipeline.Dispose();
@@ -129,20 +142,28 @@ namespace HT.Engine.Rendering
         private void CreateDescriptorSet(Device logicalDevice, DescriptorPool descriptorPool)
         {
             //Create layout
-            var transformationBinding = new DescriptorSetLayoutBinding(
-                binding: 0,
-                descriptorType: DescriptorType.UniformBuffer,
-                descriptorCount: 1,
-                stageFlags: ShaderStages.Vertex);
-
             descriptorSetLayout = logicalDevice.CreateDescriptorSetLayout(
-                new DescriptorSetLayoutCreateInfo(bindings: transformationBinding));
+                new DescriptorSetLayoutCreateInfo(
+                    bindings: new []
+                    { 
+                        new DescriptorSetLayoutBinding(
+                            binding: 0,
+                            descriptorType: DescriptorType.UniformBuffer,
+                            descriptorCount: 1,
+                            stageFlags: ShaderStages.Vertex),
+                        new DescriptorSetLayoutBinding(
+                            binding: 1,
+                            descriptorType: DescriptorType.CombinedImageSampler,
+                            descriptorCount: 1,
+                            stageFlags: ShaderStages.Fragment) 
+                    }));
 
             //Allocate the set
             descriptorSet = descriptorPool.AllocateSets(new DescriptorSetAllocateInfo(
                     descriptorSetCount: 1,
                     setLayouts: descriptorSetLayout))[0];
 
+            //Bind data to the set
             descriptorPool.UpdateSets(descriptorWrites: new []
             {
                 new WriteDescriptorSet(
@@ -152,9 +173,19 @@ namespace HT.Engine.Rendering
                     descriptorCount: 1,
                     descriptorType: DescriptorType.UniformBuffer,
                     bufferInfo: new [] { new DescriptorBufferInfo(
-                        buffer: transformationBuffer.Buffer,
-                        offset: 0,
-                        range: transformationBuffer.Size) })
+                            buffer: transformationBuffer.Buffer,
+                            offset: 0,
+                            range: transformationBuffer.Size) }),
+                new WriteDescriptorSet(
+                    dstSet: descriptorSet,
+                    dstBinding: 1,
+                    dstArrayElement: 0,
+                    descriptorCount: 1,
+                    descriptorType: DescriptorType.CombinedImageSampler,
+                    imageInfo: new [] { new DescriptorImageInfo(
+                        sampler: texture.ImageSampler,
+                        imageView: texture.ImageView,
+                        imageLayout: ImageLayout.ShaderReadOnlyOptimal) })
             }, descriptorCopies: null);
         }
 

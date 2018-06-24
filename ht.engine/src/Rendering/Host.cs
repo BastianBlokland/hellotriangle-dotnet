@@ -112,7 +112,10 @@ namespace HT.Engine.Rendering
                 minSize: (x: 150, y: 150),
                 title: string.Empty);
             SurfaceKhr surface = CreateSurface(nativeWindow);
-            HostDevice graphicsDevice = FindSuitableDevice(surface, preferDiscreteDevice);
+            HostDevice graphicsDevice = FindSuitableDevice(
+                surface,
+                scene.DeviceRequirements,
+                preferDiscreteDevice);
             return new Window(nativeWindow, surface, graphicsDevice, scene, logger);
         }
 
@@ -145,15 +148,23 @@ namespace HT.Engine.Rendering
                 $"[{nameof(Host)}] Unable to create surface for unknown surfaceType: {nativeApp.SurfaceType}");
         }
 
-        private HostDevice FindSuitableDevice(SurfaceKhr surface, bool preferDiscreteDevice = true)
+        private HostDevice FindSuitableDevice(
+            SurfaceKhr surface,
+            HostDeviceRequirements deviceRequirements,
+            bool preferDiscreteDevice = true)
         {
             ThrowIfDisposed();
             List<HostDevice> supportedDevices = new List<HostDevice>();
 
             //Find all devices that support the given surface
             for (int i = 0; i < hostDevices.Length; i++)
-                if (hostDevices[i].IsSurfaceSupported(surface))
+            {
+                if (hostDevices[i].IsSurfaceSupported(surface) && 
+                    hostDevices[i].AreRequirementsMet(deviceRequirements))
+                {
                     supportedDevices.Add(hostDevices[i]);
+                }
+            }
 
             if (supportedDevices.IsEmpty())
                 throw new Exception($"[{nameof(Host)}] Unable to find a supported device");

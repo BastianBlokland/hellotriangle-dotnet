@@ -18,10 +18,10 @@ out gl_PerVertex
 {
     vec4 gl_Position;
 };
-layout(location = 0) out vec4 fragColor;
+layout(location = 0) out vec2 fragUv;
 
 void main()
 {
     gl_Position = trans.projection * trans.view * trans.model * vec4(vertPosition, 1.0);
-    fragColor = vec4(vertUv, 1, 1);
+    fragUv = vertUv;
 }

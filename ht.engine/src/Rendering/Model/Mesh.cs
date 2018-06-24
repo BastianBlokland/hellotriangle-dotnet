@@ -7,8 +7,10 @@ namespace HT.Engine.Rendering.Model
 {
     public sealed class Mesh
     {
+        //Helper properties
         internal bool Uploaded => uploaded;
 
+        //Data
         private readonly Vertex[] vertices;
         private readonly UInt16[] indices;
 

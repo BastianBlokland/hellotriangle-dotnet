@@ -55,7 +55,7 @@ namespace HT.Engine.Rendering.Memory
             VulkanCore.Buffer source,
             Image destination,
             ImageLayout destinationLayout,
-            ImageSubresourceLayers subResource,
+            ImageSubresourceLayers subresource,
             Int2 imageExtents)
         {
             if (source == null)
@@ -65,22 +65,35 @@ namespace HT.Engine.Rendering.Memory
 
             BeginCopyRecord();
             {
-                BufferImageCopy copyRegion = new BufferImageCopy();
-                copyRegion.BufferOffset = 0;
-                copyRegion.BufferRowLength = 0;
-                copyRegion.BufferImageHeight = 0;
-                copyRegion.ImageSubresource = subResource;
-                copyRegion.ImageOffset = new Offset3D(x: 0, y: 0, z: 0);
-                copyRegion.ImageExtent = new Extent3D(
-                    width: imageExtents.X,
-                    height: imageExtents.Y,
-                    depth: 1);
-
+                //Transition the image into the transfer-destination layout
+                TransitionImageLayout(
+                    image: destination,
+                    subresource: subresource,
+                    oldLayout: ImageLayout.Undefined,
+                    newLayout: ImageLayout.TransferDstOptimal);
+                
+                //Copy the image
                 copyCommandBuffer.CmdCopyBufferToImage(
                     srcBuffer: source,
                     dstImage: destination,
-                    dstImageLayout: destinationLayout,
-                    regions: copyRegion);
+                    dstImageLayout: ImageLayout.TransferDstOptimal,
+                    regions: new BufferImageCopy {
+                        BufferOffset = 0,
+                        BufferRowLength = 0,
+                        BufferImageHeight = 0,
+                        ImageSubresource = subresource,
+                        ImageOffset = new Offset3D(x: 0, y: 0, z: 0),
+                        ImageExtent = new Extent3D(
+                            width: imageExtents.X,
+                            height: imageExtents.Y,
+                            depth: 1)});
+                
+                //Transition the image to the target layout
+                TransitionImageLayout(
+                    image: destination,
+                    subresource: subresource,
+                    oldLayout: ImageLayout.TransferDstOptimal,
+                    newLayout: destinationLayout);
             }
             EndCopyRecord();
         }
@@ -121,6 +134,58 @@ namespace HT.Engine.Rendering.Memory
             //Wait for transfer to be complete
             copyFence.Wait();
             copyFence.Reset();
+        }
+
+        private void TransitionImageLayout(
+            Image image, 
+            ImageSubresourceLayers subresource,
+            ImageLayout oldLayout,
+            ImageLayout newLayout)
+        {
+            //Get where this transition has to wait and what has to wait for this transition
+            //At the moment only two cases are handle (undefined -> transfer) and (transfer -> shader-read)
+            Accesses sourceAccess, destinationAccess;
+            PipelineStages sourcePipelineStages, destinationPipelineStages;
+            if (oldLayout == ImageLayout.Undefined && newLayout == ImageLayout.TransferDstOptimal)
+            {
+                sourceAccess = Accesses.None;
+                destinationAccess = Accesses.TransferWrite;
+                sourcePipelineStages = PipelineStages.TopOfPipe;
+                destinationPipelineStages = PipelineStages.Transfer;
+            }
+            else
+            if (oldLayout == ImageLayout.TransferDstOptimal && newLayout == ImageLayout.ShaderReadOnlyOptimal)
+            {
+                sourceAccess = Accesses.TransferWrite;
+                destinationAccess = Accesses.ShaderRead;
+                sourcePipelineStages = PipelineStages.Transfer;
+                destinationPipelineStages = PipelineStages.FragmentShader;
+            }
+            else
+                throw new Exception(
+                    $"[{nameof(Copier)}] Unsupported image transition: from: {oldLayout} to: {newLayout}");
+            
+            //Create the transition barrier
+            var imageMemoryBarrier = new ImageMemoryBarrier(
+                image: image,
+                subresourceRange: new ImageSubresourceRange(
+                    aspectMask: subresource.AspectMask,
+                    baseMipLevel: subresource.MipLevel,
+                    levelCount: 1,
+                    baseArrayLayer: subresource.BaseArrayLayer,
+                    layerCount: subresource.LayerCount),
+                srcAccessMask: sourceAccess,
+                dstAccessMask: destinationAccess,
+                oldLayout: oldLayout,
+                newLayout: newLayout);
+            //Record the transition barrier
+            copyCommandBuffer.CmdPipelineBarrier(
+                srcStageMask: sourcePipelineStages,
+                dstStageMask: destinationPipelineStages,
+                dependencyFlags: Dependencies.None,
+                memoryBarriers: null,
+                bufferMemoryBarriers: null,
+                imageMemoryBarriers: new [] { imageMemoryBarrier });
         }
 
         private void ThrowIfDisposed()

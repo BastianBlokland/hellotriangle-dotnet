@@ -8,6 +8,9 @@ namespace HT.Engine.Rendering
 {
     public sealed class RenderScene : IDisposable
     {
+        internal readonly HostDeviceRequirements DeviceRequirements = new HostDeviceRequirements(
+            samplerAnisotropy: true);
+
         private readonly Float4 clearColor;
         private readonly RenderObject[] renderobjects;
 
@@ -54,7 +57,8 @@ namespace HT.Engine.Rendering
                 maxSets: renderobjects.Length,
                 poolSizes: new []
                 {
-                    new DescriptorPoolSize(DescriptorType.UniformBuffer, renderobjects.Length)
+                    new DescriptorPoolSize(DescriptorType.UniformBuffer, renderobjects.Length),
+                    new DescriptorPoolSize(DescriptorType.CombinedImageSampler, renderobjects.Length)
                 },
                 flags: DescriptorPoolCreateFlags.None));
 
