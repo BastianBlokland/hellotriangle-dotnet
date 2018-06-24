@@ -4,7 +4,7 @@ using HT.Engine.Math;
 
 namespace HT.Engine.Math
 {
-    [StructLayout(LayoutKind.Sequential, Size = SIZE)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
     public struct Triangle
     {
         public const int SIZE = Float3.SIZE * 3;

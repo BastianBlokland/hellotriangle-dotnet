@@ -7,7 +7,7 @@ using static System.Math;
 
 namespace HT.Engine.Math
 {
-    [StructLayout(LayoutKind.Sequential, Size = SIZE)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
     public struct Float4x4 : IEquatable<Float4x4>
     {
         public const int SIZE = Float4.SIZE * 4;

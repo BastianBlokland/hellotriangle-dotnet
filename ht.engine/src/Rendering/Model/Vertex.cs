@@ -6,7 +6,7 @@ using VulkanCore;
 
 namespace HT.Engine.Rendering.Model
 {
-    [StructLayout(LayoutKind.Sequential, Size = SIZE)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
     internal struct Vertex : IEquatable<Vertex>
     {
         public const int SIZE = Float3.SIZE * 2 + Float2.SIZE;

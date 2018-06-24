@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace HT.Engine.Rendering.Memory
 {
-    [StructLayout(LayoutKind.Sequential, Size = SIZE)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
     internal struct Region : IEquatable<Region>
     {
         public const int SIZE = sizeof(long) * 3;

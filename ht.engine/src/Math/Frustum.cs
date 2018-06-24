@@ -5,7 +5,7 @@ using static System.Math;
 
 namespace HT.Engine.Math
 {
-    [StructLayout(LayoutKind.Sequential, Size = SIZE)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
     public struct Frustum : IEquatable<Frustum>
     {
         public const int SIZE = sizeof(float) * 4;

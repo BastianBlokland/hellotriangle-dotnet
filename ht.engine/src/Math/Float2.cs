@@ -5,7 +5,7 @@ using HT.Engine.Math.Extensions;
 
 namespace HT.Engine.Math
 {
-    [StructLayout(LayoutKind.Sequential, Size = SIZE)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
     public struct Float2 : IEquatable<Float2>
     {
         public const int SIZE = sizeof(float) * 2;
