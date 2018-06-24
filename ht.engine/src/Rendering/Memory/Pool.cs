@@ -30,14 +30,13 @@ namespace HT.Engine.Rendering.Memory
                 memoryTypeIndex: memoryTypeIndex));
         }
 
-        public Region AllocateAndBind(VulkanCore.Buffer buffer)
+        public void AllocateAndBind(VulkanCore.Buffer buffer)
         {
             ThrowIfDisposed();
 
             var memRequirements = buffer.GetMemoryRequirements();
             var memRegion = Allocate(memRequirements);
             buffer.BindMemory(memory, memRegion.Offset);
-            return memRegion;
         }
 
         public Region Allocate(MemoryRequirements requirements)

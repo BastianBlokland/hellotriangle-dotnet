@@ -22,6 +22,8 @@ namespace HT.Engine.Rendering.Memory
             if (memoryPool == null)
                 throw new ArgumentNullException(nameof(memoryPool));
             
+            this.size = size;
+
             //Create the buffer
             buffer = logicalDevice.CreateBuffer(new BufferCreateInfo(
                 size: size,
@@ -31,7 +33,7 @@ namespace HT.Engine.Rendering.Memory
                 sharingMode: SharingMode.Exclusive
             ));
             //Bind memory from our pool to this buffer
-            this.size = memoryPool.AllocateAndBind(buffer).Size;
+            memoryPool.AllocateAndBind(buffer);
         }
 
         public void Dispose()
