@@ -178,7 +178,8 @@ namespace HT.Engine.Rendering
         {
             ThrowIfNotInitialized();
 
-            Float4x4 viewMatrix = Float4x4.CreateTranslation((x: 0f, y: 0f, z: -2));
+            Float4x4 viewMatrix =   Float4x4.CreateRotationFromXAngle(FloatUtils.DegreesToRadians(15f)) * 
+                                    Float4x4.CreateTranslation((x: 0f, y: -.5f, z: -2));
             Float4x4 projectionMatrix = Float4x4.CreatePerspectiveProjection(
                 Frustum.CreateFromVerticalAngleAndAspect(
                     verticalAngle: FloatUtils.DegreesToRadians(45f),

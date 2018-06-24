@@ -16,7 +16,7 @@ namespace HT.Main
             HT.Engine.Rendering.Model.Mesh mesh;
             using (var parser = new HT.Engine.Parsing.WavefrontObjParser(
                 inputStream: nativeApp.ReadFile(Path.Combine("models", "spaceship.obj")), 
-                scale: .05f))
+                scale: .04f))
             {
                 mesh = parser.Parse();
             }
