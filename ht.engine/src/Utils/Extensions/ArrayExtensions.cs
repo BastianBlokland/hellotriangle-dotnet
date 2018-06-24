@@ -1,9 +1,12 @@
 using System;
+using System.Runtime.CompilerServices;
 
 namespace HT.Engine.Utils
 {
     public static class ArrayExtensions
     {
+        public static int GetSize<T>(this T[] data) => Unsafe.SizeOf<T>() * data.Length;
+
         /// <summary>
         /// Concatenates two arrays into a new array
         /// NOTE: This allocates a new array

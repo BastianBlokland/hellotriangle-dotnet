@@ -13,8 +13,8 @@ namespace HT.Engine.Rendering
 
         private bool initialized;
         private Memory.Copier copier;
-        private Memory.Pool meshMemoryPool;
-        private Memory.Pool transformationPool;
+        private Memory.Pool memoryPool;
+        private Memory.StagingBuffer stagingBuffer;
         private DescriptorPool descriptorPool;
         private RenderPass renderpass;
         private Int2 currentSwapchainSize;
@@ -46,10 +46,8 @@ namespace HT.Engine.Rendering
 
             //Allocate gpu memory
             copier = new Memory.Copier(logicalDevice, transferQueueFamilyIndex);
-            meshMemoryPool = new Memory.Pool(
-                logicalDevice, hostDevice, copier, BufferUsages.VertexBuffer | BufferUsages.IndexBuffer);
-            transformationPool = new Memory.Pool(
-                logicalDevice, hostDevice, copier, BufferUsages.UniformBuffer);
+            memoryPool = new Memory.Pool(logicalDevice, hostDevice);
+            stagingBuffer = new Memory.StagingBuffer(logicalDevice, hostDevice, copier);
 
             //Create a descriptor pool for the render-objects to create descriptor-sets from
             descriptorPool = logicalDevice.CreateDescriptorPool(new DescriptorPoolCreateInfo(
@@ -70,8 +68,8 @@ namespace HT.Engine.Rendering
                     hostDevice,
                     descriptorPool,
                     renderpass,
-                    meshMemoryPool,
-                    transformationPool);
+                    memoryPool,
+                    stagingBuffer);
             
             initialized = true;
         }
@@ -137,12 +135,12 @@ namespace HT.Engine.Rendering
                 throw new Exception(
                     $"[{nameof(RenderScene)}] Unable to deinitialize as we haven't initialized");
 
-            transformationPool.Dispose();
-            meshMemoryPool.Dispose();
-            copier.Dispose();
             renderobjects.DisposeAll();
             renderpass.Dispose();
             descriptorPool.Dispose();
+            stagingBuffer.Dispose();
+            memoryPool.Dispose();
+            copier.Dispose();
             initialized = false;
         }
 

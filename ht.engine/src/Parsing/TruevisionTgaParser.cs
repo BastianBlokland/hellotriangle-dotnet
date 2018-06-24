@@ -76,7 +76,7 @@ namespace HT.Engine.Parsing
                 if (rleCompressed)
                 {
                     byte header = Consume();
-                    bool isRunLengthPacket = header.HasBit(7);
+                    bool isRunLengthPacket = header.HasBitSet(7);
                     byte count = (byte)(header & ~(1 << 7)); //Interpret the first 7 bits as a count
                     
                     //If this is a runlength packet it means we repeat the pixel value

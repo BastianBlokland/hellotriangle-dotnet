@@ -6,17 +6,15 @@ namespace HT.Engine.Rendering.Memory
     [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
     internal struct Region : IEquatable<Region>
     {
-        public const int SIZE = sizeof(long) * 3;
+        public const int SIZE = sizeof(long) * 2;
 
         public readonly long Offset;
         public readonly long Size;
-        public readonly long RequestedSize;
 
-        public Region(long offset, long size, long requestedSize)
+        public Region(long offset, long size)
         {
             Offset = offset;
             Size = size;
-            RequestedSize = requestedSize;
         }
 
         public static bool operator ==(Region a, Region b) => a.Equals(b);
@@ -25,17 +23,10 @@ namespace HT.Engine.Rendering.Memory
 
         public override bool Equals(object obj) => obj is Region && Equals((Region)obj);
 
-        public bool Equals(Region other) => 
-            other.Offset == Offset &&
-            other.Size == Size &&
-            other.RequestedSize == RequestedSize;
+        public bool Equals(Region other) => other.Offset == Offset && other.Size == Size;
 
-        public override int GetHashCode() => 
-            Offset.GetHashCode() ^ 
-            Size.GetHashCode() ^
-            RequestedSize.GetHashCode();
+        public override int GetHashCode() => Offset.GetHashCode() ^ Size.GetHashCode();
 
-        public override string ToString() 
-            => $"(Offset: {Offset}, Size: {Size}, RequestedSize: {RequestedSize})";
+        public override string ToString() => $"(Offset: {Offset}, Size: {Size})";
     }
 }

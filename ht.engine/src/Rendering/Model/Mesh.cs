@@ -1,5 +1,6 @@
 using System;
 
+using HT.Engine.Utils;
 using VulkanCore;
 
 namespace HT.Engine.Rendering.Model
@@ -12,9 +13,8 @@ namespace HT.Engine.Rendering.Model
         private readonly UInt16[] indices;
 
         private bool uploaded;
-        private Memory.Pool memoryPool;
-        private Memory.Region verticesRegion;
-        private Memory.Region indicesRegion;
+        private Memory.DeviceBuffer vertexBuffer;
+        private Memory.DeviceBuffer indexBuffer;
 
         internal Mesh(Vertex[] vertices, UInt16[] indices)
         {
@@ -22,32 +22,29 @@ namespace HT.Engine.Rendering.Model
             this.indices = indices;
         }
 
-        internal void Upload(Memory.Pool memoryPool)
+        internal void Upload(
+            Device logicalDevice,
+            Memory.Pool memoryPool,
+            Memory.StagingBuffer stagingBuffer)
         {
-            //Sanity check that the given pool supports vertices and indices
-            if (!memoryPool.Usages.HasFlag(BufferUsages.VertexBuffer))
-                throw new ArgumentException(
-                    $"[{nameof(Mesh)}] Given pool cannot contain a vertex-buffer", nameof(memoryPool));
-            if (!memoryPool.Usages.HasFlag(BufferUsages.IndexBuffer))
-                throw new ArgumentException(
-                    $"[{nameof(Mesh)}] Given pool cannot contain a index-buffer", nameof(memoryPool));
-            //Only upload to the gpu once
-            if (uploaded)
-                throw new Exception($"[{nameof(Mesh)}] Allready uploaded");
+            if (logicalDevice == null)
+                throw new ArgumentNullException(nameof(logicalDevice));
 
-            //Save the pool so we know to what buffer we've uploaded the data
-            this.memoryPool = memoryPool;
+            //Upload our vertices
+            vertexBuffer = new Memory.DeviceBuffer(
+                logicalDevice: logicalDevice,
+                memoryPool: memoryPool,
+                size: vertices.GetSize(),
+                usages: BufferUsages.VertexBuffer);
+            stagingBuffer.Upload(vertices, vertexBuffer);
 
-            //Allocate the space in the pool
-            verticesRegion = memoryPool.Allocate<Vertex>(vertices.Length);
-            indicesRegion = memoryPool.Allocate<UInt16>(indices.Length);
-
-            //Write the date to the pool.
-            //This is a completely blocking operation, in the future we can support asynchronous
-            //uploading to the gpu
-            memoryPool.Write(vertices, verticesRegion);
-            memoryPool.Write(indices, indicesRegion);
-
+            //Upload our indices
+            indexBuffer = new Memory.DeviceBuffer(
+                logicalDevice: logicalDevice,
+                memoryPool: memoryPool,
+                size: indices.GetSize(),
+                usages: BufferUsages.IndexBuffer);
+            stagingBuffer.Upload(indices, indexBuffer);
             uploaded = true;
         }
 
@@ -56,8 +53,8 @@ namespace HT.Engine.Rendering.Model
             ThrowIfNotUploaded();
 
             //Bind our the vertex and index buffer with our uploaded data
-            commandbuffer.CmdBindVertexBuffer(memoryPool.Buffer, verticesRegion.Offset);
-            commandbuffer.CmdBindIndexBuffer(memoryPool.Buffer, indicesRegion.Offset, IndexType.UInt16);
+            commandbuffer.CmdBindVertexBuffer(vertexBuffer.Buffer, offset: 0);
+            commandbuffer.CmdBindIndexBuffer(indexBuffer.Buffer, offset: 0, indexType: IndexType.UInt16);
         }
 
         internal void RecordDraw(CommandBuffer commandbuffer)

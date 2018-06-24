@@ -12,8 +12,8 @@ namespace HT.Engine.Rendering
         private readonly ShaderProgram fragProg;
 
         private bool initialized;
-        private Memory.Pool transformationMemoryPool;
-        private Memory.Region transformationMemoryRegion;
+        private Memory.StagingBuffer stagingBuffer;
+        private Memory.DeviceBuffer transformationBuffer;
         private DescriptorSetLayout descriptorSetLayout;
         private DescriptorSet descriptorSet;
         private PipelineLayout pipelineLayout;
@@ -44,8 +44,8 @@ namespace HT.Engine.Rendering
             HostDevice hostDevice,
             DescriptorPool descriptorPool,
             RenderPass renderpass,
-            Memory.Pool meshPool,
-            Memory.Pool tranformationPool)
+            Memory.Pool memoryPool,
+            Memory.StagingBuffer stagingBuffer)
         {
             if (logicalDevice == null)
                 throw new ArgumentNullException(nameof(logicalDevice));
@@ -55,21 +55,26 @@ namespace HT.Engine.Rendering
                 throw new ArgumentNullException(nameof(descriptorPool));
             if (renderpass == null)
                 throw new ArgumentNullException(nameof(renderpass));
-            if (meshPool == null)
-                throw new ArgumentNullException(nameof(meshPool));
-            if (tranformationPool == null)
-                throw new ArgumentNullException(nameof(tranformationPool));
+            if (memoryPool == null)
+                throw new ArgumentNullException(nameof(memoryPool));
+            if (stagingBuffer == null)
+                throw new ArgumentNullException(nameof(stagingBuffer));
             if (initialized)
                 throw new Exception(
                     $"[{nameof(RenderObject)}] Allready initialized");
+            
+            this.stagingBuffer = stagingBuffer;
 
             //Upload our mesh to the gpu
             if (!mesh.Uploaded)
-                mesh.Upload(meshPool);
+                mesh.Upload(logicalDevice, memoryPool, stagingBuffer);
 
-            //Allocate a region for our transformation
-            transformationMemoryPool = tranformationPool;
-            transformationMemoryRegion = tranformationPool.Allocate<Transformation>(count: 1);
+            //Allocate a buffer for our transformation
+            transformationBuffer = new Memory.DeviceBuffer(
+                logicalDevice: logicalDevice,
+                memoryPool: memoryPool,
+                size: Transformation.SIZE,
+                usages: BufferUsages.UniformBuffer);
 
             CreateDescriptorSet(logicalDevice, descriptorPool);
 
@@ -104,7 +109,7 @@ namespace HT.Engine.Rendering
                 model: Float4x4.CreateRotationFromYAngle(yAngle),
                 view: viewMatrix,
                 projection: projectionMatrix);
-            transformationMemoryPool.Write(new [] { trans }, transformationMemoryRegion);
+            stagingBuffer.Upload(new [] { trans }, transformationBuffer);
         }
 
         internal void Deinitialize()
@@ -145,9 +150,9 @@ namespace HT.Engine.Rendering
                     descriptorCount: 1,
                     descriptorType: DescriptorType.UniformBuffer,
                     bufferInfo: new [] { new DescriptorBufferInfo(
-                        buffer: transformationMemoryPool.Buffer,
-                        offset: transformationMemoryRegion.Offset,
-                        range: transformationMemoryRegion.RequestedSize) })
+                        buffer: transformationBuffer.Buffer,
+                        offset: 0,
+                        range: transformationBuffer.Size) })
             }, descriptorCopies: null);
         }
 

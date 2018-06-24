@@ -1,5 +1,6 @@
 using System;
 
+using HT.Engine.Math;
 using VulkanCore;
 
 namespace HT.Engine.Rendering.Memory
@@ -37,6 +38,65 @@ namespace HT.Engine.Rendering.Memory
             long destinationOffset,
             long size)
         {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source));
+            if (destination == null)
+                throw new ArgumentNullException(nameof(destination));
+
+            BeginCopyRecord();
+            {
+                copyCommandBuffer.CmdCopyBuffer(source, destination, new BufferCopy(
+                    size, sourceOffset, destinationOffset));
+            }
+            EndCopyRecord();
+        }
+
+        public void Copy(
+            VulkanCore.Buffer source,
+            Image destination,
+            ImageLayout destinationLayout,
+            ImageSubresourceLayers subResource,
+            Int2 imageExtents)
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source));
+            if (destination == null)
+                throw new ArgumentNullException(nameof(destination));
+
+            BeginCopyRecord();
+            {
+                BufferImageCopy copyRegion = new BufferImageCopy();
+                copyRegion.BufferOffset = 0;
+                copyRegion.BufferRowLength = 0;
+                copyRegion.BufferImageHeight = 0;
+                copyRegion.ImageSubresource = subResource;
+                copyRegion.ImageOffset = new Offset3D(x: 0, y: 0, z: 0);
+                copyRegion.ImageExtent = new Extent3D(
+                    width: imageExtents.X,
+                    height: imageExtents.Y,
+                    depth: 1);
+
+                copyCommandBuffer.CmdCopyBufferToImage(
+                    srcBuffer: source,
+                    dstImage: destination,
+                    dstImageLayout: destinationLayout,
+                    regions: copyRegion);
+            }
+            EndCopyRecord();
+        }
+
+        public void Dispose()
+        {
+            ThrowIfDisposed();
+
+            copyCommandBuffer.Dispose();
+            commandPool.Dispose();
+            copyFence.Dispose();
+            disposed = true;
+        }
+
+        private void BeginCopyRecord()
+        {
             ThrowIfDisposed();
 
             //Reset and record the copy instruction into the commandbuffer
@@ -44,10 +104,10 @@ namespace HT.Engine.Rendering.Memory
 
             copyCommandBuffer.Begin(new CommandBufferBeginInfo(
                 flags: CommandBufferUsages.OneTimeSubmit));
+        }
 
-            copyCommandBuffer.CmdCopyBuffer(source, destination, new BufferCopy(
-                size, sourceOffset, destinationOffset));
-
+        private void EndCopyRecord()
+        {
             copyCommandBuffer.End();
 
             //Submit the copying to the transfer-queue
@@ -63,20 +123,10 @@ namespace HT.Engine.Rendering.Memory
             copyFence.Reset();
         }
 
-        public void Dispose()
-        {
-            ThrowIfDisposed();
-
-            copyCommandBuffer.Dispose();
-            commandPool.Dispose();
-            copyFence.Dispose();
-            disposed = true;
-        }
-
         private void ThrowIfDisposed()
         {
             if (disposed)
-                throw new Exception($"[{nameof(Pool)}] Allready disposed");
+                throw new Exception($"[{nameof(Copier)}] Allready disposed");
         }
     }
 }

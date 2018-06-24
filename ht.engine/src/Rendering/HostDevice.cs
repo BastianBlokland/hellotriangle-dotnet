@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 
+using HT.Engine.Math;
 using HT.Engine.Utils;
 using VulkanCore.Khr;
 using VulkanCore.Mvk;
@@ -40,11 +41,11 @@ namespace HT.Engine.Rendering
             logger?.LogList(nameof(HostDevice), $"{Name} available extensions:", availableExtensions);
         }
 
-        internal int GetMemoryType(int supportedTypesBits, MemoryProperties properties)
+        internal int GetMemoryType(MemoryProperties properties, int supportedTypesFilter = ~0)
         {
             for (int i = 0; i < deviceMemoryProperties.MemoryTypes.Length; i++)
             {
-                if ((supportedTypesBits & (1 << i)) > 0 &&
+                if (supportedTypesFilter.HasBitSet(i) &&
                     (deviceMemoryProperties.MemoryTypes[i].PropertyFlags & properties) == properties)
                     return i;
             }
