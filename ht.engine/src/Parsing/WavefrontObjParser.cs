@@ -28,23 +28,6 @@ namespace HT.Engine.Parsing
         {
             public readonly FaceElement[] Elements;
 
-            public Float3 CalculateFaceNormal(ResizeArray<Float3> positions)
-            {
-                //This method is used as a fallback when the file does not contain vertex normals
-                //Obj uses counter-clockwise vertex definition, so we can use that to assume the
-                //face normal
-                if (Elements.Length != 3)
-                    throw new Exception(
-                        $"[{nameof(WavefrontObjParser)}] Only works on triangles");
-                //Positions of the vertices that make up this face
-                var pos1 = positions.Data[Elements[0].PositionIndex];
-                var pos2 = positions.Data[Elements[1].PositionIndex];
-                var pos3 = positions.Data[Elements[2].PositionIndex];
-                //Take cross product of two edges in this triangle
-                var normal = Float3.Cross(pos2 - pos1, pos3 - pos1);
-                return Float3.FastNormalize(normal);
-            }
-
             public Face(FaceElement[] elements) => Elements = elements;
         }
 
@@ -76,10 +59,9 @@ namespace HT.Engine.Parsing
                         elementCache.Add(ConsumeFaceElement());
                         ConsumeWhitespace();
                     }
-                    //TODO: Support triangulation when there is more then 3
-                    if (elementCache.Count != 3)
+                    if (elementCache.Count < 3)
                         throw new Exception(
-                            $"[{nameof(WavefrontObjParser)}] This parser only supports triangles");
+                            $"[{nameof(WavefrontObjParser)}] At least 3 vertices are required to create a face");
                     faces.Add(new Face(elementCache.ToArray()));
                 }
                 break;
@@ -95,29 +77,50 @@ namespace HT.Engine.Parsing
         protected override Mesh Construct()
         {
             MeshBuilder meshBuilder = new MeshBuilder();
-
             for (int i = 0; i < faces.Count; i++)
-            for (int j = 0; j < faces.Data[i].Elements.Length; j++)
             {
-                var element = faces.Data[i].Elements[j];
-                Float3 pos = positions.Data[element.PositionIndex];
-                Float3 normal;
-                Float2 uv;
-                //Get the vertex normal, if none provided calculate the face-normal
+                var face = faces.Data[i];
+                if(face.Elements.Length < 3)
+                    throw new Exception(
+                        $"[{nameof(WavefrontObjParser)}] Need at least 3 vertices to form a triangle");
+
+                //Create a simple triangle fan for each face.
+                //Note: this only supports ordered simple convex polygons
+                FaceElement a = face.Elements[0]; //Pivot point for the fan
+                for (int j = 2; j < face.Elements.Length; j++)
+                {
+                    FaceElement b = face.Elements[j - 1];
+                    FaceElement c = face.Elements[j];
+
+                    //Surface normal is used when a vertex doesn't specify explict normals
+                    Float3 surfaceNormal = Triangle.GetNormal(
+                        a: GetPosition(a),
+                        b: GetPosition(b),
+                        c: GetPosition(c));
+
+                    //Add the triangle to the meshbuilder
+                    meshBuilder.PushVertex(GetVertex(a, surfaceNormal));
+                    meshBuilder.PushVertex(GetVertex(b, surfaceNormal));
+                    meshBuilder.PushVertex(GetVertex(c, surfaceNormal));
+                }
+            }
+            return meshBuilder.ToMesh();
+
+            //Helper functions
+            Float3 GetPosition(FaceElement element) => positions.Data[element.PositionIndex];
+
+            Vertex GetVertex(FaceElement element, Float3 surfaceNormal)
+            {
+                Float3 pos = GetPosition(element);
+                Float3 normal = surfaceNormal;
+                Float2 uv = Float2.Zero;
                 //Obj makes no promises that normals are normalized so we need to normalize them
                 if (element.NormalIndex != null)
                     normal = Float3.FastNormalize(normals.Data[element.NormalIndex.Value]);
-                else
-                    normal = faces.Data[i].CalculateFaceNormal(positions);
-                //Get the vertex uv, if none provided default to 0,0
                 if (element.TexcoordIndex != null)
                     uv = texcoords.Data[element.TexcoordIndex.Value];
-                else
-                    uv = Float2.Zero;
-
-                meshBuilder.PushVertex(new Vertex(pos, normal, uv));
+                return new Vertex(pos, normal, uv);
             }
-            return meshBuilder.ToMesh();
         }
 
         private FaceElement ConsumeFaceElement()

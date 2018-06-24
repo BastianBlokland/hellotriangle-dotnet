@@ -29,6 +29,8 @@ namespace HT.Engine.Math
         //Component swizzling
         public Float2 XY => new Float2(X, Y);
         public Float2 XZ => new Float2(X, Z);
+        public Float3 YZX => new Float3(Y, Z, X);
+        public Float3 ZXY => new Float3(Z, X, Y);
         public Float4 XYZ1 => new Float4(X, Y, Z, 1f);
 
         //Component index accessor
