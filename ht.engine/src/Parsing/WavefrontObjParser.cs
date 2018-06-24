@@ -80,7 +80,7 @@ namespace HT.Engine.Parsing
             for (int i = 0; i < faces.Count; i++)
             {
                 var face = faces.Data[i];
-                if(face.Elements.Length < 3)
+                if (face.Elements.Length < 3)
                     throw new Exception(
                         $"[{nameof(WavefrontObjParser)}] Need at least 3 vertices to form a triangle");
 

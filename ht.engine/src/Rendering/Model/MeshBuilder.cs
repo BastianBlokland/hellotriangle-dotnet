@@ -13,7 +13,7 @@ namespace HT.Engine.Rendering.Model
         {
             //Filter out similar vertices to reduce vertex count
             int index = FindSimilar(vertex);
-            if(index < 0)
+            if (index < 0)
             {
                 if (vertices.Count >= UInt16.MaxValue)
                     throw new Exception(
@@ -30,7 +30,7 @@ namespace HT.Engine.Rendering.Model
         private int FindSimilar(Vertex vertex)
         {
             for (int i = 0; i < vertices.Count; i++)
-                if(vertices.Data[i].Approx(vertex))
+                if (vertices.Data[i].Approx(vertex))
                     return i;
             return -1;
         }
