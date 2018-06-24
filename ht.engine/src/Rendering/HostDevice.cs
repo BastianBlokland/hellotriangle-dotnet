@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 
 using HT.Engine.Utils;
-using HT.Engine.Utils.Extensions;
 using VulkanCore.Khr;
 using VulkanCore.Mvk;
 using VulkanCore;

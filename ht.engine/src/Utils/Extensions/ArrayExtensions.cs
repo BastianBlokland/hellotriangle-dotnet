@@ -1,6 +1,6 @@
 using System;
 
-namespace HT.Engine.Utils.Extensions
+namespace HT.Engine.Utils
 {
     public static class ArrayExtensions
     {

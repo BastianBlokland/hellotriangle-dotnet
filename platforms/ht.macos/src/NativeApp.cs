@@ -6,7 +6,6 @@ using System.Runtime.InteropServices;
 using HT.Engine.Math;
 using HT.Engine.Rendering;
 using HT.Engine.Utils;
-using HT.Engine.Utils.Extensions;
 using HT.Engine.Platform;
 
 namespace HT.MacOS

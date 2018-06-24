@@ -3,7 +3,6 @@ using System.IO;
 
 using HT.Engine.Platform;
 using HT.Engine.Utils;
-using HT.Engine.Utils.Extensions;
 using VulkanCore;
 
 namespace HT.Engine.Rendering

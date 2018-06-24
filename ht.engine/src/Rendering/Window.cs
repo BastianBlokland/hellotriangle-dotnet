@@ -3,7 +3,6 @@ using System;
 using HT.Engine.Math;
 using HT.Engine.Platform;
 using HT.Engine.Utils;
-using HT.Engine.Utils.Extensions;
 using VulkanCore;
 using VulkanCore.Khr;
 
@@ -27,7 +26,7 @@ namespace HT.Engine.Rendering
 
         private SwapchainKhr swapchain;
         private Int2 swapchainSize;
-        private Image[] swapchainImages;
+        private VulkanCore.Image[] swapchainImages;
         private ImageView[] swapchainImageViews;
         private Framebuffer[] framebuffers;
         private CommandPool commandPool;

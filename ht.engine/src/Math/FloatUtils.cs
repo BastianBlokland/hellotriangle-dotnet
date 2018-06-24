@@ -1,4 +1,4 @@
-using HT.Engine.Math.Extensions;
+using HT.Engine.Math;
 
 using static System.Math;
 

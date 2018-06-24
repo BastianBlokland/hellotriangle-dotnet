@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace HT.Engine.Utils.Extensions
+namespace HT.Engine.Utils
 {
     public static class UpdatableExtensions
     {
