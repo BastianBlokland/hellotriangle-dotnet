@@ -48,6 +48,16 @@ namespace HT.Engine.Rendering.Model
             uploaded = true;
         }
 
+        internal void ClearUpload()
+        {
+            if(uploaded)
+            {
+                vertexBuffer.Dispose();
+                indexBuffer.Dispose();
+            }
+            uploaded = false;
+        }
+
         internal void RecordBind(CommandBuffer commandbuffer)
         {
             ThrowIfNotUploaded();

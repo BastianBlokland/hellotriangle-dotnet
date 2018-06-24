@@ -118,6 +118,8 @@ namespace HT.Engine.Rendering
                 throw new Exception(
                     $"[{nameof(RenderObject)}] Unable to deinitialize as we haven't initialized");
             
+            transformationBuffer.Dispose();
+            mesh.ClearUpload();
             descriptorSetLayout.Dispose();
             pipelineLayout.Dispose();
             pipeline.Dispose();
