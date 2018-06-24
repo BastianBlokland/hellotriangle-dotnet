@@ -8,7 +8,7 @@ namespace HT.Engine.Utils
     {
         /// <summary>
         /// Interpret the given data as a structure
-        /// NOTE: Make sure your struct has a sequential layout otherwise sparks may fly out
+        /// NOTE: Make sure your struct has a sequential layout without padding
         /// </summary>
         public static unsafe T Parse<T>(this byte[] data)
             where T : struct

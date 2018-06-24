@@ -64,6 +64,12 @@ namespace HT.Engine.Math
             w = W;
         }
 
+        //Creation
+        public static Float4 CreateFrom32Bit(byte x, byte y, byte z, byte w)
+            //Note: Need to investigate if there is a after approx of / 255
+            => new Float4(x / 255f, y / 255f, z / 255f, w / 255f);
+
+
         //Arithmetic operators
         public static Float4 operator +(Float4 left, Float4 right)
             => new Float4(left.X + right.X, left.Y + right.Y, left.Z + right.Z, left.W + right.W);

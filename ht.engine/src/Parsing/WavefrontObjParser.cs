@@ -7,6 +7,9 @@ using HT.Engine.Utils;
 
 namespace HT.Engine.Parsing
 {
+    //Supports vertex position, normal and texcoords and supports simple convex faces,
+    //non triangle faces will be converted to triangles using a simple triangle fan starting from
+    //vertex 0 in the face
     //Followed the spec from wikipedia: https://en.wikipedia.org/wiki/Wavefront_.obj_file
     public sealed class WavefrontObjParser : TextParser<Mesh>
     {
@@ -41,7 +44,7 @@ namespace HT.Engine.Parsing
         public WavefrontObjParser(Stream inputStream, float scale = 1f) : base(inputStream) 
             => this.scale = scale;
 
-        protected override void ConsumeToken()
+        protected override bool ConsumeToken()
         {
             ConsumeWhitespace(); //Ignore whitespace before the id
             string id = ConsumeWord();
@@ -72,6 +75,9 @@ namespace HT.Engine.Parsing
             //End the token with a newline
             if (!Current.IsEndOfFile)
                 ConsumeNewline();
+
+            //true means keep parsing (we want to read tokens till the end of the file)
+            return true; 
         }
 
         protected override Mesh Construct()

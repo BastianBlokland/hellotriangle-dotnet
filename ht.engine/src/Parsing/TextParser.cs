@@ -35,6 +35,7 @@ namespace HT.Engine.Parsing
         //Data
         private readonly TextReader inputReader;
         private readonly ResizeArray<char> charCache = new ResizeArray<char>();
+
         private T result;
         private bool parsed;
 
@@ -45,8 +46,9 @@ namespace HT.Engine.Parsing
         {
             if (!parsed)
             {
-                while (!Current.IsEndOfFile)
-                    ConsumeToken();
+                bool keepParsing = true;
+                while (keepParsing && !Current.IsEndOfFile)
+                    keepParsing = ConsumeToken();
                 result = Construct();
                 parsed = true;
             }
@@ -55,7 +57,7 @@ namespace HT.Engine.Parsing
 
         public void Dispose() => inputReader.Dispose();
 
-        protected abstract void ConsumeToken();
+        protected abstract bool ConsumeToken();
         protected abstract T Construct();
 
         protected float ConsumeFloat()

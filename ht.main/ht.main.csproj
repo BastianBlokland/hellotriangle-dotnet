@@ -25,6 +25,11 @@
         <None Include="models/*.obj">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+
+        <!--Textures (binary tga format-->
+        <None Include="textures/*.tga">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
         
     </ItemGroup>
 

@@ -35,6 +35,8 @@
         "Texcoords",
         "Unmap",
         "Vulkan",
-        "Vulkancore"
+        "Vulkancore",
+        "bgra",
+        "rgba"
     ]
 }
