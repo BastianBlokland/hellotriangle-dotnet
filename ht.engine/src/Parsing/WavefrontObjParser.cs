@@ -105,9 +105,11 @@ namespace HT.Engine.Parsing
                         c: GetPosition(c));
 
                     //Add the triangle to the meshbuilder
-                    meshBuilder.PushVertex(GetVertex(a, surfaceNormal));
-                    meshBuilder.PushVertex(GetVertex(b, surfaceNormal));
+                    //Note: Adding the triangle in reverse because obj has counter-clockwise
+                    //triangle order by default and we want a clockwise order
                     meshBuilder.PushVertex(GetVertex(c, surfaceNormal));
+                    meshBuilder.PushVertex(GetVertex(b, surfaceNormal));
+                    meshBuilder.PushVertex(GetVertex(a, surfaceNormal));
                 }
             }
             return meshBuilder.ToMesh();
