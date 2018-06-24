@@ -68,14 +68,14 @@ namespace HT.Engine.Rendering
                 destination: image,
                 destinationLayout: ImageLayout.ShaderReadOnlyOptimal,
                 subresource: new ImageSubresourceLayers(
-                    aspectMask: aspects, mipLevel: 1, baseArrayLayer: 1, layerCount: 1),
+                    aspectMask: aspects, mipLevel: 0, baseArrayLayer: 0, layerCount: 1),
                 imageExtents: (width, height));
 
             //Create a image-view
             imageView = image.CreateView(new ImageViewCreateInfo(
                 format: format,
                 subresourceRange: new ImageSubresourceRange(
-                    aspectMask: aspects, baseMipLevel: 1, levelCount: 1, baseArrayLayer: 1, layerCount: 1),
+                    aspectMask: aspects, baseMipLevel: 0, levelCount: 1, baseArrayLayer: 0, layerCount: 1),
                 viewType: ImageViewType.Image2D,
                 components: new ComponentMapping(
                     r: ComponentSwizzle.R,
@@ -99,6 +99,8 @@ namespace HT.Engine.Rendering
                 MaxLod = 0f,
                 BorderColor = BorderColor.IntOpaqueBlack,
                 UnnormalizedCoordinates = false});
+
+            uploaded = true;
         }
 
         internal void ClearUpload()
