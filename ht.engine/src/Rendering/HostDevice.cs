@@ -187,6 +187,14 @@ namespace HT.Engine.Rendering
                     GetPresentQueueFamilyIndex(surface) != null;
         }
 
+        private int? GetTransferQueueFamilyIndex()
+        {
+            for (int i = 0; i < queueFamilies.Length; i++)
+                if (queueFamilies[i].QueueFlags.HasFlag(Queues.Transfer))
+                    return i;
+            return null;
+        }
+
         private int? GetGraphicsQueueFamilyIndex()
         {
             for (int i = 0; i < queueFamilies.Length; i++)

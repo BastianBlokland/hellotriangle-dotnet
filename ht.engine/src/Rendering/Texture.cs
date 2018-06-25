@@ -21,6 +21,7 @@ namespace HT.Engine.Rendering
 
         private bool uploaded;
         private Image image;
+        private Memory.Block memory;
         private ImageView imageView;
         private Sampler imageSampler;
 
@@ -38,7 +39,7 @@ namespace HT.Engine.Rendering
 
         internal void Upload(
             Device logicalDevice,
-            Memory.PoolGroup memoryGroup,
+            Memory.Pool memoryPool,
             Memory.StagingBuffer stagingBuffer)
         {
             //TODO: Make this dynamic somehow, as its a pretty big format :)
@@ -60,7 +61,7 @@ namespace HT.Engine.Rendering
                 InitialLayout = ImageLayout.Undefined});
             
             //Bind memory from our pool to this buffer
-            memoryGroup.AllocateAndBind(image);
+            memory = memoryPool.AllocateAndBind(image);
         
             //Upload the image to the gpu
             stagingBuffer.Upload(
@@ -110,6 +111,7 @@ namespace HT.Engine.Rendering
                 imageSampler.Dispose();
                 imageView.Dispose();
                 image.Dispose();
+                memory.Free();
             }
             uploaded = false;
         }

@@ -13,18 +13,19 @@ namespace HT.Engine.Rendering.Memory
         //Data
         private long size;
         private readonly VulkanCore.Buffer buffer;
+        private readonly Block memory;
         private bool disposed;
 
         public DeviceBuffer(
             Device logicalDevice,
-            PoolGroup memoryGroup,
+            Pool memoryPool,
             long size,
             BufferUsages usages)
         {
             if (logicalDevice == null)
                 throw new ArgumentNullException(nameof(logicalDevice));
-            if (memoryGroup == null)
-                throw new ArgumentNullException(nameof(memoryGroup));
+            if (memoryPool == null)
+                throw new ArgumentNullException(nameof(memoryPool));
             
             this.size = size;
 
@@ -37,7 +38,7 @@ namespace HT.Engine.Rendering.Memory
                 sharingMode: SharingMode.Exclusive
             ));
             //Bind memory from our pool to this buffer
-            memoryGroup.AllocateAndBind(buffer);
+            memory = memoryPool.AllocateAndBind(buffer);
         }
 
         public void Dispose()
@@ -45,6 +46,7 @@ namespace HT.Engine.Rendering.Memory
             ThrowIfDisposed();
 
             buffer.Dispose();
+            memory.Free();
             disposed = true;
         }
 

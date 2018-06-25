@@ -17,7 +17,7 @@ namespace HT.Engine.Rendering
         private bool initialized;
         private Device logicalDevice;
         private Memory.Copier copier;
-        private Memory.PoolGroup memoryGroup;
+        private Memory.Pool memoryPool;
         private Memory.StagingBuffer stagingBuffer;
         private DescriptorPool descriptorPool;
         private RenderPass renderpass;
@@ -59,7 +59,7 @@ namespace HT.Engine.Rendering
 
             //Allocate gpu memory
             copier = new Memory.Copier(logicalDevice, transferQueueFamilyIndex);
-            memoryGroup = new Memory.PoolGroup(logicalDevice, hostDevice);
+            memoryPool = new Memory.Pool(logicalDevice, hostDevice);
             stagingBuffer = new Memory.StagingBuffer(logicalDevice, hostDevice, copier);
 
             //Create a descriptor pool for the render-objects to create descriptor-sets from
@@ -87,7 +87,7 @@ namespace HT.Engine.Rendering
                     hostDevice,
                     descriptorPool,
                     renderpass,
-                    memoryGroup,
+                    memoryPool,
                     stagingBuffer);
         
             initialized = true;
@@ -116,7 +116,7 @@ namespace HT.Engine.Rendering
                 SharingMode = SharingMode.Exclusive,
                 InitialLayout = ImageLayout.Undefined});
             //Allocate memory for it
-            memoryGroup.AllocateAndBind(depthImage);
+            memoryPool.AllocateAndBind(depthImage);
             //Create view on top of it
             depthImageView = depthImage.CreateView(new ImageViewCreateInfo(
                 format: depthFormat,
@@ -203,7 +203,7 @@ namespace HT.Engine.Rendering
             renderpass.Dispose();
             descriptorPool.Dispose();
             stagingBuffer.Dispose();
-            memoryGroup.Dispose();
+            memoryPool.Dispose();
             copier.Dispose();
             initialized = false;
         }

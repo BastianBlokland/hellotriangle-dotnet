@@ -1,88 +1,79 @@
 using System;
+using System.Collections.Generic;
 
-using HT.Engine.Math;
+using HT.Engine.Utils;
 using VulkanCore;
 
 namespace HT.Engine.Rendering.Memory
 {
     internal sealed class Pool : IDisposable
     {
-        //Helper properties
-        public DeviceMemory Memory => memory;
-
-        //Data
-        private readonly long poolSize;
-        private readonly int memoryTypeIndex;
-        private readonly DeviceMemory memory;
-
-        private long currentOffset;
+        private readonly Device logicalDevice;
+        private readonly HostDevice hostDevice;
+        private readonly List<Chunk> chunks = new List<Chunk>();
         private bool disposed;
 
-        internal Pool(
-            Device logicalDevice,
-            HostDevice hostDevice,
-            int supportedMemoryTypesFilter,
-            long size = 134_217_728)
+        internal Pool(Device logicalDevice, HostDevice hostDevice)
         {
             if (logicalDevice == null)
                 throw new ArgumentNullException(nameof(logicalDevice));
             if (hostDevice == null)
                 throw new ArgumentNullException(nameof(hostDevice));
-            this.poolSize = size;
-
-            //Find the memory type on the gpu to place this pool in
-            memoryTypeIndex = hostDevice.GetMemoryType(
-                properties: MemoryProperties.DeviceLocal,
-                supportedTypesFilter: supportedMemoryTypesFilter);
-            //Allocate the memory
-            memory = logicalDevice.AllocateMemory(new MemoryAllocateInfo(
-                allocationSize: size,
-                memoryTypeIndex: memoryTypeIndex));
+            this.logicalDevice = logicalDevice;
+            this.hostDevice = hostDevice;
         }
 
-        public bool IsSupported(MemoryRequirements requirements)
-            => requirements.MemoryTypeBits.HasBitSet(memoryTypeIndex);
-
-        public Region Allocate(MemoryRequirements requirements)
+        internal Block AllocateAndBind(VulkanCore.Image image)
         {
             ThrowIfDisposed();
 
-            //Verify that the memory backing this pool is supported by the requirement
-            if (!requirements.MemoryTypeBits.HasBitSet(memoryTypeIndex))
+            var memRequirements = image.GetMemoryRequirements();
+            Block block = Allocate(memRequirements);
+            image.BindMemory(block.Container.Memory, block.Offset);
+            return block;
+        }
+
+        internal Block AllocateAndBind(VulkanCore.Buffer buffer)
+        {
+            ThrowIfDisposed();
+
+            var memRequirements = buffer.GetMemoryRequirements();
+            Block block = Allocate(memRequirements);
+            buffer.BindMemory(block.Container.Memory, block.Offset);
+            return block;
+        }
+
+        internal Block Allocate(MemoryRequirements requirements)
+        {
+            //Allocate in the first chunk that supports this requirement
+            for (int i = 0; i < chunks.Count; i++)
+            {
+                if (chunks[i].IsSupported(requirements))
+                {
+                    Block? block = chunks[i].TryAllocate(requirements);
+                    if (block != null)
+                        return block.Value;
+                }
+            }
+
+            //If non supported the requirements then create a new chunk
+            Chunk newChunk = new Chunk(logicalDevice, hostDevice, requirements.MemoryTypeBits);
+            chunks.Add(newChunk);
+    
+            //Allocate from the new chunk
+            Block? newBlock = newChunk.TryAllocate(requirements);
+            if (newBlock == null)
                 throw new Exception(
-                    $"[{nameof(Pool)}] Given requirements does not match the memory backing this pool");
-
-            //Calculate padding to satisfy the alignment
-            var padding = GetPadding(currentOffset, requirements.Alignment);
-            var paddedSize = requirements.Size + padding;
-
-            if ((poolSize - currentOffset) < paddedSize)
-                throw new Exception($"[{nameof(Pool)}] Not enough space left in the pool");
-
-            Region region = new Region(
-                offset: currentOffset + padding,
-                size: requirements.Size);
-
-            //Mark the space as used
-            currentOffset += paddedSize;
-
-            return region;
+                    $"[{nameof(Pool)}] New chunk could not allocate this requirements, is it insanely big?");
+            return newBlock.Value;
         }
 
         public void Dispose()
         {
             ThrowIfDisposed();
 
-            memory.Dispose();
+            chunks.DisposeAll();
             disposed = true;
-        }
-
-        private long GetPadding(long offset, long alignment)
-        {
-            long remainder = offset % alignment;
-            if (remainder == 0)
-                return 0;
-            return alignment - remainder;
         }
 
         private void ThrowIfDisposed()
