@@ -9,7 +9,7 @@ namespace HT.Engine.Rendering.Model
         private readonly ResizeArray<Vertex> vertices = new ResizeArray<Vertex>();
         private readonly ResizeArray<UInt16> indices = new ResizeArray<UInt16>();
 
-        public void PushVertex(Vertex vertex)
+        internal void PushVertex(Vertex vertex)
         {
             //Filter out similar vertices to reduce vertex count
             int index = FindSimilar(vertex);
@@ -25,7 +25,7 @@ namespace HT.Engine.Rendering.Model
             indices.Add((UInt16)index);
         }
 
-        public Mesh ToMesh() => new Mesh(vertices.ToArray(), indices.ToArray());
+        internal Mesh ToMesh() => new Mesh(vertices.ToArray(), indices.ToArray());
 
         private int FindSimilar(Vertex vertex)
         {

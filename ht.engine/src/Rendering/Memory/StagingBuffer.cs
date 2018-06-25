@@ -16,7 +16,7 @@ namespace HT.Engine.Rendering.Memory
 
         private bool disposed;
 
-        public StagingBuffer(
+        internal StagingBuffer(
             Device logicalDevice,
             HostDevice hostDevice,
             Copier copier,
@@ -53,7 +53,7 @@ namespace HT.Engine.Rendering.Memory
             buffer.BindMemory(memory);
         }
 
-        public void Upload<T>(T[] data, Image destination, ImageLayout destinationLayout,
+        internal void Upload<T>(T[] data, Image destination, ImageLayout destinationLayout,
             ImageSubresourceLayers subresource,
             Int2 imageExtents)
             where T : struct
@@ -72,7 +72,7 @@ namespace HT.Engine.Rendering.Memory
                 imageExtents: imageExtents);
         }
 
-        public void Upload<T>(T[] data, DeviceBuffer destination)
+        internal void Upload<T>(T[] data, DeviceBuffer destination)
             where T : struct
         {
             ThrowIfDisposed();

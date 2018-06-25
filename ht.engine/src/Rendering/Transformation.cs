@@ -16,7 +16,7 @@ namespace HT.Engine.Rendering
         public readonly Float4x4 View;
         public readonly Float4x4 Projection;
 
-        public Transformation(Float4x4 model, Float4x4 view, Float4x4 projection)
+        internal Transformation(Float4x4 model, Float4x4 view, Float4x4 projection)
         {
             Model = model;
             View = view;

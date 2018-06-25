@@ -7,8 +7,8 @@ namespace HT.Engine.Rendering.Memory
     internal sealed class DeviceBuffer : IDisposable
     {
         //Helper properties
-        public VulkanCore.Buffer Buffer => buffer;
-        public long Size => size;
+        internal VulkanCore.Buffer Buffer => buffer;
+        internal long Size => size;
 
         //Data
         private long size;
@@ -16,7 +16,7 @@ namespace HT.Engine.Rendering.Memory
         private readonly Block memory;
         private bool disposed;
 
-        public DeviceBuffer(
+        internal DeviceBuffer(
             Device logicalDevice,
             Pool memoryPool,
             long size,

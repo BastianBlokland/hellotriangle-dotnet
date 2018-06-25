@@ -16,7 +16,7 @@ namespace HT.Engine.Rendering.Model
         public readonly Float3 Normal;
         public readonly Float2 Uv;
 
-        public Vertex(Float3 position, Float3 normal, Float2 uv)
+        internal Vertex(Float3 position, Float3 normal, Float2 uv)
         {
             Position = position;
             Normal = normal;

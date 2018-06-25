@@ -31,7 +31,7 @@ namespace HT.Engine.Rendering.Memory
             copyFence = logicalDevice.CreateFence(new FenceCreateInfo(flags: FenceCreateFlags.None));
         }
 
-        public void Copy(
+        internal void Copy(
             VulkanCore.Buffer source,
             long sourceOffset,
             VulkanCore.Buffer destination,
@@ -51,7 +51,7 @@ namespace HT.Engine.Rendering.Memory
             EndCopyRecord();
         }
 
-        public void Copy(
+        internal void Copy(
             VulkanCore.Buffer source,
             Image destination,
             ImageLayout destinationLayout,
@@ -98,7 +98,7 @@ namespace HT.Engine.Rendering.Memory
             EndCopyRecord();
         }
 
-        public void TransitionImageLayout(
+        internal void TransitionImageLayout(
             Image image, 
             ImageSubresourceLayers subresource,
             ImageLayout oldLayout,
@@ -151,7 +151,7 @@ namespace HT.Engine.Rendering.Memory
             copyFence.Reset();
         }
 
-        public void RecordImageLayoutBarrier(
+        internal void RecordImageLayoutBarrier(
             Image image, 
             ImageSubresourceLayers subresource,
             ImageLayout oldLayout,
