@@ -79,7 +79,7 @@ namespace HT.Engine.Rendering
             //Initialize the scene (so it can create its renderpass and pipelines etc)
             //Note: currently using the graphicsQueue also for transfering data
             scene.Initialize(logicalDevice, hostDevice, surfaceFormat, 
-                transferQueueFamilyIndex: graphicsQueue.FamilyIndex);
+                transferQueueFamilyIndex: graphicsQueue.FamilyIndex, logger: logger);
 
             //Initialize the entire setup
             CreateSwapchainSetup();

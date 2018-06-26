@@ -10,10 +10,11 @@ namespace HT.Engine.Rendering.Memory
     {
         private readonly Device logicalDevice;
         private readonly HostDevice hostDevice;
+        private readonly Logger logger;
         private readonly List<Chunk> chunks = new List<Chunk>();
         private bool disposed;
 
-        internal Pool(Device logicalDevice, HostDevice hostDevice)
+        internal Pool(Device logicalDevice, HostDevice hostDevice, Logger logger = null)
         {
             if (logicalDevice == null)
                 throw new ArgumentNullException(nameof(logicalDevice));
@@ -21,6 +22,7 @@ namespace HT.Engine.Rendering.Memory
                 throw new ArgumentNullException(nameof(hostDevice));
             this.logicalDevice = logicalDevice;
             this.hostDevice = hostDevice;
+            this.logger = logger;
         }
 
         internal Block AllocateAndBind(VulkanCore.Image image)
@@ -59,6 +61,9 @@ namespace HT.Engine.Rendering.Memory
             //If non supported the requirements then create a new chunk
             Chunk newChunk = new Chunk(logicalDevice, hostDevice, requirements.MemoryTypeBits);
             chunks.Add(newChunk);
+
+            logger?.Log("MemoryPool", 
+                $"New chuck allocated, type: {newChunk.MemoryTypeIndex}, size: {newChunk.TotalSize}");
     
             //Allocate from the new chunk
             Block? newBlock = newChunk.TryAllocate(requirements);

@@ -16,6 +16,7 @@ namespace HT.Engine.Rendering
 
         private bool initialized;
         private Device logicalDevice;
+        private Logger logger;
         private Memory.Copier copier;
         private Memory.Pool memoryPool;
         private Memory.StagingBuffer stagingBuffer;
@@ -45,7 +46,8 @@ namespace HT.Engine.Rendering
             Device logicalDevice,
             HostDevice hostDevice,
             Format surfaceFormat,
-            int transferQueueFamilyIndex)
+            int transferQueueFamilyIndex,
+            Logger logger = null)
         {
             if (logicalDevice == null)
                 throw new ArgumentNullException(nameof(logicalDevice));
@@ -56,10 +58,11 @@ namespace HT.Engine.Rendering
                     $"[{nameof(RenderScene)}] Allready initialized");
 
             this.logicalDevice = logicalDevice;
+            this.logger = logger;
 
             //Allocate gpu memory
             copier = new Memory.Copier(logicalDevice, transferQueueFamilyIndex);
-            memoryPool = new Memory.Pool(logicalDevice, hostDevice);
+            memoryPool = new Memory.Pool(logicalDevice, hostDevice, logger);
             stagingBuffer = new Memory.StagingBuffer(logicalDevice, hostDevice, copier);
 
             //Create a descriptor pool for the render-objects to create descriptor-sets from

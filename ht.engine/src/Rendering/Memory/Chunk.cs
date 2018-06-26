@@ -10,8 +10,21 @@ namespace HT.Engine.Rendering.Memory
     {
         //Helper properties
         internal DeviceMemory Memory => memory;
+        internal int MemoryTypeIndex => memoryTypeIndex;
+        internal long TotalSize => totalSize;
+        internal long FreeSize
+        {
+            get
+            {
+                long result = 0;
+                for (int i = 0; i < freeBlocks.Count; i++)
+                    result += freeBlocks.Data[i].Size;
+                return result;
+            }
+        }
 
         //Data
+        private readonly long totalSize;
         private readonly ResizeArray<Block> freeBlocks = new ResizeArray<Block>(initialCapacity: 100);
         private readonly int memoryTypeIndex;
         private readonly DeviceMemory memory;
@@ -28,6 +41,7 @@ namespace HT.Engine.Rendering.Memory
                 throw new ArgumentNullException(nameof(logicalDevice));
             if (hostDevice == null)
                 throw new ArgumentNullException(nameof(hostDevice));
+            totalSize = size;
 
             //Add a block the size of the entire chunk to the free set
             freeBlocks.Add(new Block(container: this, offset: 0, size: size));
