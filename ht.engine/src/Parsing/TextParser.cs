@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 using HT.Engine.Utils;
 
@@ -16,6 +17,8 @@ namespace HT.Engine.Parsing
             //Helper properties
             public bool IsEndOfFile => value < 0;
             public bool IsEndOfLine => IsCharacter('\r') || IsCharacter('\n');
+            public bool IsSingleQuote => !IsEndOfFile && IsCharacter('\'');
+            public bool IsDoubleQuote => !IsEndOfFile && IsCharacter('\"');
             public bool IsWhitespace => !IsEndOfFile && !IsEndOfLine && Char.IsWhiteSpace((char)value);
             public bool IsDigit => !IsEndOfFile && Char.IsDigit((char)value);
 
@@ -30,17 +33,19 @@ namespace HT.Engine.Parsing
         }
 
         //Helper properties
-        protected Entry Current => new Entry(inputReader.Peek());
+        protected Entry Current => new Entry(inputReader.Peek(charactersAhead: 0));
+        protected Entry Next => new Entry(inputReader.Peek(charactersAhead: 1));
 
         //Data
-        private readonly TextReader inputReader;
+        private readonly BufferedTextReader inputReader;
         private readonly ResizeArray<char> charCache = new ResizeArray<char>();
 
         private T result;
+        private int currentLineNumber;
         private bool parsed;
 
-        public TextParser(Stream inputStream)
-            => inputReader = new StreamReader(inputStream);
+        public TextParser(Stream inputStream, Encoding encoding)
+            => inputReader = new BufferedTextReader(inputStream, encoding, readBufferSize: 2);
 
         public T Parse()
         {
@@ -79,8 +84,7 @@ namespace HT.Engine.Parsing
             }
             //Sanity check that we consumed anything
             if (charCache.Count == 0)
-                throw new Exception(
-                    $"[{nameof(TextParser<T>)}] Expected float but got '{Current}'");
+                throw CreateError($"Expected float but got '{Current}'");
             //Parse it to a float
             return float.Parse(new string(charCache.Data, startIndex: 0, length: charCache.Count));
         }
@@ -96,10 +100,26 @@ namespace HT.Engine.Parsing
                 charCache.Add(Consume());
             //Sanity check that we consumed anything
             if (charCache.Count == 0)
-                throw new Exception(
-                    $"[{nameof(TextParser<T>)}] Expected int but got '{Current}'");
+                throw CreateError($"Expected int but got '{Current}'");
             //Parse it to an integer
             return int.Parse(new string(charCache.Data, startIndex: 0, length: charCache.Count));
+        }
+
+        public string ConsumeQuotedString()
+        {
+            //Determine if this is a single or double quoted string
+            bool isSingleQuote = Current.IsSingleQuote;
+            bool isDoubleQuote = Current.IsDoubleQuote;
+            if (!isSingleQuote && !isDoubleQuote)
+                throw CreateError($"Expected single or double quote but got '{Current}'");
+            //Consume the starting quote
+            Consume();
+            //Consume all until we find a matching end quote
+            string content = ConsumeUntil(current =>
+                isSingleQuote ? current.IsSingleQuote : current.IsDoubleQuote);
+            //Consume the end quote
+            Consume();
+            return content;
         }
 
         public string ConsumeWord() => ConsumeUntil(current => current.IsWhitespace || current.IsEndOfLine);
@@ -129,17 +149,18 @@ namespace HT.Engine.Parsing
         protected void ExpectConsumeWhitespace()
         {
             if (!Current.IsWhitespace)
-                throw new Exception(
-                    $"[{nameof(TextParser<T>)}] Expected whitespace but got '{Current}'");
+                throw CreateError($"Expected whitespace but got '{Current}'");
             ConsumeWhitespace();
         }
 
-        protected void ExpectConsume(char expectedChar)
+        protected void ExpectConsume(char expectedChar, int count = 1)
         {
-            char consumedChar = Consume();
-            if (consumedChar != expectedChar)
-                throw new Exception(
-                    $"[{nameof(TextParser<T>)}] Expected '{expectedChar}' but got '{consumedChar}'");
+            for (int i = 0; i < count; i++)
+            {
+                char consumedChar = Consume();
+                if (consumedChar != expectedChar)
+                    throw CreateError($"Expected '{expectedChar}' but got '{consumedChar}'");
+            }
         }
 
         protected void ExpectConsume(string expectedString)
@@ -148,8 +169,7 @@ namespace HT.Engine.Parsing
             {
                 char consumedChar = Consume();
                 if (consumedChar != expectedString[i])
-                    throw new Exception(
-                        $"[{nameof(TextParser<T>)}] Did not find expected string '{expectedString}'");
+                    throw CreateError($"Did not find expected string '{expectedString}'");
             }
         }
 
@@ -176,8 +196,15 @@ namespace HT.Engine.Parsing
         {
             int value = inputReader.Read();
             if (value < 0)
-                throw new Exception($"[{nameof(TextParser<T>)}] End of file");
-            return (char)value;
+                throw CreateError("End of file");
+            char character = (char)value;
+            if (character == '\n')
+                currentLineNumber++;
+            return character;
         }
+
+        protected Exception CreateError(string errorMessage)
+            //+1 to have it start from 1 (matches how most ide's show linenumbers)
+            => throw new Exception($"[{GetType().Name}] {errorMessage} Line: {currentLineNumber + 1}");
     }
 }

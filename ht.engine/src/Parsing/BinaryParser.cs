@@ -80,6 +80,9 @@ namespace HT.Engine.Parsing
         protected void ConsumeIgnore(int bytes)
             => inputReader.Read(readBuffer, index: 0, count: bytes);
 
+        protected Exception CreateError(string errorMessage)
+            => throw new Exception($"[{GetType().Name}] {errorMessage}");
+
         private void EnsureReadBuffer(int requiredSize)
         {
             if (readBuffer == null)

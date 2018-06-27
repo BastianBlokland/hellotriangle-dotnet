@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 
 using HT.Engine.Math;
 using HT.Engine.Rendering.Model;
@@ -41,7 +42,8 @@ namespace HT.Engine.Parsing
         private readonly ResizeArray<Face> faces = new ResizeArray<Face>();
         private readonly ResizeArray<FaceElement> elementCache = new ResizeArray<FaceElement>();
 
-        public WavefrontObjParser(Stream inputStream, float scale = 1f) : base(inputStream) 
+        public WavefrontObjParser(Stream inputStream, float scale = 1f) 
+            : base(inputStream, Encoding.ASCII) 
             => this.scale = scale;
 
         protected override bool ConsumeToken()
@@ -63,8 +65,7 @@ namespace HT.Engine.Parsing
                         ConsumeWhitespace();
                     }
                     if (elementCache.Count < 3)
-                        throw new Exception(
-                            $"[{nameof(WavefrontObjParser)}] At least 3 vertices are required to create a face");
+                        throw CreateError("At least 3 vertices are required to create a face");
                     faces.Add(new Face(elementCache.ToArray()));
                 }
                 break;
@@ -87,8 +88,7 @@ namespace HT.Engine.Parsing
             {
                 var face = faces.Data[i];
                 if (face.Elements.Length < 3)
-                    throw new Exception(
-                        $"[{nameof(WavefrontObjParser)}] Need at least 3 vertices to form a triangle");
+                    throw CreateError("Need at least 3 vertices to form a triangle");
 
                 //Create a simple triangle fan for each face.
                 //Note: this only supports ordered simple convex polygons

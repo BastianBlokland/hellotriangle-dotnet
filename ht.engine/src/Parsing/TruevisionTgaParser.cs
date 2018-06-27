@@ -53,11 +53,9 @@ namespace HT.Engine.Parsing
             header = Consume<Header>();
             //Sanity check some of the data in the header
             if (header.ColorMapType != ColorMapType.NoColorMap && header.ColorMapType != ColorMapType.HasColorMap)
-                throw new Exception(
-                        $@"[{nameof(TruevisionTgaParser)}] Unsupported colormap type: {header.ColorMapType}");
+                throw CreateError($"Unsupported colormap type: {header.ColorMapType}");
             if (header.BitsPerPixel != 24 && header.BitsPerPixel != 32)
-                throw new Exception(
-                        $@"[{nameof(TruevisionTgaParser)}] Only 24 (rgb) and 32 (rgba) bits per pixel are supported");
+                throw CreateError($"Only 24 (rgb) and 32 (rgba) bits per pixel are supported");
             //Check if this image is using the run-length-encoding compression
             bool rleCompressed = CheckCompression(header.ImageType);
             
@@ -126,7 +124,7 @@ namespace HT.Engine.Parsing
                     return Float4.CreateFrom32Bit(r, g, b, a);
                 }
                 default:
-                    throw new Exception($"[{nameof(TruevisionTgaParser)}] Unsupported bitsPerPixel");
+                    throw CreateError("Unsupported bitsPerPixel");
             }
         }
 
@@ -137,8 +135,7 @@ namespace HT.Engine.Parsing
                 case ImageType.UncompressedTrueColorImage: return false;
                 case ImageType.RunLengthEncodedTrueColorImage: return true;
                 default:
-                    throw new Exception(
-                        $@"[{nameof(TruevisionTgaParser)}] Unsupported image-type: {header.ImageType}");
+                    throw CreateError($"Unsupported image-type: {header.ImageType}");
             }
         }
     }
