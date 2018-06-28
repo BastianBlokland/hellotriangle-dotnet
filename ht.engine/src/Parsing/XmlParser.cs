@@ -166,14 +166,7 @@ namespace HT.Engine.Parsing
         protected override XmlDocument Construct()
         {
             if (activeStack.Count > 0)
-                throw CreateError("Not all tags have been closed");
-            if (rootElements.Count != 2)
-                throw CreateError("Incorrect structure, 1 xml declaration and document root required");
-
-            XmlElement xmlDeclarationElement = rootElements[0];
-            if (xmlDeclarationElement.Tag.Name != "xml")
-                throw CreateError("No xml declaration found");
-            
+                throw CreateError("Not all tags have been closed");            
             return new XmlDocument(rootElements[1]);
         }
 
