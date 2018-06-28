@@ -35,9 +35,9 @@ namespace HT.Engine.Parsing
     public struct XmlTag : IEquatable<XmlTag>
     {
         public readonly string Name;
-        public readonly XmlAttribute[] Attributes; //Null if no tags where set
+        public readonly IReadOnlyList<XmlAttribute> Attributes; //Null if no tags where set
 
-        public XmlTag(string name, XmlAttribute[] attributes)
+        public XmlTag(string name, IReadOnlyList<XmlAttribute> attributes)
         {
             Name = name;
             Attributes = attributes;
@@ -47,7 +47,7 @@ namespace HT.Engine.Parsing
         {
             if(Attributes == null)
                 return null;
-            for (int i = 0; i < Attributes.Length; i++)
+            for (int i = 0; i < Attributes.Count; i++)
             {
                 if (Attributes[i].Name == attributeName)
                     return Attributes[i].Value;
@@ -70,9 +70,9 @@ namespace HT.Engine.Parsing
                 return true;
             if (Attributes == null || other.Attributes == null)
                 return false;
-            if (Attributes.Length != other.Attributes.Length)
+            if (Attributes.Count != other.Attributes.Count)
                 return false;
-            for (int i = 0; i < Attributes.Length; i++)
+            for (int i = 0; i < Attributes.Count; i++)
                 if (Attributes[i] != other.Attributes[i])
                     return false;
             return true;
@@ -83,53 +83,71 @@ namespace HT.Engine.Parsing
             int hashcode = Name == null ? 1 : Name.GetHashCode();
             if (Attributes != null)
             {
-                for (int i = 0; i < Attributes.Length; i++)
+                for (int i = 0; i < Attributes.Count; i++)
                     hashcode ^= Attributes[i].GetHashCode();
             }
             return hashcode;
         }
 
         public override string ToString()
-            => $"(Name: {Name}, Attributes: {(Attributes == null ? 0 : Attributes.Length)})";
+            => $"(Name: {Name}, Attributes: {(Attributes == null ? 0 : Attributes.Count)})";
     }
 
     /// <summary>
     /// Pointers to start and ending offset positions in the file. Why not just store the raw string
-    /// here to avoid having to do another pass over the file? Well some file format put huge
-    /// amount of data in the elements (for example model data) and saving it all here in this
+    /// here to avoid having to do another pass over the file? Well some file formats put huge
+    /// amounts of data in the elements (for example model data) and saving it all here in this
     /// structure would make this potentially take huge amounts of memory and with this approach
     /// you can keep working with this stream based approach where you can parse large files without
     /// needing to have the raw text all in memory at the same time.
     /// </summary>
     public struct XmlDataEntry
     {
-        public readonly long StartPosition;
-        public readonly long EndPosition;
+        //Helper properties
+        public long ByteSize => EndBytePosition - StartBytePosition;
 
-        public XmlDataEntry(long startPosition, long endPosition)
+        //Data
+        public readonly long StartBytePosition;
+        public readonly long EndBytePosition;
+
+        public XmlDataEntry(long startBytePosition, long endBytePosition)
         {
-            StartPosition = startPosition;
-            EndPosition = endPosition;
+            if(endBytePosition < startBytePosition)
+                throw new ArgumentOutOfRangeException(nameof(endBytePosition));
+            StartBytePosition = startBytePosition;
+            EndBytePosition = endBytePosition;
         }
     }
 
     public sealed class XmlElement
     {
+        //Helper properties
+        public IReadOnlyList<XmlDataEntry> Data => data;
+        public IReadOnlyList<XmlElement> Children => children;
+
+        //Data
         public readonly XmlTag Tag;
-        public readonly List<XmlDataEntry> Data = new List<XmlDataEntry>();
-        public readonly List<XmlElement> Children = new List<XmlElement>();
+        private readonly List<XmlDataEntry> data = new List<XmlDataEntry>();
+        private readonly List<XmlElement> children = new List<XmlElement>();
 
         public XmlElement(XmlTag tag) => Tag = tag;
 
+        public void AddData(XmlDataEntry dataEntry) => data.Add(dataEntry);
+        public void AddChild(XmlElement child) => children.Add(child);
+
         public override string ToString()
-            => $"(Name: {Tag.Name}, Children: {Children.Count})";
+            => $"(Name: {Tag.Name}, Data: {data.Count}, Children: {children.Count})";
     }
 
     public sealed class XmlDocument
     {
-        public readonly XmlElement RootElement;
+        //Helper properties
+        public IReadOnlyList<XmlElement> Elements => elements;
 
-        public XmlDocument(XmlElement element) => RootElement = element;
+        //Data
+        private readonly List<XmlElement> elements = new List<XmlElement>();
+
+        public void AddElement(XmlElement element) => elements.Add(element);
     }
 
     /// <summary>
@@ -149,7 +167,7 @@ namespace HT.Engine.Parsing
         }
     
         private readonly Stack<XmlElement> activeStack = new Stack<XmlElement>();
-        private readonly List<XmlElement> rootElements = new List<XmlElement>();
+        private readonly XmlDocument document = new XmlDocument();
 
         private readonly ResizeArray<XmlAttribute> attributeCache = new ResizeArray<XmlAttribute>();
         
@@ -157,7 +175,7 @@ namespace HT.Engine.Parsing
 
         protected override bool ConsumeToken()
         {
-            ConsumeWhitespace(); //Allow starting whitespace
+            ConsumeWhitespace(includeNewline: true); //Allow starting whitespace
             (XmlTag tag, TagType type) = ConsumeTag();
             switch (type)
             {
@@ -173,9 +191,9 @@ namespace HT.Engine.Parsing
                 {
                     XmlElement element = new XmlElement(tag);
                     if (activeStack.Count == 0) //If there are not active elements they we are a root element
-                        rootElements.Add(element);
+                        document.AddElement(element);
                     else //Otherwise we become a child of the topmost element
-                        activeStack.Peek().Children.Add(element);
+                        activeStack.Peek().AddChild(element);
 
                     //If this was a element start (so not self-closing) then we add ourselves to the
                     //active stack until we find a close tag for us
@@ -186,20 +204,20 @@ namespace HT.Engine.Parsing
             }
 
             //Consume empty space between the tags
-            ConsumeWhitespace();
+            ConsumeWhitespace(includeNewline: true);
 
-            //If there is non xml-tag text between the token then we treat that as data entries
+            //If there is non xml-tag text between the tokens then we treat that as data entries
             //belonging to the active element
-            if (!Current.IsCharacter('<'))
+            if (!Current.IsCharacter('<') && !Current.IsEndOfFile)
             {
                 if (activeStack.Count == 0)
                     throw CreateError("Text found outside of root elements");
 
-                long startPosition = CurrentPosition;
+                long startPosition = CurrentBytePosition;
                 SkipUntil(current => current.IsCharacter('<'));
-                long endPosition = CurrentPosition;
+                long endPosition = CurrentBytePosition;
 
-                activeStack.Peek().Data.Add(new XmlDataEntry(startPosition, endPosition));
+                activeStack.Peek().AddData(new XmlDataEntry(startPosition, endPosition));
             }
 
             //true means keep parsing (we want to read tokens till the end of the file)
@@ -210,7 +228,7 @@ namespace HT.Engine.Parsing
         {
             if (activeStack.Count > 0)
                 throw CreateError("Not all tags have been closed");            
-            return new XmlDocument(rootElements[1]);
+            return document;
         }
 
         private (XmlTag tag, TagType type) ConsumeTag()
