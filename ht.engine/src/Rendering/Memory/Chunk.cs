@@ -8,7 +8,7 @@ namespace HT.Engine.Rendering.Memory
 {
     internal sealed class Chunk : IDisposable
     {
-        //Helper properties
+        //Properties
         internal DeviceMemory Memory => memory;
         internal int MemoryTypeIndex => memoryTypeIndex;
         internal long TotalSize => totalSize;

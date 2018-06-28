@@ -19,7 +19,7 @@ namespace HT.Engine.Math
             row2: (0f, 0f, 1f, 0f),
             row3: (0f, 0f, 0f, 1f));
 
-        //Helper properties
+        //Properties
         public Float3 Translation => Column3.XYZ;
 
         //Column index accessor

@@ -7,7 +7,7 @@ namespace HT.Engine.Rendering.Model
 {
     public sealed class Mesh
     {
-        //Helper properties
+        //Properties
         internal bool Uploaded => uploaded;
 
         //Data

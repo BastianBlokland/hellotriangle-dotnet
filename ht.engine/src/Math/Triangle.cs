@@ -9,7 +9,7 @@ namespace HT.Engine.Math
     {
         public const int SIZE = Float3.SIZE * 3;
 
-        //Helper properties
+        //Properties
         public Float3 Normal => GetNormal(A, B, C);
 
         //Data

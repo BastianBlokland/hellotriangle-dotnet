@@ -11,7 +11,7 @@ namespace HT.Engine.Parsing
     /// </summary>
     public abstract class BinaryParser<T> : IParser<T>, IDisposable
     {
-        //Helper properties
+        //Properties
         protected bool IsEndOfFile => inputReader.PeekChar() < 0;
 
         //Data

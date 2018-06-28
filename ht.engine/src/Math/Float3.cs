@@ -22,7 +22,7 @@ namespace HT.Engine.Math
         public static readonly Float3 Forward = new Float3(0f, 0f, 1f);
         public static readonly Float3 Backward = new Float3(0f, 0f, -1f);
 
-        //Helper properties
+        //Properties
         public float SquareMagnitude => X * X + Y * Y + Z * Z;
         public float Magnitude => (float)Sqrt(SquareMagnitude);
 

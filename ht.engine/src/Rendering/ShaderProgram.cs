@@ -16,7 +16,7 @@ namespace HT.Engine.Rendering
             if (nativeApp == null)
                 throw new ArgumentNullException(nameof(nativeApp));
             string binFileName = Path.Combine("shaders", "bin", $"{sourceFilename}.spv");
-            using(var file = nativeApp.ReadFile(binFileName))
+            using (var file = nativeApp.ReadFile(binFileName))
             {
                 binaryCode = file.ReadToEnd();
             }

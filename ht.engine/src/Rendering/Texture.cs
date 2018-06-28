@@ -7,7 +7,7 @@ namespace HT.Engine.Rendering
 {
     public sealed class Texture
     {
-        //Helper properties
+        //Properties
         internal bool Uploaded => uploaded;
         internal int Width => width;
         internal int Height => height;

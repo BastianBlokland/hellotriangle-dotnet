@@ -11,7 +11,7 @@ namespace HT.Engine.Math
         //Presets
         public static readonly IntRect Zero = new IntRect();
 
-        //Helper properties
+        //Properties
         public Int2 Size => new Int2(Width, Height);
         public int Width => Max.X - Min.X;
         public int Height => Max.Y - Min.Y;

@@ -11,7 +11,7 @@ namespace HT.Engine.Utils
     public sealed class ResizeArray<T>
         where T : struct
     {
-        //Helper properties
+        //Properties
         public int CurrentCapacity => data.Length;
         public bool IsEmpty => count == 0;
         public T FirstOrDefault => IsEmpty ? default(T) : data[0];

@@ -6,7 +6,7 @@ namespace HT.Engine.Rendering.Memory
 {
     internal sealed class DeviceBuffer : IDisposable
     {
-        //Helper properties
+        //Properties
         internal VulkanCore.Buffer Buffer => buffer;
         internal long Size => size;
 

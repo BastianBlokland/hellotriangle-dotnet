@@ -45,7 +45,7 @@ namespace HT.Engine.Parsing
 
         public string GetAttributeValue(string attributeName)
         {
-            if(Attributes == null)
+            if (Attributes == null)
                 return null;
             for (int i = 0; i < Attributes.Count; i++)
             {
@@ -103,7 +103,7 @@ namespace HT.Engine.Parsing
     /// </summary>
     public struct XmlDataEntry
     {
-        //Helper properties
+        //Properties
         public long ByteSize => EndBytePosition - StartBytePosition;
 
         //Data
@@ -112,7 +112,7 @@ namespace HT.Engine.Parsing
 
         public XmlDataEntry(long startBytePosition, long endBytePosition)
         {
-            if(endBytePosition < startBytePosition)
+            if (endBytePosition < startBytePosition)
                 throw new ArgumentOutOfRangeException(nameof(endBytePosition));
             StartBytePosition = startBytePosition;
             EndBytePosition = endBytePosition;
@@ -121,7 +121,7 @@ namespace HT.Engine.Parsing
 
     public sealed class XmlElement
     {
-        //Helper properties
+        //Properties
         public IReadOnlyList<XmlDataEntry> Data => data;
         public IReadOnlyList<XmlElement> Children => children;
 
@@ -141,7 +141,7 @@ namespace HT.Engine.Parsing
 
     public sealed class XmlDocument
     {
-        //Helper properties
+        //Properties
         public IReadOnlyList<XmlElement> Elements => elements;
 
         //Data

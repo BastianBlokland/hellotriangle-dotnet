@@ -11,7 +11,7 @@ namespace HT.MacOS
             Logger logger = new Logger();
             logger.Log($"MacOS-{nameof(Launcher)}", "Launching program");
 
-            using(var app = new NativeApp(logger))
+            using (var app = new NativeApp(logger))
             {
                 HT.Main.Program.Run(app, logger);
             }

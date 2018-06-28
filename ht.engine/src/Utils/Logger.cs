@@ -42,7 +42,7 @@ namespace HT.Engine.Utils
 
         public void LogList<T>(string context, string message, IList<T> list)
         {
-            using(var stream = new LogStream())
+            using (var stream = new LogStream())
             {
                 stream.AppendLine($"[{context}] {message}");
                 stream.AppendList(list);

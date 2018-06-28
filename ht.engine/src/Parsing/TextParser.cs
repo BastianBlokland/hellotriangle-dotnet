@@ -14,7 +14,7 @@ namespace HT.Engine.Parsing
     {
         protected struct Entry
         {
-            //Helper properties
+            //Properties
             public bool IsEndOfFile => value < 0;
             public bool IsEndOfLine => IsCharacter('\r') || IsCharacter('\n');
             public bool IsSingleQuote => !IsEndOfFile && IsCharacter('\'');
@@ -38,7 +38,7 @@ namespace HT.Engine.Parsing
             }
         }
 
-        //Helper properties
+        //Properties
         protected long CurrentBytePosition => inputReader.CurrentBytePosition;
         protected Entry Current => new Entry(inputReader.Peek(charactersAhead: 0));
         protected Entry Next => new Entry(inputReader.Peek(charactersAhead: 1));

@@ -10,7 +10,7 @@ namespace HT.Engine.Math
     {
         public const int SIZE = sizeof(float) * 4;
 
-        //Helper properties
+        //Properties
         public float Length => FarDistance - NearDistance;
 
         //Data

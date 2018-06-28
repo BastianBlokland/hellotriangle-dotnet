@@ -11,7 +11,7 @@ namespace HT.Win32
             Logger logger = new Logger();
             logger.Log($"Win32-{nameof(Launcher)}", "Launching program"); 
 
-            using(var app = new NativeApp(logger))
+            using (var app = new NativeApp(logger))
             {
                 HT.Main.Program.Run(app, logger);
             }
