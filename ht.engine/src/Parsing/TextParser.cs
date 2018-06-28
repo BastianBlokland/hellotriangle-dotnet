@@ -29,11 +29,17 @@ namespace HT.Engine.Parsing
 
             public bool IsCharacter(char character) => !IsEndOfFile && (char)value == character;
 
-            public override string ToString() => value.ToString();
+            public override string ToString()
+            {
+                if (IsEndOfFile) return "EOF";
+                if (IsEndOfLine) return "EOL";
+                if (IsWhitespace) return "SPACE";
+                return ((char)value).ToString();
+            }
         }
 
         //Helper properties
-        protected long CurrentPosition => inputReader.CurrentPosition;
+        protected long CurrentBytePosition => inputReader.CurrentBytePosition;
         protected Entry Current => new Entry(inputReader.Peek(charactersAhead: 0));
         protected Entry Next => new Entry(inputReader.Peek(charactersAhead: 1));
 
@@ -45,7 +51,7 @@ namespace HT.Engine.Parsing
         private bool parsed;
 
         public TextParser(Stream inputStream, Encoding encoding)
-            => inputReader = new BufferedTextReader(inputStream, encoding, readBufferSize: 2);
+            => inputReader = new BufferedTextReader(inputStream, encoding, maxPeekAhead: 2);
 
         public T Parse()
         {
@@ -140,9 +146,9 @@ namespace HT.Engine.Parsing
                 Consume();
         }
 
-        protected void ConsumeWhitespace()
+        protected void ConsumeWhitespace(bool includeNewline = false)
         {
-            while (Current.IsWhitespace)
+            while (Current.IsWhitespace || (includeNewline && Current.IsEndOfLine))
                 Consume();
         }
 
@@ -202,12 +208,36 @@ namespace HT.Engine.Parsing
         {
             int value = inputReader.Read();
             if (value < 0)
-                throw CreateError("End of file");
+                throw CreateError("Unexpected end of file");
             return (char)value;
         }
 
         protected Exception CreateError(string errorMessage)
-            //+1 to have it start from 1 (matches how most ide's show linenumbers)
-            => throw new Exception($"[{GetType().Name}] {errorMessage} Position: {CurrentPosition}");
+        {
+            #if DEBUG
+            //In debug seek back through the stream to gather what line number we where at,
+            //why not just keep track of the lines while reading? Because someone can skip ahead
+            //using the seek feature and thus the linenumber would not match 
+            if (inputReader.CanSeekBackward)
+            {
+                long lineNumber = 1; //Start at 1 to match how most editors show linenumbers
+                long charOnLine = 1; //Start at 1 to match how most editors show characters on line
+                long curBytePos = inputReader.CurrentBytePosition;
+                inputReader.SeekToBeginning();
+                while (inputReader.CurrentBytePosition < curBytePos) //Read back to current 
+                {
+                    int val = inputReader.Read();
+                    if (val == '\n')
+                    {
+                        lineNumber++;
+                        charOnLine = 0;
+                    }
+                    charOnLine++;
+                }
+                return new Exception($"[{GetType().Name}] {errorMessage} (Current: '{Current}', Line: {lineNumber}, CharacterOnLine: {charOnLine})");
+            }
+            #endif
+            return new Exception($"[{GetType().Name}] {errorMessage}");
+        }
     }
 }
