@@ -11,23 +11,60 @@ namespace HT.Engine.Utils
     /// </summary>
     public sealed class BufferedTextReader : IDisposable
     {
+        //Helper properties
+        public long CurrentPosition => stream.Position - buffer.Length;
+
+        //Data
+        private readonly Stream stream;
         private readonly TextReader reader;
         private readonly int[] buffer;
         private int currentIndex;
 
         public BufferedTextReader(Stream stream, Encoding encoding, int readBufferSize = 2)
         {
+            if (stream == null)
+                throw new ArgumentNullException(nameof(stream));
+            if (!stream.CanRead)
+                throw new ArgumentException(
+                    $"[{nameof(BufferedTextReader)}] Only works on a readable stream", nameof(stream));
+
+            this.stream = stream;
             reader = new StreamReader(stream, encoding);
             buffer = new int[readBufferSize];
             for (int i = 0; i < readBufferSize; i++)
                 buffer[i] = reader.Read();
         }
 
+        public void SeekForward(long position)
+        {
+            if (CurrentPosition == position) //Allready at correct entry
+                return;
+            if (position < CurrentPosition)
+                throw new ArgumentOutOfRangeException(nameof(position), 
+                    $"[{nameof(BufferedTextReader)}] Only forward seeking is allowed");
+            
+            if (stream.CanSeek) //If the stream supports seeking we can use that to 'skip' ahead
+            {
+                //Seek the stream to the specified point
+                stream.Seek(position, SeekOrigin.Begin);
+                //Refill our buffer
+                currentIndex = 0;
+                for (int i = 0; i < buffer.Length; i++)
+                    buffer[i] = reader.Read();
+            }
+            else //If not we just read through it one by one
+            {
+                long readCount = position - CurrentPosition;
+                for (long i = 0; i < readCount; i++)
+                    Read();
+            }
+        }
+
         public int Peek(int charactersAhead = 0)
         {
             if (charactersAhead < 0 || charactersAhead > buffer.Length)
-                throw new ArgumentOutOfRangeException(
-                    nameof(charactersAhead), "Out of specified read-buffer size");
+                throw new ArgumentOutOfRangeException(nameof(charactersAhead),
+                    $"[{nameof(BufferedTextReader)}] Out of specified read-buffer size");
             return buffer[(currentIndex + charactersAhead) % buffer.Length];
         }
 
