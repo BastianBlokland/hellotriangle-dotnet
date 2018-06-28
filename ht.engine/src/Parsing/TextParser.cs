@@ -33,6 +33,7 @@ namespace HT.Engine.Parsing
         }
 
         //Helper properties
+        protected long CurrentPosition => inputReader.CurrentPosition;
         protected Entry Current => new Entry(inputReader.Peek(charactersAhead: 0));
         protected Entry Next => new Entry(inputReader.Peek(charactersAhead: 1));
 
@@ -41,7 +42,6 @@ namespace HT.Engine.Parsing
         private readonly ResizeArray<char> charCache = new ResizeArray<char>();
 
         private T result;
-        private int currentLineNumber;
         private bool parsed;
 
         public TextParser(Stream inputStream, Encoding encoding)
@@ -134,6 +134,12 @@ namespace HT.Engine.Parsing
             return new string(charCache.Data, startIndex: 0, length: charCache.Count);
         }
 
+        protected void SkipUntil(Predicate<Entry> endPredicate)
+        {
+            while (!Current.IsEndOfFile && !endPredicate(Current))
+                Consume();
+        }
+
         protected void ConsumeWhitespace()
         {
             while (Current.IsWhitespace)
@@ -197,14 +203,11 @@ namespace HT.Engine.Parsing
             int value = inputReader.Read();
             if (value < 0)
                 throw CreateError("End of file");
-            char character = (char)value;
-            if (character == '\n')
-                currentLineNumber++;
-            return character;
+            return (char)value;
         }
 
         protected Exception CreateError(string errorMessage)
             //+1 to have it start from 1 (matches how most ide's show linenumbers)
-            => throw new Exception($"[{GetType().Name}] {errorMessage} Line: {currentLineNumber + 1}");
+            => throw new Exception($"[{GetType().Name}] {errorMessage} Position: {CurrentPosition}");
     }
 }

@@ -43,6 +43,18 @@ namespace HT.Engine.Parsing
             Attributes = attributes;
         }
 
+        public string GetAttributeValue(string attributeName)
+        {
+            if(Attributes == null)
+                return null;
+            for (int i = 0; i < Attributes.Length; i++)
+            {
+                if (Attributes[i].Name == attributeName)
+                    return Attributes[i].Value;
+            }
+            return null;
+        }
+
         //Equality
         public static bool operator ==(XmlTag a, XmlTag b) => a.Equals(b);
 
@@ -81,10 +93,30 @@ namespace HT.Engine.Parsing
             => $"(Name: {Name}, Attributes: {(Attributes == null ? 0 : Attributes.Length)})";
     }
 
+    /// <summary>
+    /// Pointers to start and ending offset positions in the file. Why not just store the raw string
+    /// here to avoid having to do another pass over the file? Well some file format put huge
+    /// amount of data in the elements (for example model data) and saving it all here in this
+    /// structure would make this potentially take huge amounts of memory and with this approach
+    /// you can keep working with this stream based approach where you can parse large files without
+    /// needing to have the raw text all in memory at the same time.
+    /// </summary>
+    public struct XmlDataEntry
+    {
+        public readonly long StartPosition;
+        public readonly long EndPosition;
+
+        public XmlDataEntry(long startPosition, long endPosition)
+        {
+            StartPosition = startPosition;
+            EndPosition = endPosition;
+        }
+    }
+
     public sealed class XmlElement
     {
         public readonly XmlTag Tag;
-        public readonly List<string> Data = new List<string>();
+        public readonly List<XmlDataEntry> Data = new List<XmlDataEntry>();
         public readonly List<XmlElement> Children = new List<XmlElement>();
 
         public XmlElement(XmlTag tag) => Tag = tag;
@@ -100,6 +132,10 @@ namespace HT.Engine.Parsing
         public XmlDocument(XmlElement element) => RootElement = element;
     }
 
+    /// <summary>
+    /// Basic xml parser / tokenizer, can be used as the tokenizer in a multi pass parser
+    /// Followed basic spec from wiki: https://en.wikipedia.org/wiki/XML
+    /// </summary>
     public sealed class XmlParser : TextParser<XmlDocument>
     {
         private enum TagType : byte
@@ -121,7 +157,7 @@ namespace HT.Engine.Parsing
 
         protected override bool ConsumeToken()
         {
-            ConsumeWhitespace(); //Allow whitespace between tokens
+            ConsumeWhitespace(); //Allow starting whitespace
             (XmlTag tag, TagType type) = ConsumeTag();
             switch (type)
             {
@@ -149,14 +185,21 @@ namespace HT.Engine.Parsing
                 }
             }
 
-            //All text until the next token is considered data belonging to the active element
-            //Trim to remove starting and trailing whitespace
-            string text = ConsumeUntil(current => current.IsCharacter('<')).Trim();
-            if (!string.IsNullOrEmpty(text))
+            //Consume empty space between the tags
+            ConsumeWhitespace();
+
+            //If there is non xml-tag text between the token then we treat that as data entries
+            //belonging to the active element
+            if (!Current.IsCharacter('<'))
             {
                 if (activeStack.Count == 0)
                     throw CreateError("Text found outside of root elements");
-                activeStack.Peek().Data.Add(text);
+
+                long startPosition = CurrentPosition;
+                SkipUntil(current => current.IsCharacter('<'));
+                long endPosition = CurrentPosition;
+
+                activeStack.Peek().Data.Add(new XmlDataEntry(startPosition, endPosition));
             }
 
             //true means keep parsing (we want to read tokens till the end of the file)
