@@ -12,7 +12,7 @@ namespace HT.Engine.Parsing
     //non triangle faces will be converted to triangles using a simple triangle fan starting from
     //vertex 0 in the face
     //Followed the spec from wikipedia: https://en.wikipedia.org/wiki/Wavefront_.obj_file
-    public sealed class WavefrontObjParser : TextParser<Mesh>
+    public sealed class WavefrontObjParser : IParser<Mesh>
     {
         private struct FaceElement
         {
@@ -35,6 +35,7 @@ namespace HT.Engine.Parsing
             public Face(FaceElement[] elements) => Elements = elements;
         }
 
+        private readonly TextParser par;
         private readonly float scale;
         private readonly ResizeArray<Float3> positions = new ResizeArray<Float3>();
         private readonly ResizeArray<Float3> normals = new ResizeArray<Float3>();
@@ -43,52 +44,60 @@ namespace HT.Engine.Parsing
         private readonly ResizeArray<FaceElement> elementCache = new ResizeArray<FaceElement>();
 
         public WavefrontObjParser(Stream inputStream, float scale = 1f) 
-            : base(inputStream, Encoding.ASCII) 
-            => this.scale = scale;
-
-        protected override bool ConsumeToken()
         {
-            ConsumeWhitespace(); //Ignore whitespace before the id
-            string id = ConsumeWord();
-            ConsumeWhitespace(); //Ignore whitespace after the id
-            switch (id)
-            {
-                case "v": positions.Add(ConsumeFloat3() * scale); break;
-                case "vn": normals.Add(ConsumeFloat3()); break;
-                case "vt": texcoords.Add(ConsumeFloat2()); break;
-                case "f":
-                {
-                    elementCache.Clear();
-                    while (!Current.IsEndOfLine)
-                    {
-                        elementCache.Add(ConsumeFaceElement());
-                        ConsumeWhitespace();
-                    }
-                    if (elementCache.Count < 3)
-                        throw CreateError("At least 3 vertices are required to create a face");
-                    faces.Add(new Face(elementCache.ToArray()));
-                }
-                break;
-            }
-            //Ignore everything we don't know about
-            ConsumeRestOfLine();
-
-            //End the token with a newline
-            if (!Current.IsEndOfFile)
-                ConsumeNewline();
-
-            //true means keep parsing (we want to read tokens till the end of the file)
-            return true; 
+            this.par = new TextParser(inputStream, Encoding.ASCII);
+            this.scale = scale;
         }
 
-        protected override Mesh Construct()
+        public Mesh Parse()
+        {
+            if (par.Current.IsEndOfFile)
+                throw new Exception($"[{nameof(WavefrontObjParser)}] Stream allready at the end");
+                
+            while (!par.Current.IsEndOfFile)
+            {
+                par.ConsumeWhitespace(); //Ignore whitespace before the id
+                string id = par.ConsumeWord();
+                par.ConsumeWhitespace(); //Ignore whitespace after the id
+                switch (id)
+                {
+                    case "v": positions.Add(ConsumeFloat3() * scale); break;
+                    case "vn": normals.Add(ConsumeFloat3()); break;
+                    case "vt": texcoords.Add(ConsumeFloat2()); break;
+                    case "f":
+                    {
+                        elementCache.Clear();
+                        while (!par.Current.IsEndOfLine)
+                        {
+                            elementCache.Add(ConsumeFaceElement());
+                            par.ConsumeWhitespace();
+                        }
+                        if (elementCache.Count < 3)
+                            throw par.CreateError("At least 3 vertices are required to create a face");
+                        faces.Add(new Face(elementCache.ToArray()));
+                    }
+                    break;
+                }
+                //Ignore everything we don't know about
+                par.ConsumeRestOfLine();
+
+                //End the token with a newline
+                if (!par.Current.IsEndOfFile)
+                    par.ConsumeNewline();
+            }
+            return CreateMesh();
+        }
+
+        public void Dispose() => par.Dispose();
+
+        private Mesh CreateMesh()
         {
             MeshBuilder meshBuilder = new MeshBuilder();
             for (int i = 0; i < faces.Count; i++)
             {
                 var face = faces.Data[i];
                 if (face.Elements.Length < 3)
-                    throw CreateError("Need at least 3 vertices to form a triangle");
+                    throw par.CreateError("Need at least 3 vertices to form a triangle");
 
                 //Create a simple triangle fan for each face.
                 //Note: this only supports ordered simple convex polygons
@@ -137,37 +146,37 @@ namespace HT.Engine.Parsing
             int positionIndex;
             int? texcoordIndex = null;
             int? normalIndex = null;
-            TryConsume('v'); //Optionally start with v
-            positionIndex = ConsumeInt() - 1;
-            if (TryConsume('/'))
+            par.TryConsume('v'); //Optionally start with v
+            positionIndex = par.ConsumeInt() - 1;
+            if (par.TryConsume('/'))
             {
-                TryConsume("vt"); //Optionally start with vt
-                if (Current.IsDigit) //Check here because its allowed to omit the texcoord
-                    texcoordIndex = ConsumeInt() - 1;
+                par.TryConsume("vt"); //Optionally start with vt
+                if (par.Current.IsDigit) //Check here because its allowed to omit the texcoord
+                    texcoordIndex = par.ConsumeInt() - 1;
             }
-            if (TryConsume('/'))
+            if (par.TryConsume('/'))
             {
-                TryConsume("vn"); //Optionally start with vn
-                normalIndex = ConsumeInt() - 1;
+                par.TryConsume("vn"); //Optionally start with vn
+                normalIndex = par.ConsumeInt() - 1;
             }
             return new FaceElement(positionIndex, texcoordIndex, normalIndex);
         }
 
         private Float3 ConsumeFloat3()
         {
-            float x = ConsumeFloat();
-            ExpectConsumeWhitespace();
-            float y = ConsumeFloat();
-            ExpectConsumeWhitespace();
-            float z = ConsumeFloat();
+            float x = par.ConsumeFloat();
+            par.ExpectConsumeWhitespace();
+            float y = par.ConsumeFloat();
+            par.ExpectConsumeWhitespace();
+            float z = par.ConsumeFloat();
             return new Float3(x, y, z);
         }
 
         private Float2 ConsumeFloat2()
         {
-            float x = ConsumeFloat();
-            ExpectConsumeWhitespace();
-            float y = ConsumeFloat();
+            float x = par.ConsumeFloat();
+            par.ExpectConsumeWhitespace();
+            float y = par.ConsumeFloat();
             return new Float2(x, y);
         }
     }

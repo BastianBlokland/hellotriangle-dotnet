@@ -7,53 +7,26 @@ using HT.Engine.Utils;
 namespace HT.Engine.Parsing
 {
     /// <summary>
-    /// Base class for a single pass binary parser
+    /// Utility for parsing a binary stream
     /// </summary>
-    public abstract class BinaryParser<T> : IParser<T>, IDisposable
+    public sealed class BinaryParser : IDisposable
     {
         //Properties
-        protected bool IsEndOfFile => inputReader.PeekChar() < 0;
+        public bool IsEndOfFile => inputReader.PeekChar() < 0;
 
         //Data
         private readonly BinaryReader inputReader;
-
         private byte[] readBuffer;
-        private T result;
-        private bool parsed;
 
         public BinaryParser(Stream inputStream) => inputReader = new BinaryReader(inputStream);
 
-        public T Parse()
-        {
-            if (!parsed)
-            {
-                bool keepParsing = true;
-                while (keepParsing && !IsEndOfFile)
-                    keepParsing = ConsumeToken();
-                result = Construct();
-                parsed = true;
-            }
-            return result;
-        }
-
         public void Dispose() => inputReader.Dispose();
-
-        /// <summary>
-        /// Parse a single token
-        /// </summary>
-        /// <returns>bool to indicate if you want to keep parsing</returns>
-        protected abstract bool ConsumeToken();
-
-        /// <summary>
-        /// Construct the type from the consumed tokens
-        /// </summary>
-        protected abstract T Construct();
 
         /// <summary>
         /// Reads struct from the input-reader
         /// NOTE: Make sure your struct has a sequential layout without padding
         /// </summary>
-        protected unsafe ST Consume<ST>()
+        public unsafe ST Consume<ST>()
             where ST : struct
         {
             int size = Unsafe.SizeOf<ST>();
@@ -77,10 +50,10 @@ namespace HT.Engine.Parsing
 
         public float ConsumeFloat() => inputReader.ReadSingle();
 
-        protected void ConsumeIgnore(int bytes)
+        public void ConsumeIgnore(int bytes)
             => inputReader.Read(readBuffer, index: 0, count: bytes);
 
-        protected Exception CreateError(string errorMessage)
+        public Exception CreateError(string errorMessage)
             => throw new Exception($"[{GetType().Name}] {errorMessage}");
 
         private void EnsureReadBuffer(int requiredSize)

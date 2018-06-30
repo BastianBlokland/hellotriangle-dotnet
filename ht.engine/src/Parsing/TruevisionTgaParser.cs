@@ -11,7 +11,7 @@ namespace HT.Engine.Parsing
     //Followed the spec from wikipedia: https://en.wikipedia.org/wiki/Truevision_TGA
     //About tga colors: http://www.ryanjuckett.com/programming/parsing-colors-in-a-tga-file/
     //About rle compression: https://en.wikipedia.org/wiki/Run-length_encoding
-    public sealed class TruevisionTgaParser : BinaryParser<Texture>
+    public sealed class TruevisionTgaParser : IParser<Texture>
     {
         private enum ColorMapType : byte
         {
@@ -42,20 +42,22 @@ namespace HT.Engine.Parsing
             public readonly byte ImageDescriptor;
         }
 
+        private readonly BinaryParser par;
         private Header header;
         private Float4[] pixels;
 
-        public TruevisionTgaParser(Stream inputStream) : base(inputStream) { }
+        public TruevisionTgaParser(Stream inputStream) 
+            => par = new BinaryParser(inputStream);
 
-        protected override bool ConsumeToken()
+        public Texture Parse()
         {
             //Read the header
-            header = Consume<Header>();
+            header = par.Consume<Header>();
             //Sanity check some of the data in the header
             if (header.ColorMapType != ColorMapType.NoColorMap && header.ColorMapType != ColorMapType.HasColorMap)
-                throw CreateError($"Unsupported colormap type: {header.ColorMapType}");
+                throw par.CreateError($"Unsupported colormap type: {header.ColorMapType}");
             if (header.BitsPerPixel != 24 && header.BitsPerPixel != 32)
-                throw CreateError($"Only 24 (rgb) and 32 (rgba) bits per pixel are supported");
+                throw par.CreateError($"Only 24 (rgb) and 32 (rgba) bits per pixel are supported");
             //Check if this image is using the run-length-encoding compression
             bool rleCompressed = CheckCompression(header.ImageType);
             
@@ -63,17 +65,17 @@ namespace HT.Engine.Parsing
             pixels = new Float4[header.ImageWidth * header.ImageHeight];
 
             //Ignore the id field
-            ConsumeIgnore(header.IdLength);
+            par.ConsumeIgnore(header.IdLength);
             //Ignore the colormap if there was any (we just want to read the raw colors)
             if (header.ColorMapType == ColorMapType.HasColorMap)
-                ConsumeIgnore(header.ColorMapLength);
+                par.ConsumeIgnore(header.ColorMapLength);
 
             //Read the color data
             for (int i = 0; i < pixels.Length; i++)
             {
                 if (rleCompressed)
                 {
-                    byte header = Consume();
+                    byte header = par.Consume();
                     bool isRunLengthPacket = header.HasBitSet(7);
                     byte count = (byte)(header & ~(1 << 7)); //Interpret the first 7 bits as a count
                     
@@ -97,11 +99,10 @@ namespace HT.Engine.Parsing
                 else
                     pixels[i] = ConsumePixel();
             }
-            return false; //Only 1 image in file
+            return new Texture(pixels, header.ImageWidth, header.ImageHeight);
         }
 
-        protected override Texture Construct() 
-            => new Texture(pixels, header.ImageWidth, header.ImageHeight);
+        public void Dispose() => par.Dispose();
 
         private Float4 ConsumePixel()
         {
@@ -110,21 +111,21 @@ namespace HT.Engine.Parsing
                 case 24: //Stored as BGR and 1 byte per component (because little-endian)
                 {
                     //Stored as RGB but we need to read as BGR because its in little-endian
-                    byte b = Consume();
-                    byte g = Consume();
-                    byte r = Consume();
+                    byte b = par.Consume();
+                    byte g = par.Consume();
+                    byte r = par.Consume();
                     return Float4.CreateFrom32Bit(r, g, b, 255);
                 }
                 case 32: //Stored as BGRA and 1 byte per component (because little-endian)
                 {
-                    byte b = Consume();
-                    byte g = Consume();
-                    byte r = Consume();
-                    byte a = Consume();
+                    byte b = par.Consume();
+                    byte g = par.Consume();
+                    byte r = par.Consume();
+                    byte a = par.Consume();
                     return Float4.CreateFrom32Bit(r, g, b, a);
                 }
                 default:
-                    throw CreateError("Unsupported bitsPerPixel");
+                    throw par.CreateError("Unsupported bitsPerPixel");
             }
         }
 
@@ -135,7 +136,7 @@ namespace HT.Engine.Parsing
                 case ImageType.UncompressedTrueColorImage: return false;
                 case ImageType.RunLengthEncodedTrueColorImage: return true;
                 default:
-                    throw CreateError($"Unsupported image-type: {header.ImageType}");
+                    throw par.CreateError($"Unsupported image-type: {header.ImageType}");
             }
         }
     }

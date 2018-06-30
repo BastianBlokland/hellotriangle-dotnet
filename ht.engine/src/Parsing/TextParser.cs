@@ -8,11 +8,11 @@ using HT.Engine.Utils;
 namespace HT.Engine.Parsing
 {
     /// <summary>
-    /// Base class for a single pass text parser
+    /// Utility for parsing a text stream
     /// </summary>
-    public abstract class TextParser<T> : IParser<T>, IDisposable
+    public sealed class TextParser : IDisposable
     {
-        protected struct Entry
+        public struct Entry
         {
             //Properties
             public bool IsEndOfFile => value < 0;
@@ -39,39 +39,23 @@ namespace HT.Engine.Parsing
         }
 
         //Properties
-        protected long CurrentBytePosition => inputReader.CurrentBytePosition;
-        protected Entry Current => new Entry(inputReader.Peek(charactersAhead: 0));
-        protected Entry Next => new Entry(inputReader.Peek(charactersAhead: 1));
+        public long CurrentBytePosition => inputReader.CurrentBytePosition;
+        public Entry Current => new Entry(inputReader.Peek(charactersAhead: 0));
+        public Entry Next => new Entry(inputReader.Peek(charactersAhead: 1));
 
         //Data
         private readonly BufferedTextReader inputReader;
         private readonly ResizeArray<char> charCache = new ResizeArray<char>();
 
-        private T result;
-        private bool parsed;
-
         public TextParser(Stream inputStream, Encoding encoding)
             => inputReader = new BufferedTextReader(inputStream, encoding, maxPeekAhead: 2);
 
-        public T Parse()
-        {
-            if (!parsed)
-            {
-                bool keepParsing = true;
-                while (keepParsing && !Current.IsEndOfFile)
-                    keepParsing = ConsumeToken();
-                result = Construct();
-                parsed = true;
-            }
-            return result;
-        }
+        public void SeekToBeginning() => inputReader.SeekToBeginning();
+        public void Seek(long bytePosition) => inputReader.Seek(bytePosition);
 
         public void Dispose() => inputReader.Dispose();
 
-        protected abstract bool ConsumeToken();
-        protected abstract T Construct();
-
-        protected float ConsumeFloat()
+        public float ConsumeFloat()
         {
             charCache.Clear();
             //Optionally consume a negative sign
@@ -95,7 +79,7 @@ namespace HT.Engine.Parsing
             return float.Parse(new string(charCache.Data, startIndex: 0, length: charCache.Count));
         }
 
-        protected int ConsumeInt()
+        public int ConsumeInt()
         {
             charCache.Clear();
             //Optionally parse a negative sign
@@ -121,51 +105,51 @@ namespace HT.Engine.Parsing
             //Consume the starting quote
             Consume();
             //Consume all until we find a matching end quote
-            string content = ConsumeUntil(current =>
-                isSingleQuote ? current.IsSingleQuote : current.IsDoubleQuote);
+            string content = ConsumeUntil(() =>
+                isSingleQuote ? Current.IsSingleQuote : Current.IsDoubleQuote);
             //Consume the end quote
             Consume();
             return content;
         }
 
-        public string ConsumeWord() => ConsumeUntil(current => current.IsWhitespace || current.IsEndOfLine);
+        public string ConsumeWord() => ConsumeUntil(() => Current.IsWhitespace || Current.IsEndOfLine);
 
-        protected string ConsumeRestOfLine() => ConsumeUntil(current => current.IsEndOfLine);
+        public string ConsumeRestOfLine() => ConsumeUntil(() => Current.IsEndOfLine);
 
-        protected string ConsumeUntil(Predicate<Entry> endPredicate)
+        public string ConsumeUntil(Func<bool> endPredicate)
         {
             charCache.Clear();
-            while (!Current.IsEndOfFile && !endPredicate(Current))
+            while (!Current.IsEndOfFile && !endPredicate())
                 charCache.Add(Consume());
             return new string(charCache.Data, startIndex: 0, length: charCache.Count);
         }
 
-        protected void SkipUntil(Predicate<Entry> endPredicate)
+        public void ConsumeIgnoreUntil(Func<bool> endPredicate)
         {
-            while (!Current.IsEndOfFile && !endPredicate(Current))
+            while (!Current.IsEndOfFile && !endPredicate())
                 Consume();
         }
 
-        protected void ConsumeWhitespace(bool includeNewline = false)
+        public void ConsumeWhitespace(bool includeNewline = false)
         {
             while (Current.IsWhitespace || (includeNewline && Current.IsEndOfLine))
                 Consume();
         }
 
-        protected void ConsumeNewline()
+        public void ConsumeNewline()
         {
             TryConsume('\r'); //Optionally consume the windows carriage-return
             ExpectConsume('\n');
         }
 
-        protected void ExpectConsumeWhitespace()
+        public void ExpectConsumeWhitespace()
         {
             if (!Current.IsWhitespace)
                 throw CreateError($"Expected whitespace but got '{Current}'");
             ConsumeWhitespace();
         }
 
-        protected void ExpectConsume(char expectedChar, int count = 1)
+        public void ExpectConsume(char expectedChar, int count = 1)
         {
             for (int i = 0; i < count; i++)
             {
@@ -175,7 +159,7 @@ namespace HT.Engine.Parsing
             }
         }
 
-        protected void ExpectConsume(string expectedString)
+        public void ExpectConsume(string expectedString)
         {
             for (int i = 0; i < expectedString.Length; i++)
             {
@@ -185,7 +169,7 @@ namespace HT.Engine.Parsing
             }
         }
 
-        protected bool TryConsume(char expectedChar)
+        public bool TryConsume(char expectedChar)
         {
             if (!Current.IsCharacter(expectedChar))
                 return false;
@@ -193,7 +177,7 @@ namespace HT.Engine.Parsing
             return true;
         }
 
-        protected bool TryConsume(string expectedString)
+        public bool TryConsume(string expectedString)
         {
             for (int i = 0; i < expectedString.Length; i++)
             {
@@ -204,7 +188,7 @@ namespace HT.Engine.Parsing
             return true;
         }
 
-        protected char Consume()
+        public char Consume()
         {
             int value = inputReader.Read();
             if (value < 0)
@@ -212,7 +196,7 @@ namespace HT.Engine.Parsing
             return (char)value;
         }
 
-        protected Exception CreateError(string errorMessage)
+        public Exception CreateError(string errorMessage)
         {
             #if DEBUG
             //In debug seek back through the stream to gather what line number we where at,
@@ -234,10 +218,11 @@ namespace HT.Engine.Parsing
                     }
                     charOnLine++;
                 }
-                return new Exception($"[{GetType().Name}] {errorMessage} (Current: '{Current}', Line: {lineNumber}, CharacterOnLine: {charOnLine})");
+                return new Exception(
+                    $"[{nameof(TextParser)}] {errorMessage} (Current: '{Current}', Line: {lineNumber}, CharacterOnLine: {charOnLine})");
             }
             #endif
-            return new Exception($"[{GetType().Name}] {errorMessage}");
+            return new Exception($"[{nameof(TextParser)}] {errorMessage}");
         }
     }
 }

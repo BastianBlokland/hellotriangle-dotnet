@@ -154,7 +154,7 @@ namespace HT.Engine.Parsing
     /// Basic xml parser / tokenizer, can be used as the tokenizer in a multi pass parser
     /// Followed basic spec from wiki: https://en.wikipedia.org/wiki/XML
     /// </summary>
-    public sealed class XmlParser : TextParser<XmlDocument>
+    public sealed class XmlParser : IParser<XmlDocument>
     {
         private enum TagType : byte
         {
@@ -165,108 +165,114 @@ namespace HT.Engine.Parsing
             TypeDeclaration = 4, //Example: <!ELEMNAME>
             Comment = 5 //Example: <!-- ELEMNAME -->
         }
-    
+
+        private readonly TextParser par;    
         private readonly Stack<XmlElement> activeStack = new Stack<XmlElement>();
         private readonly XmlDocument document = new XmlDocument();
 
         private readonly ResizeArray<XmlAttribute> attributeCache = new ResizeArray<XmlAttribute>();
         
-        public XmlParser(Stream inputStream) : base(inputStream, Encoding.UTF8) { }
+        public XmlParser(Stream inputStream)
+            => par = new TextParser(inputStream, Encoding.UTF8);
 
-        protected override bool ConsumeToken()
+        public XmlDocument Parse()
         {
-            ConsumeWhitespace(includeNewline: true); //Allow starting whitespace
-            (XmlTag tag, TagType type) = ConsumeTag();
-            switch (type)
+            if (par.Current.IsEndOfFile)
+                throw new Exception($"[{nameof(XmlParser)}] Stream allready at the end");
+                
+            while (!par.Current.IsEndOfFile)
             {
-                case TagType.Comment: break; //Currently not handling comments
-                case TagType.ElementEnd: //Element end should remove a element from the active-stack
+                par.ConsumeWhitespace(includeNewline: true); //Allow starting whitespace
+                (XmlTag tag, TagType type) = ConsumeTag();
+                switch (type)
                 {
-                    if (activeStack.Count == 0 || activeStack.Peek().Tag.Name != tag.Name)
-                        throw CreateError($"Closing tag for {tag.Name} found but its not open");
-                    activeStack.Pop();
-                    break;
-                }
-                default: //All other types should create a new element
-                {
-                    XmlElement element = new XmlElement(tag);
-                    if (activeStack.Count == 0) //If there are not active elements they we are a root element
-                        document.AddElement(element);
-                    else //Otherwise we become a child of the topmost element
-                        activeStack.Peek().AddChild(element);
+                    case TagType.Comment: break; //Currently not handling comments
+                    case TagType.ElementEnd: //Element end should remove a element from the active-stack
+                    {
+                        if (activeStack.Count == 0 || activeStack.Peek().Tag.Name != tag.Name)
+                            throw par.CreateError($"Closing tag for '{tag.Name}' found but its not open");
+                        activeStack.Pop();
+                        break;
+                    }
+                    default: //All other types should create a new element
+                    {
+                        XmlElement element = new XmlElement(tag);
+                        if (activeStack.Count == 0) //If there are not active elements they we are a root element
+                            document.AddElement(element);
+                        else //Otherwise we become a child of the topmost element
+                            activeStack.Peek().AddChild(element);
 
-                    //If this was a element start (so not self-closing) then we add ourselves to the
-                    //active stack until we find a close tag for us
-                    if (type == TagType.ElementStart)
-                        activeStack.Push(element);
-                    break;
+                        //If this was a element start (so not self-closing) then we add ourselves to the
+                        //active stack until we find a close tag for us
+                        if (type == TagType.ElementStart)
+                            activeStack.Push(element);
+                        break;
+                    }
+                }
+
+                //Consume empty space between the tags
+                par.ConsumeWhitespace(includeNewline: true);
+
+                //If there is non xml-tag text between the tokens then we treat that as data entries
+                //belonging to the active element
+                if (!par.Current.IsCharacter('<') && !par.Current.IsEndOfFile)
+                {
+                    if (activeStack.Count == 0)
+                        throw par.CreateError("Text found outside of root elements");
+
+                    long startPosition = par.CurrentBytePosition;
+                    par.ConsumeIgnoreUntil(() => par.Current.IsCharacter('<'));
+                    long endPosition = par.CurrentBytePosition;
+
+                    activeStack.Peek().AddData(new XmlDataEntry(startPosition, endPosition));
                 }
             }
-
-            //Consume empty space between the tags
-            ConsumeWhitespace(includeNewline: true);
-
-            //If there is non xml-tag text between the tokens then we treat that as data entries
-            //belonging to the active element
-            if (!Current.IsCharacter('<') && !Current.IsEndOfFile)
-            {
-                if (activeStack.Count == 0)
-                    throw CreateError("Text found outside of root elements");
-
-                long startPosition = CurrentBytePosition;
-                SkipUntil(current => current.IsCharacter('<'));
-                long endPosition = CurrentBytePosition;
-
-                activeStack.Peek().AddData(new XmlDataEntry(startPosition, endPosition));
-            }
-
-            //true means keep parsing (we want to read tokens till the end of the file)
-            return true; 
-        }
-
-        protected override XmlDocument Construct()
-        {
             if (activeStack.Count > 0)
-                throw CreateError("Not all tags have been closed");            
+                throw par.CreateError("Not all tags have been closed");            
             return document;
         }
 
+        public void Dispose() => par.Dispose();
+
         private (XmlTag tag, TagType type) ConsumeTag()
         {
-            ExpectConsume('<');
-            bool isTypeDeclaration = TryConsume('!');
+            par.ExpectConsume('<');
+            bool isTypeDeclaration = par.TryConsume('!');
             //Comments are <!- and name of element cannot start with dash so this should be a safe
             //check to see if its a comment
-            if (Current.IsCharacter('-')) 
+            if (par.Current.IsCharacter('-')) 
             {
                 string comment = ConsumeComment();
-                ExpectConsume('>');
+                par.ExpectConsume('>');
                 return (new XmlTag(comment, attributes: null), TagType.Comment);
             }
 
-            bool isClose = TryConsume('/');
-            bool isProcessingInstruction = TryConsume('?');
-            ConsumeWhitespace(); //Allow whitespace between tag start and tag name
-            string tagName = ConsumeUntil(current => current.IsWhitespace || current.IsCharacter('>'));
-            ConsumeWhitespace(); //Allow whitespace after tag name
+            bool isClose = par.TryConsume('/');
+            bool isProcessingInstruction = par.TryConsume('?');
+            par.ConsumeWhitespace(); //Allow whitespace between tag start and tag name
+            string tagName = par.ConsumeUntil(() => par.Current.IsWhitespace || par.Current.IsCharacter('>'));
+            par.ConsumeWhitespace(); //Allow whitespace after tag name
 
             //While we are not at the end we keep reading attributes
             //(close tag are not allowed to have atribute)
             attributeCache.Clear();
-            while (!Current.IsCharacter('>') && !Current.IsCharacter('?') && !Current.IsCharacter('/'))
+            while (
+                !par.Current.IsCharacter('>') &&
+                !par.Current.IsCharacter('?') &&
+                !par.Current.IsCharacter('/'))
             {
-                string attributeName = ConsumeUntil(current => current.IsCharacter('=') || current.IsWhitespace);
-                ConsumeWhitespace(); //Allow whitespace between name and '='
-                ExpectConsume('=');
-                ConsumeWhitespace(); //Allow whitespace between '=' and value
-                string attributeValue = ConsumeQuotedString();
-                ConsumeWhitespace(); //Allow whitespace after value
+                string attributeName = par.ConsumeUntil(() => par.Current.IsCharacter('=') || par.Current.IsWhitespace);
+                par.ConsumeWhitespace(); //Allow whitespace between name and '='
+                par.ExpectConsume('=');
+                par.ConsumeWhitespace(); //Allow whitespace between '=' and value
+                string attributeValue = par.ConsumeQuotedString();
+                par.ConsumeWhitespace(); //Allow whitespace after value
                 attributeCache.Add(new XmlAttribute(attributeName, attributeValue));
             }
             if (isProcessingInstruction)
-                ExpectConsume('?'); //Processing instructions have to end with ?>
-            bool isSelfClose = TryConsume('/');
-            ExpectConsume('>');
+                par.ExpectConsume('?'); //Processing instructions have to end with ?>
+            bool isSelfClose = par.TryConsume('/');
+            par.ExpectConsume('>');
 
             return
             (
@@ -291,9 +297,12 @@ namespace HT.Engine.Parsing
 
             string ConsumeComment()
             {
-                ExpectConsume('-', count: 2);
-                string result = ConsumeUntil(Current => Current.IsCharacter('-') && Next.IsCharacter('-')); 
-                ExpectConsume('-', count: 2);
+                par.ExpectConsume('-', count: 2);
+
+                string result = par.ConsumeUntil(() =>
+                    par.Current.IsCharacter('-') && par.Next.IsCharacter('-')); 
+
+                par.ExpectConsume('-', count: 2);
                 return result.Trim(); //Trim the whitespace from beginning and end of the comment
             }
         }

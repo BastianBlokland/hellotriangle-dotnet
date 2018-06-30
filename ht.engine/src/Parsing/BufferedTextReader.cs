@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 
-namespace HT.Engine.Utils
+namespace HT.Engine.Parsing
 {
     /// <summary>
     /// Implementation of a text-reader
