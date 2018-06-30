@@ -6,7 +6,7 @@ using HT.Engine.Math;
 namespace HT.Engine.Math
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
-    public struct Float4 : IEquatable<Float4>
+    public struct Float4 : IFloatSet, IEquatable<Float4>
     {
         public const int SIZE = sizeof(float) * 4;
 
