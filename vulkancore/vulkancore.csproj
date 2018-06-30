@@ -13,6 +13,8 @@
         <Version>1.0.0-alpha36</Version>
 
         <TargetFramework>netstandard2.0</TargetFramework>
+        <Sdk>2.1.301</Sdk>
+        <LangVersion>7.3</LangVersion>
         <RootNamespace>VulkanCore</RootNamespace>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

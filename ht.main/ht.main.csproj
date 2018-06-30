@@ -6,6 +6,8 @@
         <Description>Main application logic</Description>
 
         <TargetFramework>netstandard2.0</TargetFramework>
+        <Sdk>2.1.301</Sdk>
+        <LangVersion>7.3</LangVersion>
         <RootNamespace>HT.Main</RootNamespace>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -20,9 +22,13 @@
         <None Include="shaders/bin/*.spv">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-
-        <!--Models (text obj format-->
+        <!--Obj Models (text obj format-->
         <None Include="models/*.obj">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+
+        <!--Dae Models (text collada format-->
+        <None Include="models/*.dae">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
 
