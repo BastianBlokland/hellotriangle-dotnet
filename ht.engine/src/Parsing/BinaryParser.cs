@@ -17,7 +17,6 @@ namespace HT.Engine.Parsing
 
         //Data
         private readonly BinaryReader inputReader;
-        private byte[] readBuffer;
 
         public BinaryParser(Stream inputStream, bool leaveStreamOpen) => 
             inputReader = new BinaryReader(inputStream, Encoding.ASCII, leaveOpen: leaveStreamOpen);
@@ -30,13 +29,12 @@ namespace HT.Engine.Parsing
             where ST : struct
         {
             int size = Unsafe.SizeOf<ST>();
-
-            //Read the required amount of bytes
-            EnsureReadBuffer(size);
-            inputReader.Read(readBuffer, index: 0, count: size);
-
-            return readBuffer.Parse<ST>();
+            Span<byte> data = stackalloc byte[size];
+            inputReader.Read(data);
+            return MemoryMarshal.Read<ST>(data);
         }
+
+        public void Consume(Span<byte> data) => inputReader.Read(data);
 
         public byte Consume() => inputReader.ReadByte();
 
@@ -51,23 +49,17 @@ namespace HT.Engine.Parsing
         public float ConsumeFloat() => inputReader.ReadSingle();
 
         public void ConsumeIgnore(int bytes)
-            => inputReader.Read(readBuffer, index: 0, count: bytes);
+        {
+            //Depending on usage this might be a bad implementation, as it could create
+            //a very big stack array, but the advantage is that we don't need to read byte for byte
+            //the alternative would be just call 'Read' in a for loop
+            Span<byte> data = stackalloc byte[bytes];
+            inputReader.Read(data);
+        }
 
         public Exception CreateError(string errorMessage)
             => throw new Exception($"[{GetType().Name}] {errorMessage}");
 
         public void Dispose() => inputReader.Dispose();
-
-        private void EnsureReadBuffer(int requiredSize)
-        {
-            if (readBuffer == null)
-                readBuffer = new byte[requiredSize];
-            else
-            if (readBuffer.Length < requiredSize)
-            {
-                var doubleSize = readBuffer.Length * 2;
-                Array.Resize(ref readBuffer, System.Math.Max(doubleSize, requiredSize));
-            }
-        }
     }
 }

@@ -24,7 +24,7 @@ namespace HT.Engine.Math
             throw new Exception($"[{nameof(FloatSetUtils)}] Unknown type: {typeof(T)}");
         }
 
-        public static T Create<T>(in Span<float> data)
+        public static T Create<T>(in ReadOnlySpan<float> data)
             where T : struct, IFloatSet
         {
             #if DEBUG

@@ -111,18 +111,15 @@ namespace HT.Engine.Parsing
                 case 24: //Stored as BGR and 1 byte per component (because little-endian)
                 {
                     //Stored as RGB but we need to read as BGR because its in little-endian
-                    byte b = par.Consume();
-                    byte g = par.Consume();
-                    byte r = par.Consume();
-                    return Float4.CreateFrom32Bit(r, g, b, 255);
+                    Span<byte> data = stackalloc byte[3];
+                    par.Consume(data);
+                    return Float4.CreateFrom32Bit(data[2], data[1], data[0], 255);
                 }
                 case 32: //Stored as BGRA and 1 byte per component (because little-endian)
                 {
-                    byte b = par.Consume();
-                    byte g = par.Consume();
-                    byte r = par.Consume();
-                    byte a = par.Consume();
-                    return Float4.CreateFrom32Bit(r, g, b, a);
+                    Span<byte> data = stackalloc byte[4];
+                    par.Consume(data);
+                    return Float4.CreateFrom32Bit(data[2], data[1], data[0], data[3]);
                 }
                 default:
                     throw par.CreateError("Unsupported bitsPerPixel");
