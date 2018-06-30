@@ -7,7 +7,7 @@ using VulkanCore;
 namespace HT.Engine.Rendering
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
-    internal struct Transformation : IEquatable<Transformation>
+    internal readonly struct Transformation : IEquatable<Transformation>
     {
         public const int SIZE = Float4x4.SIZE * 3;
 

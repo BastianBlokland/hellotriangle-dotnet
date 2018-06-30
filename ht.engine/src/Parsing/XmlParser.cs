@@ -7,7 +7,7 @@ using HT.Engine.Utils;
 
 namespace HT.Engine.Parsing
 {
-    public struct XmlAttribute : IEquatable<XmlAttribute>
+    public readonly struct XmlAttribute : IEquatable<XmlAttribute>
     {
         public readonly string Name;
         public readonly string Value;
@@ -32,7 +32,7 @@ namespace HT.Engine.Parsing
         public override string ToString() => $"(Name: {Name}, Value: {Value})";
     }
 
-    public struct XmlTag : IEquatable<XmlTag>
+    public readonly struct XmlTag : IEquatable<XmlTag>
     {
         public readonly string Name;
         public readonly IReadOnlyList<XmlAttribute> Attributes; //Null if no tags where set
@@ -101,7 +101,7 @@ namespace HT.Engine.Parsing
     /// you can keep working with this stream based approach where you can parse large files without
     /// needing to have the raw text all in memory at the same time.
     /// </summary>
-    public struct XmlDataEntry
+    public readonly struct XmlDataEntry
     {
         //Properties
         public long ByteSize => EndBytePosition - StartBytePosition;

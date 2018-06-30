@@ -1,6 +1,6 @@
 namespace HT.Engine.Rendering.Memory
 {
-    internal struct Block
+    internal readonly struct Block
     {
         internal readonly Chunk Container;
         internal readonly long Offset;

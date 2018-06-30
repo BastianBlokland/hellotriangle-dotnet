@@ -6,7 +6,7 @@ using HT.Engine.Math;
 namespace HT.Engine.Math
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
-    public struct Int2 : IEquatable<Int2>
+    public readonly struct Int2 : IEquatable<Int2>
     {
         public const int SIZE = sizeof(int) * 2;
 

@@ -14,7 +14,7 @@ namespace HT.Engine.Parsing
     //Followed the spec from wikipedia: https://en.wikipedia.org/wiki/Wavefront_.obj_file
     public sealed class WavefrontObjParser : IParser<Mesh>
     {
-        private struct FaceElement
+        private readonly struct FaceElement
         {
             public readonly int PositionIndex;
             public readonly int? TexcoordIndex;
@@ -28,7 +28,7 @@ namespace HT.Engine.Parsing
             }
         }
 
-        private struct Face
+        private readonly struct Face
         {
             public readonly FaceElement[] Elements;
 

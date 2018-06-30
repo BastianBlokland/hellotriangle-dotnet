@@ -2,7 +2,7 @@ using VulkanCore;
 
 namespace HT.Engine.Rendering
 {
-    public struct HostDeviceRequirements
+    public readonly struct HostDeviceRequirements
     {
         public readonly bool SamplerAnisotropy;
 

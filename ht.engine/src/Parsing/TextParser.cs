@@ -12,7 +12,7 @@ namespace HT.Engine.Parsing
     /// </summary>
     public sealed class TextParser : IDisposable
     {
-        public struct Entry
+        public readonly struct Entry
         {
             //Properties
             public bool IsEndOfFile => value < 0;

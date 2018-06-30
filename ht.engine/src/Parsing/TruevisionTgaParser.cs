@@ -26,7 +26,7 @@ namespace HT.Engine.Parsing
         }
 
         [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 18)]
-        private struct Header
+        private readonly struct Header
         {
             public readonly byte IdLength;
             public readonly ColorMapType ColorMapType;

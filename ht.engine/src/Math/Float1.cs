@@ -6,7 +6,7 @@ using HT.Engine.Math;
 namespace HT.Engine.Math
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
-    public struct Float1 : IFloatSet, IEquatable<Float1>
+    public readonly struct Float1 : IFloatSet, IEquatable<Float1>
     {
         public const int SIZE = sizeof(float);
 
@@ -15,6 +15,8 @@ namespace HT.Engine.Math
         public static readonly Float1 One = 1f;
 
         //Component index accessor
+        public int ComponentCount => 1;
+        
         public float this[int i]
         {
             get 
