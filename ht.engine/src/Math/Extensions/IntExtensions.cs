@@ -2,6 +2,10 @@ namespace HT.Engine.Math
 {
     public static class IntExtensions
     {
+        public static int ClampPositive(this int val) => val < 0 ? 0 : val;
+
+        public static int ClampMin(this int val, int min) => val < min ? min : val;
+        
         public static int Clamp(this int val, int min, int max)
             => val < min ? min : (val > max ? max : val);
 

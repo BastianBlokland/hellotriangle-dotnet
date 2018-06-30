@@ -125,6 +125,8 @@ namespace HT.Engine.Parsing
         public IReadOnlyList<XmlDataEntry> Data => data;
         public IReadOnlyList<XmlElement> Children => children;
         public bool HasChildren => children != null && children.Count > 0;
+        public XmlDataEntry? FirstData => (data == null || data.Count == 0) ? 
+            null : (XmlDataEntry?)data[0];
 
         //Data
         public readonly XmlTag Tag;
@@ -134,6 +136,20 @@ namespace HT.Engine.Parsing
         public XmlElement(XmlTag tag) => Tag = tag;
 
         public bool HasName(string name) => Tag.Name == name;
+
+        public XmlElement GetChildWithAttribute(
+            string name,
+            string attributeName,
+            string attributeValue)
+        {
+            if (children == null)
+                return null;
+            for (int i = 0; i < children.Count; i++)
+                if (children[i].HasName(name) &&
+                    children[i].Tag.GetAttributeValue(attributeName) == attributeValue)
+                    return children[i];
+            return null;
+        }
 
         public XmlElement GetChild(int index)
         {

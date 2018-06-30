@@ -19,7 +19,7 @@ namespace HT.Engine.Utils
         /// void Test<T>() where T : struct
         /// {
         ///     T data = default(T);
-        ///     if(data is float)
+        ///     if (data is float)
         ///         ForceAssign(ref data, 133f);
         /// }
         /// 
@@ -31,7 +31,7 @@ namespace HT.Engine.Utils
             where T2 : struct
         {
             #if DEBUG
-            if(typeof(T1) != typeof(T2))
+            if (typeof(T1) != typeof(T2))
                 throw new Exception($"[{nameof(UnsafeUtils)}] Given types don't match!");
             #endif
 

@@ -13,12 +13,6 @@ namespace HT.Engine.Parsing
     /// </summary>
     public sealed class TextParser : IDisposable
     {
-        public enum Seperator : byte
-        {
-            Space,
-            Comma
-        }
-
         public readonly struct Entry
         {
             //Properties
@@ -64,7 +58,7 @@ namespace HT.Engine.Parsing
         public void SeekToBeginning() => inputReader.SeekToBeginning();
         public void Seek(long bytePosition) => inputReader.Seek(bytePosition);
 
-        public T ConsumeFloatSet<T>(Seperator seperator = Seperator.Space)
+        public T ConsumeFloatSet<T>(char decimalSeperator = '.', char floatSeperator = ' ')
             where T : struct, IFloatSet
         {
             int componentCount = FloatSetUtils.GetComponentCount<T>();
@@ -72,14 +66,14 @@ namespace HT.Engine.Parsing
             Span<float> data = stackalloc float[componentCount];
             for (int i = 0; i < data.Length; i++)
             {
-                data[i] = ConsumeFloat();
+                data[i] = ConsumeFloat(decimalSeperator);
                 if (i != data.Length - 1)
-                    ExpectConsumeSeperator(seperator);
+                    ExpectConsume(floatSeperator);
             }
             return FloatSetUtils.Create<T>(data);
         }
 
-        public float ConsumeFloat()
+        public float ConsumeFloat(char decimalSeperator)
         {
             charCache.Clear();
             //Optionally consume a negative sign
@@ -89,9 +83,11 @@ namespace HT.Engine.Parsing
             while (Current.IsDigit)
                 charCache.Add(Consume());
             //Optionally consume the decimal point and the digits after it
-            if (Current.IsCharacter('.'))
+            if (Current.IsCharacter(decimalSeperator))
             {
-                charCache.Add(Consume()); //Consume the decimal point
+                //Allways use '.' as the seperator for float.parse
+                Consume(); charCache.Add('.'); 
+                
                 //Consume the digits after it
                 while (Current.IsDigit)
                     charCache.Add(Consume());
@@ -164,15 +160,6 @@ namespace HT.Engine.Parsing
         {
             TryConsume('\r'); //Optionally consume the windows carriage-return
             ExpectConsume('\n');
-        }
-
-        public void ExpectConsumeSeperator(Seperator seperator)
-        {
-            switch (seperator)
-            {
-            case Seperator.Space: ExpectConsume(' '); break;
-            case Seperator.Comma: ExpectConsume(','); break;
-            }
         }
 
         public void ExpectConsume(char expectedChar, int count = 1)

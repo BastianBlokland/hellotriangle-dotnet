@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Text;
 
+using HT.Engine.Math;
+
 namespace HT.Engine.Parsing
 {
     /// <summary>
@@ -33,8 +35,8 @@ namespace HT.Engine.Parsing
             =>  (stream.Position - byteBufferSize) + 
                 encoding.GetByteCount(
                     chars: charBuffer, 
-                    index: 0, 
-                    count: currentCharIndex + maxPeekAhead);
+                    index: charBufferStartOffset, 
+                    count: (currentCharIndex - charBufferStartOffset).ClampPositive());
         public bool CanSeekBackward => stream.CanSeek;
 
         //Data
@@ -46,6 +48,7 @@ namespace HT.Engine.Parsing
         private readonly char[] charBuffer;
         private int byteBufferSize;
         private int charBufferSize;
+        private int charBufferStartOffset;
         private int currentCharIndex;
 
         public BufferedTextReader(
@@ -167,6 +170,10 @@ namespace HT.Engine.Parsing
                 byteCount: byteBufferSize,
                 chars: charBuffer,
                 charIndex: charIndex) + charIndex;
+            //Keep track of where in the charBuffer our newly read chars begin, this is required for
+            //the property that calculates our current offset in the stream, as the chars before
+            //this where not read in this iteration so should not be part of the offset calculation
+            charBufferStartOffset = charIndex;
         }
     }
 }
