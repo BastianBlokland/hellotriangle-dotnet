@@ -104,7 +104,7 @@ namespace HT.Engine.Rendering
         internal bool IsFormatSupported(Format format, ImageTiling tiling, FormatFeatures features)
         {
             var properties = physicalDevice.GetFormatProperties(format);
-            switch(tiling)
+            switch (tiling)
             {
                 case ImageTiling.Linear:
                     return (properties.LinearTilingFeatures & features) == features;
