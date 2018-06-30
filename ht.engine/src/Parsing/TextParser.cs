@@ -47,13 +47,15 @@ namespace HT.Engine.Parsing
         private readonly BufferedTextReader inputReader;
         private readonly ResizeArray<char> charCache = new ResizeArray<char>();
 
-        public TextParser(Stream inputStream, Encoding encoding)
-            => inputReader = new BufferedTextReader(inputStream, encoding, maxPeekAhead: 2);
+        public TextParser(Stream inputStream, Encoding encoding, bool leaveStreamOpen)
+            => inputReader = new BufferedTextReader(
+                inputStream,
+                encoding,
+                maxPeekAhead: 2,
+                leaveStreamOpen: leaveStreamOpen);
 
         public void SeekToBeginning() => inputReader.SeekToBeginning();
         public void Seek(long bytePosition) => inputReader.Seek(bytePosition);
-
-        public void Dispose() => inputReader.Dispose();
 
         public float ConsumeFloat()
         {
@@ -224,5 +226,7 @@ namespace HT.Engine.Parsing
             #endif
             return new Exception($"[{nameof(TextParser)}] {errorMessage}");
         }
+
+        public void Dispose() => inputReader.Dispose();
     }
 }

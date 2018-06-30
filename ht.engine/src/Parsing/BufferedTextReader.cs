@@ -41,13 +41,18 @@ namespace HT.Engine.Parsing
         private readonly Stream stream;
         private readonly Encoding encoding;
         private readonly int maxPeekAhead;
+        private readonly bool leaveStreamOpen;
         private readonly byte[] byteBuffer;
         private readonly char[] charBuffer;
         private int byteBufferSize;
         private int charBufferSize;
         private int currentCharIndex;
 
-        public BufferedTextReader(Stream stream, Encoding encoding, int maxPeekAhead = 10)
+        public BufferedTextReader(
+            Stream stream,
+            Encoding encoding,
+            int maxPeekAhead = 10,
+            bool leaveStreamOpen = false)
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
@@ -62,6 +67,7 @@ namespace HT.Engine.Parsing
             this.stream = stream;
             this.encoding = encoding;
             this.maxPeekAhead = maxPeekAhead;
+            this.leaveStreamOpen = leaveStreamOpen;
             byteBuffer = new byte[BYTE_BUFFER_SIZE];
             //Why maxPeakAhead + 1? Because we allways read in BYTE_BUFFER_SIZE block BUT
             //we want to read a new block before completely 'exhausting' the previous block because
@@ -143,7 +149,11 @@ namespace HT.Engine.Parsing
             }
         }
 
-        public void Dispose() => stream.Dispose();
+        public void Dispose()
+        {
+            if (!leaveStreamOpen)
+                stream.Dispose();
+        }
 
         private void FillBuffer(int charIndex)
         {

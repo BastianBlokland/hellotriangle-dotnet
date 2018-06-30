@@ -43,9 +43,9 @@ namespace HT.Engine.Parsing
         private readonly ResizeArray<Face> faces = new ResizeArray<Face>();
         private readonly ResizeArray<FaceElement> elementCache = new ResizeArray<FaceElement>();
 
-        public WavefrontObjParser(Stream inputStream, float scale = 1f) 
+        public WavefrontObjParser(Stream inputStream, float scale = 1f, bool leaveStreamOpen = false)
         {
-            this.par = new TextParser(inputStream, Encoding.ASCII);
+            this.par = new TextParser(inputStream, Encoding.ASCII, leaveStreamOpen);
             this.scale = scale;
         }
 

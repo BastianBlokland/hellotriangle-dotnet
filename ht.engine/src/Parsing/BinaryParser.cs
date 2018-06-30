@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 using HT.Engine.Utils;
 
 namespace HT.Engine.Parsing
@@ -18,9 +19,8 @@ namespace HT.Engine.Parsing
         private readonly BinaryReader inputReader;
         private byte[] readBuffer;
 
-        public BinaryParser(Stream inputStream) => inputReader = new BinaryReader(inputStream);
-
-        public void Dispose() => inputReader.Dispose();
+        public BinaryParser(Stream inputStream, bool leaveStreamOpen) => 
+            inputReader = new BinaryReader(inputStream, Encoding.ASCII, leaveOpen: leaveStreamOpen);
 
         /// <summary>
         /// Reads struct from the input-reader
@@ -55,6 +55,8 @@ namespace HT.Engine.Parsing
 
         public Exception CreateError(string errorMessage)
             => throw new Exception($"[{GetType().Name}] {errorMessage}");
+
+        public void Dispose() => inputReader.Dispose();
 
         private void EnsureReadBuffer(int requiredSize)
         {

@@ -46,8 +46,8 @@ namespace HT.Engine.Parsing
         private Header header;
         private Float4[] pixels;
 
-        public TruevisionTgaParser(Stream inputStream) 
-            => par = new BinaryParser(inputStream);
+        public TruevisionTgaParser(Stream inputStream, bool leaveStreamOpen = false)
+            => par = new BinaryParser(inputStream, leaveStreamOpen);
 
         public Texture Parse()
         {
@@ -106,7 +106,7 @@ namespace HT.Engine.Parsing
 
         private Float4 ConsumePixel()
         {
-            switch(header.BitsPerPixel)
+            switch (header.BitsPerPixel)
             {
                 case 24: //Stored as BGR and 1 byte per component (because little-endian)
                 {
@@ -131,7 +131,7 @@ namespace HT.Engine.Parsing
 
         private bool CheckCompression(ImageType type)
         {
-            switch(type)
+            switch (type)
             {
                 case ImageType.UncompressedTrueColorImage: return false;
                 case ImageType.RunLengthEncodedTrueColorImage: return true;

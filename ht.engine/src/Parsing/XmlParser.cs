@@ -124,6 +124,7 @@ namespace HT.Engine.Parsing
         //Properties
         public IReadOnlyList<XmlDataEntry> Data => data;
         public IReadOnlyList<XmlElement> Children => children;
+        public bool HasChildren => children != null && children.Count > 0;
 
         //Data
         public readonly XmlTag Tag;
@@ -131,6 +132,25 @@ namespace HT.Engine.Parsing
         private readonly List<XmlElement> children = new List<XmlElement>();
 
         public XmlElement(XmlTag tag) => Tag = tag;
+
+        public bool HasName(string name) => Tag.Name == name;
+
+        public XmlElement GetChild(int index)
+        {
+            if (children == null || children.Count <= index)
+                return null;
+            return children[index];
+        }
+
+        public XmlElement GetChild(string name)
+        {
+            if (children == null)
+                return null;
+            for (int i = 0; i < children.Count; i++)
+                if (children[i].HasName(name))
+                    return children[i];
+            return null;
+        }
 
         public void AddData(XmlDataEntry dataEntry) => data.Add(dataEntry);
         public void AddChild(XmlElement child) => children.Add(child);
@@ -143,6 +163,7 @@ namespace HT.Engine.Parsing
     {
         //Properties
         public IReadOnlyList<XmlElement> Elements => elements;
+        public int RootElementCount => elements.Count;
 
         //Data
         private readonly List<XmlElement> elements = new List<XmlElement>();
@@ -172,8 +193,8 @@ namespace HT.Engine.Parsing
 
         private readonly ResizeArray<XmlAttribute> attributeCache = new ResizeArray<XmlAttribute>();
         
-        public XmlParser(Stream inputStream)
-            => par = new TextParser(inputStream, Encoding.UTF8);
+        public XmlParser(Stream inputStream, bool leaveStreamOpen = false)
+            => par = new TextParser(inputStream, Encoding.UTF8, leaveStreamOpen);
 
         public XmlDocument Parse()
         {
