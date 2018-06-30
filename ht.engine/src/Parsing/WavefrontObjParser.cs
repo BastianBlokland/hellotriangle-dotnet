@@ -61,9 +61,9 @@ namespace HT.Engine.Parsing
                 par.ConsumeWhitespace(); //Ignore whitespace after the id
                 switch (id)
                 {
-                    case "v": positions.Add(ConsumeFloat3() * scale); break;
-                    case "vn": normals.Add(ConsumeFloat3()); break;
-                    case "vt": texcoords.Add(ConsumeFloat2()); break;
+                    case "v": positions.Add(par.ConsumeFloatSet<Float3>() * scale); break;
+                    case "vn": normals.Add(par.ConsumeFloatSet<Float3>()); break;
+                    case "vt": texcoords.Add(par.ConsumeFloatSet<Float2>()); break;
                     case "f":
                     {
                         elementCache.Clear();
@@ -160,24 +160,6 @@ namespace HT.Engine.Parsing
                 normalIndex = par.ConsumeInt() - 1;
             }
             return new FaceElement(positionIndex, texcoordIndex, normalIndex);
-        }
-
-        private Float3 ConsumeFloat3()
-        {
-            float x = par.ConsumeFloat();
-            par.ExpectConsumeWhitespace();
-            float y = par.ConsumeFloat();
-            par.ExpectConsumeWhitespace();
-            float z = par.ConsumeFloat();
-            return new Float3(x, y, z);
-        }
-
-        private Float2 ConsumeFloat2()
-        {
-            float x = par.ConsumeFloat();
-            par.ExpectConsumeWhitespace();
-            float y = par.ConsumeFloat();
-            return new Float2(x, y);
         }
     }
 }

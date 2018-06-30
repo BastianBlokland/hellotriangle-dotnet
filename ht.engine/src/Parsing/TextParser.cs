@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
+using HT.Engine.Math;
 using HT.Engine.Utils;
 
 namespace HT.Engine.Parsing
@@ -12,6 +13,12 @@ namespace HT.Engine.Parsing
     /// </summary>
     public sealed class TextParser : IDisposable
     {
+        public enum Seperator : byte
+        {
+            Space,
+            Comma
+        }
+
         public readonly struct Entry
         {
             //Properties
@@ -56,6 +63,21 @@ namespace HT.Engine.Parsing
 
         public void SeekToBeginning() => inputReader.SeekToBeginning();
         public void Seek(long bytePosition) => inputReader.Seek(bytePosition);
+
+        public T ConsumeFloatSet<T>(Seperator seperator = Seperator.Space)
+            where T : struct, IFloatSet
+        {
+            int componentCount = FloatSetUtils.GetComponentCount<T>();
+
+            Span<float> data = stackalloc float[componentCount];
+            for (int i = 0; i < data.Length; i++)
+            {
+                data[i] = ConsumeFloat();
+                if (i != data.Length - 1)
+                    ExpectConsumeSeperator(seperator);
+            }
+            return FloatSetUtils.Create<T>(data);
+        }
 
         public float ConsumeFloat()
         {
@@ -144,11 +166,13 @@ namespace HT.Engine.Parsing
             ExpectConsume('\n');
         }
 
-        public void ExpectConsumeWhitespace()
+        public void ExpectConsumeSeperator(Seperator seperator)
         {
-            if (!Current.IsWhitespace)
-                throw CreateError($"Expected whitespace but got '{Current}'");
-            ConsumeWhitespace();
+            switch (seperator)
+            {
+            case Seperator.Space: ExpectConsume(' '); break;
+            case Seperator.Comma: ExpectConsume(','); break;
+            }
         }
 
         public void ExpectConsume(char expectedChar, int count = 1)
