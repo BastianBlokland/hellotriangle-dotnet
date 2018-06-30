@@ -27,40 +27,21 @@ namespace HT.Engine.Math
         public static T Create<T>(in Span<float> data)
             where T : struct, IFloatSet
         {
+            #if DEBUG
+            if (data.Length < GetComponentCount<T>())
+                throw new Exception($"[{nameof(FloatSetUtils)}] No enough elements in given data");
+            #endif
+
             //This implementation uses some dirty generic specialization but its a very fast and
             //generic way to create a floatX out of a arbitrary set of floats. And also it stays
             //completely typed and doesn't do any boxing
             T value = default(T);
             switch (value)
             {
-            case Float1 _:
-                #if DEBUG
-                if (data.Length < 1)
-                    throw new Exception($"[{nameof(FloatSetUtils)}] No enough elements in given data");
-                #endif
-                UnsafeUtils.ForceAssign(ref value, new Float1(data[0]));
-                break;
-            case Float2 _:
-                #if DEBUG
-                if (data.Length < 2)
-                    throw new Exception($"[{nameof(FloatSetUtils)}] No enough elements in given data");
-                #endif
-                UnsafeUtils.ForceAssign(ref value, new Float2(data[0], data[1]));
-                break;
-            case Float3 _:
-                #if DEBUG
-                if (data.Length < 3)
-                    throw new Exception($"[{nameof(FloatSetUtils)}] No enough elements in given data");
-                #endif
-                UnsafeUtils.ForceAssign(ref value, new Float3(data[0], data[1], data[2]));
-                break;
-            case Float4 _:
-                #if DEBUG
-                if (data.Length < 4)
-                    throw new Exception($"[{nameof(FloatSetUtils)}] No enough elements in given data");
-                #endif
-                UnsafeUtils.ForceAssign(ref value, new Float4(data[0], data[1], data[2], data[3]));
-                break;
+            case Float1 _: UnsafeUtils.ForceAssign(ref value, new Float1(data[0])); break;
+            case Float2 _: UnsafeUtils.ForceAssign(ref value, new Float2(data[0], data[1])); break;
+            case Float3 _: UnsafeUtils.ForceAssign(ref value, new Float3(data[0], data[1], data[2])); break;
+            case Float4 _: UnsafeUtils.ForceAssign(ref value, new Float4(data[0], data[1], data[2], data[3])); break;
             }
             return value;
         }
