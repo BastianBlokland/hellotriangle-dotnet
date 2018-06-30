@@ -8,7 +8,7 @@
         <OutputType>Exe</OutputType>
         <TargetFramework>netcoreapp2.1</TargetFramework>
         <Sdk>2.1.301</Sdk>
-        <LangVersion>7.3</LangVersion>
+        <LangVersion>7.2</LangVersion>
         <RootNamespace>HT.MacOS</RootNamespace>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
