@@ -143,7 +143,12 @@ namespace HT.Engine.Parsing
                     int texcoord2Index = GetIndex(i, vertexIndex: j, semantic: "TEXCOORD");
                     Float2 texcoord2 = texcoord2Index >= 0 ? texcoords2.Data[texcoord2Index] : Float2.Zero;
 
-                    meshBuilder.PushVertex(new Vertex(position, normal, uv1: texcoord1, uv2: texcoord2));
+                    meshBuilder.PushVertex(new Vertex(
+                        position: position,
+                        color: Float4.One,
+                        normal: normal,
+                        uv1: texcoord1,
+                        uv2: texcoord2));
                 }
             }
             return meshBuilder.ToMesh();

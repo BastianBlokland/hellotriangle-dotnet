@@ -9,17 +9,19 @@ namespace HT.Engine.Rendering.Model
     [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
     internal readonly struct Vertex : IEquatable<Vertex>
     {
-        public const int SIZE = Float3.SIZE * 2 + Float2.SIZE * 2;
+        public const int SIZE = Float3.SIZE * 2 + Float4.SIZE + Float2.SIZE * 2;
 
         //Data
         public readonly Float3 Position;
+        public readonly Float4 Color;
         public readonly Float3 Normal;
         public readonly Float2 Uv1;
         public readonly Float2 Uv2;
 
-        internal Vertex(Float3 position, Float3 normal, Float2 uv1, Float2 uv2)
+        internal Vertex(Float3 position, Float4 color, Float3 normal, Float2 uv1, Float2 uv2)
         {
             Position = position;
+            Color = color;
             Normal = normal;
             Uv1 = uv1;
             Uv2 = uv2;
@@ -34,24 +36,27 @@ namespace HT.Engine.Rendering.Model
 
         public bool Equals(Vertex other) => 
             other.Position == Position && 
+            other.Color == Color &&
             other.Normal == Normal &&
             other.Uv1 == Uv1 &&
             other.Uv2 == Uv2;
 
         public override int GetHashCode() =>
-            Position.GetHashCode() ^ 
+            Position.GetHashCode() ^
+            Color.GetHashCode() ^
             Normal.GetHashCode() ^
             Uv1.GetHashCode() ^
             Uv2.GetHashCode();
 
         public bool Approx(Vertex other) =>
             Position.Approx(other.Position) &&
+            Color.Approx(other.Color) &&
             Normal.Approx(other.Normal) &&
             Uv1.Approx(other.Uv1) &&
             Uv2.Approx(other.Uv2);
 
         public override string ToString() => 
-            $"(Position: {Position}, Normal: {Normal}, Uv1: {Uv1}, Uv2: {Uv2})";
+            $"(Position: {Position}, Color: {Color}, Normal: {Normal}, Uv1: {Uv1}, Uv2: {Uv2})";
 
         //Shader bindings
         internal static VertexInputBindingDescription GetBindingDescription()
@@ -61,36 +66,56 @@ namespace HT.Engine.Rendering.Model
                 inputRate: VertexInputRate.Vertex);
 
         internal static VertexInputAttributeDescription[] GetAttributeDescriptions()
-            => new []
+        {
+            var attributes = new VertexInputAttributeDescription[5];
+            int offset = 0;
+            for (int i = 0; i < attributes.Length; i++)
             {
-                //Position
-                new VertexInputAttributeDescription(
-                    location: 0,
-                    binding: 0,
-                    format: Format.R32G32B32SFloat, //float3
-                    offset: 0 //In bytes from the beginning of the struct
-                ),
-                //Normal
-                new VertexInputAttributeDescription(
-                    location: 1,
-                    binding: 0,
-                    format: Format.R32G32B32SFloat, //float3
-                    offset: Float3.SIZE //In bytes from the beginning of the struct
-                ),
-                //Uv1
-                new VertexInputAttributeDescription(
-                    location: 2,
-                    binding: 0,
-                    format: Format.R32G32SFloat, //float2
-                    offset: Float3.SIZE * 2 //In bytes from the beginning of the struct
-                ),
-                //Uv2
-                new VertexInputAttributeDescription(
-                    location: 3,
-                    binding: 0,
-                    format: Format.R32G32SFloat, //float2
-                    offset: Float3.SIZE * 2 + Float2.SIZE //In bytes from the beginning of the struct
-                )
-            };
+                switch(i)
+                {
+                case 0: //Position
+                    attributes[i] = new VertexInputAttributeDescription(
+                        location: i,
+                        binding: 0,
+                        format: Format.R32G32B32SFloat, //float3
+                        offset: offset); //In bytes from the beginning of the struct
+                    offset += Float3.SIZE;
+                    break;
+                case 1: //Color
+                    attributes[i] = new VertexInputAttributeDescription(
+                        location: i,
+                        binding: 0,
+                        format: Format.R32G32B32A32SFloat, //float4
+                        offset: offset); //In bytes from the beginning of the struct
+                    offset += Float4.SIZE;
+                    break;
+                case 2: //Normal
+                    attributes[i] = new VertexInputAttributeDescription(
+                        location: i,
+                        binding: 0,
+                        format: Format.R32G32B32SFloat, //float3
+                        offset: offset); //In bytes from the beginning of the struct
+                    offset += Float3.SIZE;
+                    break;
+                case 3: //Uv1
+                    attributes[i] = new VertexInputAttributeDescription(
+                        location: i,
+                        binding: 0,
+                        format: Format.R32G32SFloat, //float2
+                        offset: offset); //In bytes from the beginning of the struct
+                    offset += Float2.SIZE;
+                    break;
+                case 4: //Uv2
+                    attributes[i] = new VertexInputAttributeDescription(
+                        location: i,
+                        binding: 0,
+                        format: Format.R32G32SFloat, //float2
+                        offset: offset); //In bytes from the beginning of the struct
+                    offset += Float2.SIZE;
+                    break;
+                }
+            }
+            return attributes;
+        }
     }
 }
