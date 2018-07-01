@@ -93,6 +93,18 @@ namespace HT.MacOS
         public IntPtr OSInstanceHandle => instanceHandle;
         public IntPtr OSViewHandle => nativeMetalViewHandle;
 
+        //Handle to the delgates we've handed to the native side, its important we hold a handle
+        //to them otherwise they will get garbage collected on the native side
+        private readonly ResizedDelegate onResized;
+        private readonly BeginResizeDelegate onBeginResize;
+        private readonly EndResizeDelegate onEndResize;
+        private readonly MovedDelegate onMoved;
+        private readonly MinimizedDelegate onMinimized;
+        private readonly DeminimizedDelegate onDeminimized;
+        private readonly MaximizedDelegate onMaximized;
+        private readonly DemaximizedDelegate onDemaximized;
+        private readonly CloseRequestedDelegate onCloseRequested;
+
         private IntPtr instanceHandle;
         private IntPtr nativeWindowHandle;
         private IntPtr nativeMetalViewHandle;
@@ -110,6 +122,19 @@ namespace HT.MacOS
         {
             this.title = title;
 
+            //Create delegates pointing to our callbacks
+            //NOTE: Its important to keep a reference to this delegates in the class because
+            //otherwise they will be garbage collected but the native side still has pointer to them
+            onResized = new ResizedDelegate(OnResized);
+            onBeginResize = new BeginResizeDelegate(OnBeginResize);
+            onEndResize = new EndResizeDelegate(OnEndResize);
+            onMoved = new MovedDelegate(OnMoved);
+            onMinimized = new MinimizedDelegate(OnMinimized);
+            onDeminimized = new DeminimizedDelegate(OnDeminimized);
+            onMaximized = new MaximizedDelegate(OnMaximized);
+            onDemaximized = new DemaximizedDelegate(OnDemaximized);
+            onCloseRequested = new CloseRequestedDelegate(OnCloseRequested);
+
             //Gets a handle to our process
             instanceHandle = System.Diagnostics.Process.GetCurrentProcess().Handle;
             //Create the os window
@@ -119,15 +144,15 @@ namespace HT.MacOS
                 size,
                 minSize,
                 title,
-                OnResized,
-                OnBeginResize,
-                OnEndResize,
-                OnMoved,
-                OnMinimized, 
-                OnDeminimized,
-                OnMaximized,
-                OnDemaximized,
-                OnCloseRequested
+                onResized,
+                onBeginResize,
+                onEndResize,
+                onMoved,
+                onMinimized, 
+                onDeminimized,
+                onMaximized,
+                onDemaximized,
+                onCloseRequested
             );
             //create a metal-view so we can actually render into our window
             nativeMetalViewHandle = CreateMetalView(nativeWindowHandle);
