@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text;
 
@@ -75,19 +76,37 @@ namespace HT.Engine.Parsing
 
         public float ConsumeFloat()
         {
-            string text = ConsumeUntil(() => 
-                !(Current.IsDigit || 
-                  Current.IsCharacter('.') ||
-                  Current.IsCharacter('-') ||
-                  Current.IsCharacter('e')));
-            return float.Parse(text);
+            charCache.Clear();
+            //Optionally consume a negative sign
+            if (Current.IsCharacter('-'))
+                charCache.Add(Consume());
+            //Consume all the characters that can be part of the float
+            while (Current.IsDigit || 
+                   Current.IsCharacter('.') ||
+                   Current.IsCharacter(',') ||
+                   Current.IsCharacter('e') ||
+                   Current.IsCharacter('-'))
+            {
+                char c = Consume();
+                if (c == ',') //Use dots for the decimal point
+                    charCache.Add('.');
+                else
+                    charCache.Add(c);
+            }
+            string text = new string(charCache.Data, startIndex: 0, length: charCache.Count);
+            return float.Parse(text, NumberStyles.Float);
         }
 
         public int ConsumeInt()
         {
-            string text = ConsumeUntil(() => 
-                !(Current.IsDigit || 
-                  Current.IsCharacter('-')));
+            charCache.Clear();
+            //Optionally consume a negative sign
+            if (Current.IsCharacter('-'))
+                charCache.Add(Consume());
+            //Consume all the characters that can be part of the int
+            while (Current.IsDigit)
+                charCache.Add(Consume());
+            string text = new string(charCache.Data, startIndex: 0, length: charCache.Count);
             return int.Parse(text);
         }
 
