@@ -147,9 +147,15 @@ namespace HT.Engine.Parsing
 
                     int texcoord1Index = GetIndex(i, vertexIndex: j, semantic: "VERTEX_TEXCOORD");
                     Float2 texcoord1 = texcoord1Index < 0 ? Float2.Zero : texcoords1.Data[texcoord1Index];
-
                     int texcoord2Index = GetIndex(i, vertexIndex: j, semantic: "TEXCOORD");
                     Float2 texcoord2 = texcoord2Index < 0 ? Float2.Zero : texcoords2.Data[texcoord2Index];
+
+                    //If we have a texcoord2 but no texcoord1 then we flip them
+                    if (texcoord1Index < 0 && texcoord2Index >= 0)
+                    {
+                        texcoord1 = texcoord2;
+                        texcoord2 = Float2.Zero;
+                    }
 
                     meshBuilder.PushVertex(new Vertex(
                         position: position,
