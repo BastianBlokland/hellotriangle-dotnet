@@ -138,7 +138,7 @@ namespace HT.Engine.Parsing
                     normal = Float3.FastNormalize(normals.Data[element.NormalIndex.Value]);
                 if (element.TexcoordIndex != null)
                     uv = texcoords.Data[element.TexcoordIndex.Value];
-                return new Vertex(pos, normal, uv);
+                return new Vertex(pos, normal, uv1: uv, uv2: Float2.Zero);
             }
         }
 

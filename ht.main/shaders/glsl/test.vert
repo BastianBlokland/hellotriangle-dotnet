@@ -11,7 +11,8 @@ layout(binding = 0) uniform Transformation
 
 layout(location = 0) in vec3 vertPosition;
 layout(location = 1) in vec3 vertNormal;
-layout(location = 2) in vec2 vertUv;
+layout(location = 2) in vec2 vertUv1;
+layout(location = 3) in vec2 vertUv2;
 
 //Output
 out gl_PerVertex
@@ -23,5 +24,5 @@ layout(location = 0) out vec2 fragUv;
 void main()
 {
     gl_Position = trans.projection * trans.view * trans.model * vec4(vertPosition, 1.0);
-    fragUv = vertUv;
+    fragUv = vertUv2;
 }

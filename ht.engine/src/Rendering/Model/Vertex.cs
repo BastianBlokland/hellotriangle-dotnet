@@ -9,18 +9,20 @@ namespace HT.Engine.Rendering.Model
     [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
     internal readonly struct Vertex : IEquatable<Vertex>
     {
-        public const int SIZE = Float3.SIZE * 2 + Float2.SIZE;
+        public const int SIZE = Float3.SIZE * 2 + Float2.SIZE * 2;
 
         //Data
         public readonly Float3 Position;
         public readonly Float3 Normal;
-        public readonly Float2 Uv;
+        public readonly Float2 Uv1;
+        public readonly Float2 Uv2;
 
-        internal Vertex(Float3 position, Float3 normal, Float2 uv)
+        internal Vertex(Float3 position, Float3 normal, Float2 uv1, Float2 uv2)
         {
             Position = position;
             Normal = normal;
-            Uv = uv;
+            Uv1 = uv1;
+            Uv2 = uv2;
         }
 
         //Equality
@@ -33,20 +35,23 @@ namespace HT.Engine.Rendering.Model
         public bool Equals(Vertex other) => 
             other.Position == Position && 
             other.Normal == Normal &&
-            other.Uv == Uv;
+            other.Uv1 == Uv1 &&
+            other.Uv2 == Uv2;
 
         public override int GetHashCode() =>
             Position.GetHashCode() ^ 
             Normal.GetHashCode() ^
-            Uv.GetHashCode();
+            Uv1.GetHashCode() ^
+            Uv2.GetHashCode();
 
         public bool Approx(Vertex other) =>
             Position.Approx(other.Position) &&
             Normal.Approx(other.Normal) &&
-            Uv.Approx(other.Uv);
+            Uv1.Approx(other.Uv1) &&
+            Uv2.Approx(other.Uv2);
 
         public override string ToString() => 
-            $"(Position: {Position}, Normal: {Normal}, Uv: {Uv})";
+            $"(Position: {Position}, Normal: {Normal}, Uv1: {Uv1}, Uv2: {Uv2})";
 
         //Shader bindings
         internal static VertexInputBindingDescription GetBindingDescription()
@@ -72,12 +77,19 @@ namespace HT.Engine.Rendering.Model
                     format: Format.R32G32B32SFloat, //float3
                     offset: Float3.SIZE //In bytes from the beginning of the struct
                 ),
-                //Uv
+                //Uv1
                 new VertexInputAttributeDescription(
                     location: 2,
                     binding: 0,
                     format: Format.R32G32SFloat, //float2
                     offset: Float3.SIZE * 2 //In bytes from the beginning of the struct
+                ),
+                //Uv2
+                new VertexInputAttributeDescription(
+                    location: 3,
+                    binding: 0,
+                    format: Format.R32G32SFloat, //float2
+                    offset: Float3.SIZE * 2 + Float2.SIZE //In bytes from the beginning of the struct
                 )
             };
     }

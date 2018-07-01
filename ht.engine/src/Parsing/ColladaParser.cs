@@ -1,9 +1,12 @@
 using System;
 using System.IO;
 using System.Text;
+
 using HT.Engine.Math;
 using HT.Engine.Rendering.Model;
 using HT.Engine.Utils;
+
+using static System.Math;
 
 namespace HT.Engine.Parsing
 {
@@ -39,12 +42,13 @@ namespace HT.Engine.Parsing
         private readonly ResizeArray<Input> inputs = new ResizeArray<Input>();
         private readonly ResizeArray<int> indices = new ResizeArray<int>();
         private int triangleCount;
+        private int inputStride;
 
         //Vertex data
         private readonly ResizeArray<Float3> positions = new ResizeArray<Float3>();
         private readonly ResizeArray<Float3> normals = new ResizeArray<Float3>();
-        private readonly ResizeArray<Float2> texcoords = new ResizeArray<Float2>();
-        private string positionSemantic, normalSemantic, texcoordSemantic;
+        private readonly ResizeArray<Float2> texcoords1 = new ResizeArray<Float2>();
+        private readonly ResizeArray<Float2> texcoords2 = new ResizeArray<Float2>();
 
         public ColladaParser(Stream inputStream, float scale, bool leaveStreamOpen = false)
         {
@@ -104,45 +108,22 @@ namespace HT.Engine.Parsing
                 throw new Exception($"[{nameof(ColladaParser)}] Mesh element missing");
 
             //Parse the triangles
-            XmlElement trianglesElement = meshElement.GetChild("triangles");
-            if (trianglesElement == null || !trianglesElement.HasChildren)
-                throw new Exception($"[{nameof(ColladaParser)}] Triangles element missing / incorrect");
-            ParseTriangles(trianglesElement);
+            ParseTriangles(meshElement);
 
-            //Parse vertex data
-            XmlElement verticesElement = meshElement.GetChild("vertices");
-            if (verticesElement == null || !verticesElement.HasChildren)
-                throw new Exception($"[{nameof(ColladaParser)}] Vertices element missing / incorrect");
-            for (int i = 0; i < verticesElement.Children.Count; i++)
+            //Parse input data
+            for (int i = 0; i < inputs.Count; i++)
             {
-                XmlElement childElement = verticesElement.Children[i];
-                if (childElement.HasName("input"))
+                Input input = inputs.Data[i];
+                XmlElement dataElement = meshElement.GetChildWithAttribute(
+                    name: "source",
+                    attributeName: "id",
+                    attributeValue: input.Source);
+                switch (input.Semantic)
                 {
-                    //Find the source data
-                    string source = childElement.Tag.GetAttributeValue("source");
-                    if (!source.StartsWith('#'))
-                        throw new Exception($"[{nameof(ColladaParser)}] Incorrect source format");
-                    source = source.Substring(startIndex: 1);
-                    XmlElement dataElement = meshElement.GetChildWithAttribute("source", "id", source);
-                    if (dataElement == null)
-                        throw new Exception($"[{nameof(ColladaParser)}] Source not found");
-
-                    string semantic = childElement.Tag.GetAttributeValue("semantic");
-                    switch (semantic)
-                    {
-                    case "POSITION":
-                        ParseFloatSetArray(dataElement, positions); 
-                        positionSemantic = "VERTEX";
-                        break;
-                    case "NORMAL":
-                        ParseFloatSetArray(dataElement, normals); 
-                        normalSemantic = "VERTEX";
-                        break;
-                    case "TEXCOORD":
-                        ParseFloatSetArray(dataElement, texcoords);
-                        texcoordSemantic = "VERTEX";
-                        break;
-                    }
+                case "VERTEX_POSITION": ParseFloatSetArray(dataElement, positions); break;
+                case "VERTEX_NORMAL": ParseFloatSetArray(dataElement, normals); break;
+                case "VERTEX_TEXCOORD": ParseFloatSetArray(dataElement, texcoords1); break;
+                case "TEXCOORD": ParseFloatSetArray(dataElement, texcoords2); break;
                 }
             }
             
@@ -153,13 +134,16 @@ namespace HT.Engine.Parsing
                 //In reverse as collada uses counter-clockwise triangles and we use clockwise
                 for (int j = 3 - 1; j >= 0 ; j--)
                 {
-                    int positionIndex = GetIndex(i, vertexIndex: j, semantic: positionSemantic);
+                    int positionIndex = GetIndex(i, vertexIndex: j, semantic: "VERTEX_POSITION");
                     Float3 position = positionIndex >= 0 ? positions.Data[positionIndex] * scale : Float3.Zero;
-                    int normalIndex = GetIndex(i, vertexIndex: j, semantic: normalSemantic);
+                    int normalIndex = GetIndex(i, vertexIndex: j, semantic: "VERTEX_NORMAL");
                     Float3 normal = normalIndex >= 0 ? normals.Data[normalIndex] : Float3.Zero;
-                    int texcoordIndex = GetIndex(i, vertexIndex: j, semantic: texcoordSemantic);
-                    Float2 texcoord = texcoordIndex >= 0 ? texcoords.Data[texcoordIndex] : Float2.Zero;
-                    meshBuilder.PushVertex(new Vertex(position, normal, texcoord));
+                    int texcoord1Index = GetIndex(i, vertexIndex: j, semantic: "VERTEX_TEXCOORD");
+                    Float2 texcoord1 = texcoord1Index >= 0 ? texcoords1.Data[texcoord1Index] : Float2.Zero;
+                    int texcoord2Index = GetIndex(i, vertexIndex: j, semantic: "TEXCOORD");
+                    Float2 texcoord2 = texcoord2Index >= 0 ? texcoords2.Data[texcoord2Index] : Float2.Zero;
+
+                    meshBuilder.PushVertex(new Vertex(position, normal, uv1: texcoord1, uv2: texcoord2));
                 }
             }
             return meshBuilder.ToMesh();
@@ -169,8 +153,8 @@ namespace HT.Engine.Parsing
                 int offset = GetOffset(semantic);
                 if (offset < 0)
                     return -1;
-                int triangleStartOffset = triangleIndex * inputs.Count * 3;
-                int vertexStartOffset = vertexIndex * inputs.Count; 
+                int triangleStartOffset = triangleIndex * inputStride * 3;
+                int vertexStartOffset = vertexIndex * inputStride; 
                 return indices.Data[triangleStartOffset + vertexStartOffset + offset];
             }
 
@@ -183,22 +167,54 @@ namespace HT.Engine.Parsing
             }
         }
 
-        private void ParseTriangles(XmlElement trianglesElement)
+        private void ParseTriangles(XmlElement meshElement)
         {
+            XmlElement trianglesElement = meshElement.GetChild("triangles");
+            if (trianglesElement == null || !trianglesElement.HasChildren)
+                throw new Exception($"[{nameof(ColladaParser)}] Triangles element missing / incorrect");
+
             triangleCount = int.Parse(trianglesElement.Tag.GetAttributeValue("count"));
             for (int i = 0; i < trianglesElement.Children.Count; i++)
+                ParseTriangleElement(trianglesElement.Children[i]);
+
+            void ParseTriangleElement(XmlElement triangleElement)
             {
-                XmlElement childElement = trianglesElement.Children[i];
-                if (childElement.HasName("input"))
+                //The input elements contain info about what is in the indicies
+                if (triangleElement.HasName("input"))
                 {
-                    string semantic = childElement.Tag.GetAttributeValue("semantic");
-                    int offset = int.Parse(childElement.Tag.GetAttributeValue("offset"));
-                    string source = childElement.Tag.GetAttributeValue("source");
-                    inputs.Add(new Input(semantic, offset, source));
+                    string semantic = triangleElement.Tag.GetAttributeValue("semantic");
+                    int offset = int.Parse(triangleElement.Tag.GetAttributeValue("offset"));
+                    string sourceReference = GetSourceReference(triangleElement);
+                    inputStride = Max(inputStride, offset + 1);
+
+                    //In collada vertex info is stored in another element, to make parsing easier
+                    //we collapse that into the same element and just prefix the name with 'VERTEX'
+                    //to seperate them. 
+                    if (semantic == "VERTEX")
+                    {
+                        XmlElement vertexElement = meshElement.GetChildWithAttribute(
+                            name: "vertices",
+                            attributeName: "id",
+                            attributeValue: sourceReference);
+                        for (int i = 0; i < vertexElement.Children.Count; i++)
+                        {
+                            XmlElement vertexInput = vertexElement.Children[i];
+                            if (vertexInput.HasName("input"))
+                            {
+                                semantic = "VERTEX_" + vertexInput.Tag.GetAttributeValue("semantic");
+                                sourceReference = GetSourceReference(vertexInput);
+                                inputs.Add(new Input(semantic, offset, sourceReference));
+                            }
+                        }
+                    }
+                    else
+                        inputs.Add(new Input(semantic, offset, sourceReference));
                 }
-                if (childElement.HasName("p"))
+
+                // The 'p' (primitive) element contains the actual indices
+                if (triangleElement.HasName("p"))
                 {
-                    XmlDataEntry? dataEntry = childElement.FirstData;
+                    XmlDataEntry? dataEntry = triangleElement.FirstData;
                     if (dataEntry == null)
                         throw new Exception($"[{nameof(ColladaParser)}] Data is missing");
                     
@@ -209,10 +225,19 @@ namespace HT.Engine.Parsing
                         par.ConsumeWhitespace(includeNewline: true);
                         indices.Add(par.ConsumeInt());
                     }
-                    if (indices.Count != triangleCount * 3 * inputs.Count)
+                    if (indices.Count != triangleCount * 3 * inputStride)
                         throw new Exception($"[{nameof(ColladaParser)}] Incorrect indices count found");
                 }
             }
+        }
+
+        private string GetSourceReference(XmlElement element)
+        {
+            string source = element.Tag.GetAttributeValue("source");
+            if (source == null || !source.StartsWith('#'))
+                throw new Exception($"[{nameof(ColladaParser)}] Incorrect source format");
+            source = source.Substring(startIndex: 1);
+            return source;
         }
 
         private void ParseFloatSetArray<T>(XmlElement element, ResizeArray<T> output)
