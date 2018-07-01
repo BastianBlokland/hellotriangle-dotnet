@@ -12,6 +12,12 @@ using static System.Math;
 namespace HT.Engine.Parsing
 {
     /// <summary>
+    /// TODO: Add support for the 'polylist' style of defining primitives, shouldn't be hard
+    /// to implement if we just treat it as a triangle fan (starting from a arbitrary vertex) that
+    /// way it should work for simple convex polygons, so at least for quads it should be perfect.
+    /// Until that time you can import a 'polylist' collada file into your favorite modeling software
+    /// and click 'triangulate' when exporting
+    /// 
     /// Collada 1.4 parser
     /// Reads a single mesh from a collada scene file
     /// Specifications: https://www.khronos.org/files/collada_spec_1_4.pdf
@@ -22,8 +28,8 @@ namespace HT.Engine.Parsing
     /// - POSITION
     /// - COLOR
     /// - NORMAL
-    /// - TEXCOORD
-    /// - TEXCOORD2 (it uses 1 from the primitive element and 1 from the vertices element)
+    /// - TEXCOORD set 0
+    /// - TEXCOORD2 set 1
     /// 
     /// This uses a multipass approach, first it parses the xml structure of the file and takes note
     /// of the positions of the data in the xml file. Then it looks in the xml structure for the
@@ -35,12 +41,14 @@ namespace HT.Engine.Parsing
         {
             public readonly string Semantic;
             public readonly int Offset;
+            public readonly int Set;
             public readonly string Source;
 
-            public Input(string semantic, int offset, string source)
+            public Input(string semantic, int offset, int set, string source)
             {
                 Semantic = semantic;
                 Offset = offset;
+                Set = set;
                 Source = source;
             }
         }
@@ -151,6 +159,7 @@ namespace HT.Engine.Parsing
             ParseTriangles(meshElement);
 
             //Parse input data
+            int minTexcoordSet = GetMinSet("TEXCOORD");
             for (int i = 0; i < inputs.Count; i++)
             {
                 Input input = inputs.Data[i];
@@ -163,8 +172,13 @@ namespace HT.Engine.Parsing
                 case "POSITION": ParseFloatSetArray(dataElement, positions); break;
                 case "COLOR": ParseFloatSetArray(dataElement, colors); break;
                 case "NORMAL": ParseFloatSetArray(dataElement, normals); break;
-                case "VERTEX_TEXCOORD": ParseFloatSetArray(dataElement, texcoords1); break;
-                case "TEXCOORD": ParseFloatSetArray(dataElement, texcoords2); break;
+                case "TEXCOORD":
+                    if (input.Set == minTexcoordSet)
+                        ParseFloatSetArray(dataElement, texcoords1);
+                    else
+                    if (input.Set == minTexcoordSet + 1)
+                        ParseFloatSetArray(dataElement, texcoords2);
+                    break;
                 }
             }
             
@@ -191,18 +205,11 @@ namespace HT.Engine.Parsing
                         surfaceNormal :
                         transformation.TransformVector(Float3.FastNormalize(normals.Data[normalIndex]));
 
-                    int texcoord1Index = GetIndex(i, vertexIndex: j, semantic: "VERTEX_TEXCOORD");
+                    int texcoord1Index = GetIndex(i, vertexIndex: j, semantic: "TEXCOORD", set: minTexcoordSet);
                     Float2 texcoord1 = texcoord1Index < 0 ? Float2.Zero : texcoords1.Data[texcoord1Index];
 
-                    int texcoord2Index = GetIndex(i, vertexIndex: j, semantic: "TEXCOORD");
+                    int texcoord2Index = GetIndex(i, vertexIndex: j, semantic: "TEXCOORD", set: minTexcoordSet + 1);
                     Float2 texcoord2 = texcoord2Index < 0 ? Float2.Zero : texcoords2.Data[texcoord2Index];
-
-                    //If we have a texcoord2 but no texcoord1 then we flip them
-                    if (texcoord1Index < 0 && texcoord2Index >= 0)
-                    {
-                        texcoord1 = texcoord2;
-                        texcoord2 = Float2.Zero;
-                    }
 
                     meshBuilder.PushVertex(new Vertex(
                         position: position,
@@ -223,9 +230,9 @@ namespace HT.Engine.Parsing
                 return transformation.TransformPoint(positions.Data[index]);
             }
 
-            int GetIndex(int triangleIndex, int vertexIndex, string semantic)
+            int GetIndex(int triangleIndex, int vertexIndex, string semantic, int set = -1)
             {
-                int offset = GetOffset(semantic);
+                int offset = GetOffset(semantic, set);
                 if (offset < 0)
                     return -1;
                 int triangleStartOffset = triangleIndex * inputStride * 3;
@@ -233,12 +240,21 @@ namespace HT.Engine.Parsing
                 return indices.Data[triangleStartOffset + vertexStartOffset + offset];
             }
 
-            int GetOffset(string semantic)
+            int GetOffset(string semantic, int set)
             {
                 for (int i = 0; i < inputs.Count; i++)
-                    if (inputs.Data[i].Semantic == semantic)
+                    if (inputs.Data[i].Semantic == semantic && inputs.Data[i].Set == set)
                         return inputs.Data[i].Offset;
                 return -1;
+            }
+
+            int GetMinSet(string semantic)
+            {
+                int min = int.MaxValue;
+                for (int i = 0; i < inputs.Count; i++)
+                    if (inputs.Data[i].Semantic == semantic && inputs.Data[i].Set < min)
+                        min = inputs.Data[i].Set;
+                return min;
             }
         }
 
@@ -273,23 +289,11 @@ namespace HT.Engine.Parsing
                         if (vertexInput.HasName("input"))
                         {
                             string semantic = vertexInput.Tag.GetAttributeValue("semantic");
-                            //If there allready was a semantic with the same name then we prefix it with 'VERTEX'
-                            if (HasSemantic(semantic))
-                                semantic = $"VERTEX_{semantic}";
-
                             string sourceReference = GetSourceReference(vertexInput);
-                            inputs.Add(new Input(semantic, input.Offset, sourceReference));
+                            inputs.Add(new Input(semantic, input.Offset, set: -1, sourceReference));
                         }
                     }
                 }
-            }
-            
-            bool HasSemantic(string semantic)
-            {
-                for (int i = 0; i < inputs.Count; i++)
-                    if (inputs.Data[i].Semantic == semantic)
-                        return true;
-                return false;
             }
 
             void ParseTriangleElement(XmlElement triangleElement)
@@ -299,9 +303,10 @@ namespace HT.Engine.Parsing
                 {
                     string semantic = triangleElement.Tag.GetAttributeValue("semantic");
                     int offset = int.Parse(triangleElement.Tag.GetAttributeValue("offset"));
+                    int set = int.Parse(triangleElement.Tag.GetAttributeValue("set", "-1"));
                     string sourceReference = GetSourceReference(triangleElement);
                     inputStride = Max(inputStride, offset + 1);
-                    inputs.Add(new Input(semantic, offset, sourceReference));
+                    inputs.Add(new Input(semantic, offset, set, sourceReference));
                 }
 
                 // The 'p' (primitive) element contains the actual indices

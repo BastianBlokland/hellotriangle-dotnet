@@ -43,16 +43,16 @@ namespace HT.Engine.Parsing
             Attributes = attributes;
         }
 
-        public string GetAttributeValue(string attributeName)
+        public string GetAttributeValue(string attributeName, string @default = null)
         {
             if (Attributes == null)
-                return null;
+                return @default;
             for (int i = 0; i < Attributes.Count; i++)
             {
                 if (Attributes[i].Name == attributeName)
                     return Attributes[i].Value;
             }
-            return null;
+            return @default;
         }
 
         //Equality
@@ -265,7 +265,7 @@ namespace HT.Engine.Parsing
                 }
             }
             if (activeStack.Count > 0)
-                throw par.CreateError("Not all tags have been closed");            
+                throw par.CreateError("Not all tags have been closed");
             return document;
         }
 
