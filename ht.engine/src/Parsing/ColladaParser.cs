@@ -62,7 +62,7 @@ namespace HT.Engine.Parsing
         private readonly ResizeArray<Float2> texcoords1 = new ResizeArray<Float2>();
         private readonly ResizeArray<Float2> texcoords2 = new ResizeArray<Float2>();
 
-        public ColladaParser(Stream inputStream, float scale, bool leaveStreamOpen = false)
+        public ColladaParser(Stream inputStream, float scale = 1f, bool leaveStreamOpen = false)
         {
             if (inputStream == null)
                 throw new ArgumentNullException(nameof(inputStream));

@@ -15,8 +15,7 @@ namespace HT.Main
         {
             HT.Engine.Rendering.Model.Mesh mesh;
             using (var parser = new HT.Engine.Parsing.ColladaParser(
-                inputStream: nativeApp.ReadFile(Path.Combine("models", "spaceship.dae")),
-                scale: .04f))
+                inputStream: nativeApp.ReadFile(Path.Combine("models", "spaceship.dae"))))
             {
                 mesh = parser.Parse();
             }
