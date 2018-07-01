@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.IO;
 using System.Text;
 
@@ -34,9 +35,9 @@ namespace HT.Engine.Parsing
             }
         }
 
-        private readonly float scale;
         private readonly TextParser par;
         private readonly XmlElement colladaElement;
+        private Float4x4 transformation;
 
         //Triangle data
         private readonly ResizeArray<Input> inputs = new ResizeArray<Input>();
@@ -58,7 +59,6 @@ namespace HT.Engine.Parsing
             //We need support for seekable streams because we use a multi-pass approach
             if (!inputStream.CanSeek)
                 throw new Exception($"[{nameof(ColladaParser)}] Only works on seekable streams");
-            this.scale = scale;
             
             //Parse xml structure
             XmlDocument document;
@@ -84,10 +84,15 @@ namespace HT.Engine.Parsing
             //Seek the stream back to the beginning and create a parser for getting data out of it
             inputStream.Seek(offset: 0, origin: SeekOrigin.Begin);
             par = new TextParser(inputStream, Encoding.UTF8, leaveStreamOpen);
+
+            //Set transformation matrix based on input scale (file data will be added later)
+            transformation = Float4x4.CreateScale(scale);
         }
 
         public Mesh Parse()
         {
+            ParseAssetMeta();
+
             XmlElement geometriesElement = colladaElement.GetChild("library_geometries");
             if (geometriesElement == null)
                 throw new Exception($"[{nameof(ColladaParser)}] No 'library_geometries' element found");
@@ -101,6 +106,30 @@ namespace HT.Engine.Parsing
         }
 
         public void Dispose() => par.Dispose();
+
+        private void ParseAssetMeta()
+        {
+            XmlElement unitElement = colladaElement.GetChild("asset")?.GetChild("unit");
+            if (unitElement != null)
+            {
+                string meter = unitElement.Tag.GetAttributeValue("meter");
+                if (!string.IsNullOrEmpty(meter))
+                {
+                    float meterScale = float.Parse(meter.Replace(',', '.'), NumberStyles.Float);
+                    transformation *= Float4x4.CreateScale(meterScale);
+                }
+            }
+            XmlElement axisElement = colladaElement.GetChild("asset")?.GetChild("up_axis");
+            if (axisElement != null && axisElement.FirstData != null)
+            {
+                long startPos = axisElement.FirstData.Value.StartBytePosition;
+                long endPos = axisElement.FirstData.Value.EndBytePosition;
+                par.Seek(startPos);
+                string val = par.ConsumeUntil(() => par.CurrentBytePosition >= endPos);
+                if (val == "Z_UP")
+                    transformation *= Float4x4.CreateRotationFromXAngle(-90f * FloatUtils.DEG_TO_RAD);
+            }
+        }
 
         private Mesh ParseGeometry(XmlElement geometryElement)
         {
@@ -148,7 +177,9 @@ namespace HT.Engine.Parsing
                     Float4 color = colorIndex < 0 ? Float4.One : colors.Data[colorIndex];
 
                     int normalIndex = GetIndex(i, vertexIndex: j, semantic: "NORMAL");
-                    Float3 normal = normalIndex < 0 ? surfaceNormal : Float3.FastNormalize(normals.Data[normalIndex]);
+                    Float3 normal = normalIndex < 0 ? 
+                        surfaceNormal :
+                        transformation.TransformVector(Float3.FastNormalize(normals.Data[normalIndex]));
 
                     int texcoord1Index = GetIndex(i, vertexIndex: j, semantic: "VERTEX_TEXCOORD");
                     Float2 texcoord1 = texcoord1Index < 0 ? Float2.Zero : texcoords1.Data[texcoord1Index];
@@ -179,7 +210,7 @@ namespace HT.Engine.Parsing
                 if (index < 0)
                     throw new Exception(
                         $"[{nameof(ColladaParser)}] No position data found for: triangle: {triangleIndex}, vertex: {vertexIndex}");
-                return positions.Data[index] * scale;
+                return transformation.TransformPoint(positions.Data[index]);
             }
 
             int GetIndex(int triangleIndex, int vertexIndex, string semantic)

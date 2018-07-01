@@ -84,6 +84,12 @@ namespace HT.Engine.Math
             row2: (0f, 0f, 1f, translation.Z),
             row3: (0f, 0f, 0f, 1f));
 
+        public static Float4x4 CreateScale(float scale) => CreateFromRows(
+            row0: (scale, 0f,    0f,    0f),
+            row1: (0f,    scale, 0f,    0f),
+            row2: (0f,    0f,    scale, 0f),
+            row3: (0f,    0f,    0f,    1f));
+
         public static Float4x4 CreateScale(Float3 scale) => CreateFromRows(
             row0: (scale.X, 0f,      0f,      0f),
             row1: (0f,      scale.Y, 0f,      0f),
