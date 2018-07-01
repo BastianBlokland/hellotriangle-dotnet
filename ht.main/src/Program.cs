@@ -36,7 +36,7 @@ namespace HT.Main
             using (var window = host.CreateWindow(
                 windowSize: (x: 800, y: 600),
                 scene: new RenderScene(
-                    clearColor: ColorUtils.Black,
+                    clearColor: ColorUtils.Yellow,
                     renderobjects: new [] { new RenderObject(mesh, texture, vert, frag) })))
             {
                 bool running = true;

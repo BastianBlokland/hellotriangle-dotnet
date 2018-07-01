@@ -44,7 +44,7 @@ namespace HT.Engine.Parsing
 
         private readonly BinaryParser par;
         private Header header;
-        private Float4[] pixels;
+        private Byte4[] pixels;
 
         public TruevisionTgaParser(Stream inputStream, bool leaveStreamOpen = false)
         {
@@ -66,7 +66,7 @@ namespace HT.Engine.Parsing
             bool rleCompressed = CheckCompression(header.ImageType);
             
             //Create array for the pixels
-            pixels = new Float4[header.ImageWidth * header.ImageHeight];
+            pixels = new Byte4[header.ImageWidth * header.ImageHeight];
 
             //Ignore the id field
             par.ConsumeIgnore(header.IdLength);
@@ -87,7 +87,7 @@ namespace HT.Engine.Parsing
                     //as many times as set by count
                     if (isRunLengthPacket)
                     {
-                        Float4 pixel = ConsumePixel();
+                        Byte4 pixel = ConsumePixel();
                         for (int j = 0; j < count + 1; j++)
                             pixels[i + j] = pixel;
                     }
@@ -108,7 +108,7 @@ namespace HT.Engine.Parsing
 
         public void Dispose() => par.Dispose();
 
-        private Float4 ConsumePixel()
+        private Byte4 ConsumePixel()
         {
             switch (header.BitsPerPixel)
             {
@@ -117,13 +117,13 @@ namespace HT.Engine.Parsing
                     //Stored as RGB but we need to read as BGR because its in little-endian
                     Span<byte> data = stackalloc byte[3];
                     par.Consume(data);
-                    return Float4.CreateFrom32Bit(data[2], data[1], data[0], 255);
+                    return new Byte4(data[2], data[1], data[0], 255);
                 }
                 case 32: //Stored as BGRA and 1 byte per component (because little-endian)
                 {
                     Span<byte> data = stackalloc byte[4];
                     par.Consume(data);
-                    return Float4.CreateFrom32Bit(data[2], data[1], data[0], data[3]);
+                    return new Byte4(data[2], data[1], data[0], data[3]);
                 }
                 default:
                     throw par.CreateError("Unsupported bitsPerPixel");

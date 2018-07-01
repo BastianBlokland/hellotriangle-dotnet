@@ -15,7 +15,7 @@ namespace HT.Engine.Rendering
         internal ImageView ImageView => imageView;
 
         //Data
-        private Float4[] pixels; //stored row by row
+        private Byte4[] pixels; //stored row by row
         private readonly int width;
         private readonly int height;
 
@@ -25,7 +25,7 @@ namespace HT.Engine.Rendering
         private ImageView imageView;
         private Sampler imageSampler;
 
-        public Texture(Float4[] pixels, int width, int height)
+        public Texture(Byte4[] pixels, int width, int height)
         {
             if (pixels == null)
                 throw new ArgumentNullException(nameof(pixels));
@@ -42,8 +42,7 @@ namespace HT.Engine.Rendering
             Memory.Pool memoryPool,
             Memory.StagingBuffer stagingBuffer)
         {
-            //TODO: Make this dynamic somehow, as its a pretty big format :)
-            var format = Format.R32G32B32A32SFloat;
+            var format = Format.R8G8B8A8UNorm;
             var aspects = ImageAspects.Color;
 
             //Create the image

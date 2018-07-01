@@ -2,30 +2,30 @@ namespace HT.Engine.Math
 {
     public static class ColorUtils
     {
-        public static readonly Float4 White = new Float4(1f, 1f, 1f, 1f);
-        public static readonly Float4 Silver = new Float4(.75f, .75f, .75f, 1f);
-        public static readonly Float4 Gray = new Float4(.5f, .5f, .5f, 1f);
-        public static readonly Float4 Black = new Float4(0f, 0f, 0f, 1f);
-        public static readonly Float4 Red = new Float4(1f, 0f, 0f, 1f);
-        public static readonly Float4 Maroon = new Float4(.5f, 0f, 0f, 1f);
-        public static readonly Float4 Yellow = new Float4(1f, 1f, 0f, 1f);
-        public static readonly Float4 Olive = new Float4(.5f, .5f, 0f, 1f);
-        public static readonly Float4 Lime = new Float4(0f, 1f, 0f, 1f);
-        public static readonly Float4 Green = new Float4(0f, .5f, 0f, 1f);
-        public static readonly Float4 Aqua = new Float4(0f, 1f, 1f, 1f);
-        public static readonly Float4 Teal = new Float4(0f, .5f, .5f, 1f);
-        public static readonly Float4 Blue = new Float4(0f, 0f, 1f, 1f);
-        public static readonly Float4 Navy = new Float4(0f, 0f, .5f, 1f);
-        public static readonly Float4 Fuchsia = new Float4(1f, 0f, 1f, 1f);
-        public static readonly Float4 Purple = new Float4(.5f, 0f, .5f, 1f);
+        public static readonly Byte4 White = new Byte4(255, 255, 255, 255);
+        public static readonly Byte4 Silver = new Byte4(192, 192, 192, 255);
+        public static readonly Byte4 Gray = new Byte4(128, 128, 128, 255);
+        public static readonly Byte4 Black = new Byte4(0, 0, 0, 255);
+        public static readonly Byte4 Red = new Byte4(255, 0, 0, 255);
+        public static readonly Byte4 Maroon = new Byte4(128, 0, 0, 255);
+        public static readonly Byte4 Yellow = new Byte4(255, 255, 0, 255);
+        public static readonly Byte4 Olive = new Byte4(128, 128, 0, 255);
+        public static readonly Byte4 Lime = new Byte4(0, 255, 0, 255);
+        public static readonly Byte4 Green = new Byte4(0, 128, 0, 255);
+        public static readonly Byte4 Aqua = new Byte4(0, 255, 255, 255);
+        public static readonly Byte4 Teal = new Byte4(0, 128, 128, 255);
+        public static readonly Byte4 Blue = new Byte4(0, 0, 255, 255);
+        public static readonly Byte4 Navy = new Byte4(0, 0, 128, 255);
+        public static readonly Byte4 Fuchsia = new Byte4(255, 0, 255, 255);
+        public static readonly Byte4 Purple = new Byte4(128, 0, 128, 255);
 
-        private static readonly Float4[] colors = new []
+        private static readonly Byte4[] colors = new []
         {
             White, Silver, Gray, Black, Red, Maroon, Yellow, Olive, Lime, Green, Aqua, Teal,
             Blue, Navy, Fuchsia, Purple
         };
 
-        public static Float4 GetColor(int hash)
+        public static Byte4 GetColor(int hash)
             => colors[System.Math.Abs(hash % colors.Length)];
     }
 }

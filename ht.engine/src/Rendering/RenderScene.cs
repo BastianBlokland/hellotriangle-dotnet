@@ -11,7 +11,7 @@ namespace HT.Engine.Rendering
         internal readonly HostDeviceRequirements DeviceRequirements = new HostDeviceRequirements(
             samplerAnisotropy: true);
 
-        private readonly Float4 clearColor;
+        private readonly Byte4 clearColor;
         private readonly RenderObject[] renderobjects;
 
         private bool initialized;
@@ -27,7 +27,7 @@ namespace HT.Engine.Rendering
         private Image depthImage;
         private ImageView depthImageView;
         
-        public RenderScene(Float4 clearColor, RenderObject[] renderobjects)
+        public RenderScene(Byte4 clearColor, RenderObject[] renderobjects)
         {
             if (renderobjects == null)
                 throw new ArgumentNullException(nameof(renderobjects));
@@ -149,6 +149,7 @@ namespace HT.Engine.Rendering
         {
             ThrowIfNotInitialized();
 
+            Float4 normalizedClearColor = clearColor.Normalized;
             commandbuffer.CmdBeginRenderPass(new RenderPassBeginInfo(
                 renderPass: renderpass,
                 framebuffer: framebuffer,
@@ -156,7 +157,11 @@ namespace HT.Engine.Rendering
                 clearValues: new [] 
                 {
                     //Framebuffer color
-                    new ClearValue(new ClearColorValue(new ColorF4(clearColor.R, clearColor.G, clearColor.B, clearColor.A))),
+                    new ClearValue(new ClearColorValue(new ColorF4(
+                        normalizedClearColor.R,
+                        normalizedClearColor.G,
+                        normalizedClearColor.B,
+                        normalizedClearColor.A))),
                     //Depthbuffer value
                     new ClearValue(new ClearDepthStencilValue(depth: 1f, stencil: 0))
                 }));
