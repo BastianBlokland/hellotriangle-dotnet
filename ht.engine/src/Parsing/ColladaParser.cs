@@ -131,17 +131,25 @@ namespace HT.Engine.Parsing
             MeshBuilder meshBuilder = new MeshBuilder();
             for (int i = 0; i < triangleCount; i++)
             {
+                //Surface normal is used when a vertex doesn't specify explict normals
+                Float3 surfaceNormal = Triangle.GetNormal(
+                    GetPosition(i, vertexIndex: 2),
+                    GetPosition(i, vertexIndex: 1),
+                    GetPosition(i, vertexIndex: 0));
+
                 //In reverse as collada uses counter-clockwise triangles and we use clockwise
                 for (int j = 3 - 1; j >= 0 ; j--)
                 {
-                    int positionIndex = GetIndex(i, vertexIndex: j, semantic: "VERTEX_POSITION");
-                    Float3 position = positionIndex >= 0 ? positions.Data[positionIndex] * scale : Float3.Zero;
+                    Float3 position = GetPosition(i, vertexIndex: j);
+                    
                     int normalIndex = GetIndex(i, vertexIndex: j, semantic: "VERTEX_NORMAL");
-                    Float3 normal = normalIndex >= 0 ? normals.Data[normalIndex] : Float3.Zero;
+                    Float3 normal = normalIndex < 0 ? surfaceNormal : Float3.FastNormalize(normals.Data[normalIndex]);
+
                     int texcoord1Index = GetIndex(i, vertexIndex: j, semantic: "VERTEX_TEXCOORD");
-                    Float2 texcoord1 = texcoord1Index >= 0 ? texcoords1.Data[texcoord1Index] : Float2.Zero;
+                    Float2 texcoord1 = texcoord1Index < 0 ? Float2.Zero : texcoords1.Data[texcoord1Index];
+
                     int texcoord2Index = GetIndex(i, vertexIndex: j, semantic: "TEXCOORD");
-                    Float2 texcoord2 = texcoord2Index >= 0 ? texcoords2.Data[texcoord2Index] : Float2.Zero;
+                    Float2 texcoord2 = texcoord2Index < 0 ? Float2.Zero : texcoords2.Data[texcoord2Index];
 
                     meshBuilder.PushVertex(new Vertex(
                         position: position,
@@ -152,6 +160,15 @@ namespace HT.Engine.Parsing
                 }
             }
             return meshBuilder.ToMesh();
+
+            Float3 GetPosition(int triangleIndex, int vertexIndex)
+            {
+                int index = GetIndex(triangleIndex, vertexIndex, semantic: "VERTEX_POSITION");
+                if (index < 0)
+                    throw new Exception(
+                        $"[{nameof(ColladaParser)}] No position data found for: triangle: {triangleIndex}, vertex: {vertexIndex}");
+                return positions.Data[index] * scale;
+            }
 
             int GetIndex(int triangleIndex, int vertexIndex, string semantic)
             {
