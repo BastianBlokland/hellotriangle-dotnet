@@ -47,7 +47,11 @@ namespace HT.Engine.Parsing
         private Float4[] pixels;
 
         public TruevisionTgaParser(Stream inputStream, bool leaveStreamOpen = false)
-            => par = new BinaryParser(inputStream, leaveStreamOpen);
+        {
+            if (inputStream == null)
+                throw new ArgumentNullException(nameof(inputStream));
+            par = new BinaryParser(inputStream, leaveStreamOpen);
+        }
 
         public Texture Parse()
         {

@@ -45,6 +45,8 @@ namespace HT.Engine.Parsing
 
         public WavefrontObjParser(Stream inputStream, float scale = 1f, bool leaveStreamOpen = false)
         {
+            if (inputStream == null)
+                throw new ArgumentNullException(nameof(inputStream));
             this.par = new TextParser(inputStream, Encoding.ASCII, leaveStreamOpen);
             this.scale = scale;
         }
