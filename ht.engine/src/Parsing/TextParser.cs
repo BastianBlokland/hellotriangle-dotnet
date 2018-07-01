@@ -58,7 +58,7 @@ namespace HT.Engine.Parsing
         public void SeekToBeginning() => inputReader.SeekToBeginning();
         public void Seek(long bytePosition) => inputReader.Seek(bytePosition);
 
-        public T ConsumeFloatSet<T>(char decimalSeperator = '.', char floatSeperator = ' ')
+        public T ConsumeFloatSet<T>(char seperator = ' ')
             where T : struct, IFloatSet
         {
             int componentCount = FloatSetUtils.GetComponentCount<T>();
@@ -66,53 +66,29 @@ namespace HT.Engine.Parsing
             Span<float> data = stackalloc float[componentCount];
             for (int i = 0; i < data.Length; i++)
             {
-                data[i] = ConsumeFloat(decimalSeperator);
+                data[i] = ConsumeFloat();
                 if (i != data.Length - 1)
-                    ExpectConsume(floatSeperator);
+                    ExpectConsume(seperator);
             }
             return FloatSetUtils.Create<T>(data);
         }
 
-        public float ConsumeFloat(char decimalSeperator)
+        public float ConsumeFloat()
         {
-            charCache.Clear();
-            //Optionally consume a negative sign
-            if (Current.IsCharacter('-'))
-                charCache.Add(Consume());
-            //Consume all the before the decimal point
-            while (Current.IsDigit)
-                charCache.Add(Consume());
-            //Optionally consume the decimal point and the digits after it
-            if (Current.IsCharacter(decimalSeperator))
-            {
-                //Allways use '.' as the seperator for float.parse
-                Consume(); charCache.Add('.'); 
-                
-                //Consume the digits after it
-                while (Current.IsDigit)
-                    charCache.Add(Consume());
-            }
-            //Sanity check that we consumed anything
-            if (charCache.Count == 0)
-                throw CreateError($"Expected float but got '{Current}'");
-            //Parse it to a float
-            return float.Parse(new string(charCache.Data, startIndex: 0, length: charCache.Count));
+            string text = ConsumeUntil(() => 
+                !(Current.IsDigit || 
+                  Current.IsCharacter('.') ||
+                  Current.IsCharacter('-') ||
+                  Current.IsCharacter('e')));
+            return float.Parse(text);
         }
 
         public int ConsumeInt()
         {
-            charCache.Clear();
-            //Optionally parse a negative sign
-            if (Current.IsCharacter('-'))
-                charCache.Add(Consume());
-            //Parse all the digits
-            while (Current.IsDigit)
-                charCache.Add(Consume());
-            //Sanity check that we consumed anything
-            if (charCache.Count == 0)
-                throw CreateError($"Expected int but got '{Current}'");
-            //Parse it to an integer
-            return int.Parse(new string(charCache.Data, startIndex: 0, length: charCache.Count));
+            string text = ConsumeUntil(() => 
+                !(Current.IsDigit || 
+                  Current.IsCharacter('-')));
+            return int.Parse(text);
         }
 
         public string ConsumeQuotedString()
