@@ -147,7 +147,7 @@ namespace HT.Engine.Parsing
 
                     int texcoord1Index = GetIndex(i, vertexIndex: j, semantic: "VERTEX_TEXCOORD");
                     Float2 texcoord1 = texcoord1Index < 0 ? Float2.Zero : texcoords1.Data[texcoord1Index];
-                    
+
                     int texcoord2Index = GetIndex(i, vertexIndex: j, semantic: "TEXCOORD");
                     Float2 texcoord2 = texcoord2Index < 0 ? Float2.Zero : texcoords2.Data[texcoord2Index];
 
@@ -199,13 +199,16 @@ namespace HT.Engine.Parsing
         private void ParseTriangles(XmlElement meshElement)
         {
             XmlElement trianglesElement = meshElement.GetChild("triangles");
-            if (trianglesElement == null || !trianglesElement.HasChildren)
-                throw new Exception($"[{nameof(ColladaParser)}] Triangles element missing / incorrect");
+            XmlElement polygonsElement = trianglesElement ?? meshElement.GetChild("polygons");
+            if (polygonsElement == null || !polygonsElement.HasChildren)
+                throw new Exception($"[{nameof(ColladaParser)}] Triangles / Polygons element missing");
 
             //Parse all the triangles data
-            triangleCount = int.Parse(trianglesElement.Tag.GetAttributeValue("count"));
-            for (int i = 0; i < trianglesElement.Children.Count; i++)
-                ParseTriangleElement(trianglesElement.Children[i]);
+            triangleCount = int.Parse(polygonsElement.Tag.GetAttributeValue("count"));
+            for (int i = 0; i < polygonsElement.Children.Count; i++)
+                ParseTriangleElement(polygonsElement.Children[i]);
+            if (indices.Count != triangleCount * 3 * inputStride)
+                throw new Exception($"[{nameof(ColladaParser)}] Incorrect indices count found");
 
             //The triangle input can contain a VERTEX element with more data, we want to resolve
             //that here so we end of with just a flat list of attributes
@@ -234,7 +237,7 @@ namespace HT.Engine.Parsing
                     }
                 }
             }
-
+            
             bool HasSemantic(string semantic)
             {
                 for (int i = 0; i < inputs.Count; i++)
@@ -269,8 +272,6 @@ namespace HT.Engine.Parsing
                         par.ConsumeWhitespace(includeNewline: true);
                         indices.Add(par.ConsumeInt());
                     }
-                    if (indices.Count != triangleCount * 3 * inputStride)
-                        throw new Exception($"[{nameof(ColladaParser)}] Incorrect indices count found");
                 }
             }
         }
