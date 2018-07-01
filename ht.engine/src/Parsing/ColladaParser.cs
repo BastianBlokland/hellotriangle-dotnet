@@ -120,8 +120,8 @@ namespace HT.Engine.Parsing
                     attributeValue: input.Source);
                 switch (input.Semantic)
                 {
-                case "VERTEX_POSITION": ParseFloatSetArray(dataElement, positions); break;
-                case "VERTEX_NORMAL": ParseFloatSetArray(dataElement, normals); break;
+                case "POSITION": ParseFloatSetArray(dataElement, positions); break;
+                case "NORMAL": ParseFloatSetArray(dataElement, normals); break;
                 case "VERTEX_TEXCOORD": ParseFloatSetArray(dataElement, texcoords1); break;
                 case "TEXCOORD": ParseFloatSetArray(dataElement, texcoords2); break;
                 }
@@ -142,11 +142,12 @@ namespace HT.Engine.Parsing
                 {
                     Float3 position = GetPosition(i, vertexIndex: j);
                     
-                    int normalIndex = GetIndex(i, vertexIndex: j, semantic: "VERTEX_NORMAL");
+                    int normalIndex = GetIndex(i, vertexIndex: j, semantic: "NORMAL");
                     Float3 normal = normalIndex < 0 ? surfaceNormal : Float3.FastNormalize(normals.Data[normalIndex]);
 
                     int texcoord1Index = GetIndex(i, vertexIndex: j, semantic: "VERTEX_TEXCOORD");
                     Float2 texcoord1 = texcoord1Index < 0 ? Float2.Zero : texcoords1.Data[texcoord1Index];
+                    
                     int texcoord2Index = GetIndex(i, vertexIndex: j, semantic: "TEXCOORD");
                     Float2 texcoord2 = texcoord2Index < 0 ? Float2.Zero : texcoords2.Data[texcoord2Index];
 
@@ -169,7 +170,7 @@ namespace HT.Engine.Parsing
 
             Float3 GetPosition(int triangleIndex, int vertexIndex)
             {
-                int index = GetIndex(triangleIndex, vertexIndex, semantic: "VERTEX_POSITION");
+                int index = GetIndex(triangleIndex, vertexIndex, semantic: "POSITION");
                 if (index < 0)
                     throw new Exception(
                         $"[{nameof(ColladaParser)}] No position data found for: triangle: {triangleIndex}, vertex: {vertexIndex}");
@@ -201,42 +202,57 @@ namespace HT.Engine.Parsing
             if (trianglesElement == null || !trianglesElement.HasChildren)
                 throw new Exception($"[{nameof(ColladaParser)}] Triangles element missing / incorrect");
 
+            //Parse all the triangles data
             triangleCount = int.Parse(trianglesElement.Tag.GetAttributeValue("count"));
             for (int i = 0; i < trianglesElement.Children.Count; i++)
                 ParseTriangleElement(trianglesElement.Children[i]);
 
+            //The triangle input can contain a VERTEX element with more data, we want to resolve
+            //that here so we end of with just a flat list of attributes
+            for (int i = 0; i < inputs.Count; i++)
+            {
+                Input input = inputs.Data[i];
+                if (input.Semantic == "VERTEX")
+                {
+                    XmlElement vertexElement = meshElement.GetChildWithAttribute(
+                        name: "vertices",
+                        attributeName: "id",
+                        attributeValue: input.Source);
+                    for (int j = 0; j < vertexElement.Children.Count; j++)
+                    {
+                        XmlElement vertexInput = vertexElement.Children[j];
+                        if (vertexInput.HasName("input"))
+                        {
+                            string semantic = vertexInput.Tag.GetAttributeValue("semantic");
+                            //If there allready was a semantic with the same name then we prefix it with 'VERTEX'
+                            if (HasSemantic(semantic))
+                                semantic = $"VERTEX_{semantic}";
+
+                            string sourceReference = GetSourceReference(vertexInput);
+                            inputs.Add(new Input(semantic, input.Offset, sourceReference));
+                        }
+                    }
+                }
+            }
+
+            bool HasSemantic(string semantic)
+            {
+                for (int i = 0; i < inputs.Count; i++)
+                    if (inputs.Data[i].Semantic == semantic)
+                        return true;
+                return false;
+            }
+
             void ParseTriangleElement(XmlElement triangleElement)
             {
-                //The input elements contain info about what is in the indicies
+                //The input elements contain info about what is in the indices
                 if (triangleElement.HasName("input"))
                 {
                     string semantic = triangleElement.Tag.GetAttributeValue("semantic");
                     int offset = int.Parse(triangleElement.Tag.GetAttributeValue("offset"));
                     string sourceReference = GetSourceReference(triangleElement);
                     inputStride = Max(inputStride, offset + 1);
-
-                    //In collada vertex info is stored in another element, to make parsing easier
-                    //we collapse that into the same element and just prefix the name with 'VERTEX'
-                    //to seperate them. 
-                    if (semantic == "VERTEX")
-                    {
-                        XmlElement vertexElement = meshElement.GetChildWithAttribute(
-                            name: "vertices",
-                            attributeName: "id",
-                            attributeValue: sourceReference);
-                        for (int i = 0; i < vertexElement.Children.Count; i++)
-                        {
-                            XmlElement vertexInput = vertexElement.Children[i];
-                            if (vertexInput.HasName("input"))
-                            {
-                                semantic = "VERTEX_" + vertexInput.Tag.GetAttributeValue("semantic");
-                                sourceReference = GetSourceReference(vertexInput);
-                                inputs.Add(new Input(semantic, offset, sourceReference));
-                            }
-                        }
-                    }
-                    else
-                        inputs.Add(new Input(semantic, offset, sourceReference));
+                    inputs.Add(new Input(semantic, offset, sourceReference));
                 }
 
                 // The 'p' (primitive) element contains the actual indices
