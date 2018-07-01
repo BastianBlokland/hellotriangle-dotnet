@@ -13,7 +13,17 @@ namespace HT.Engine.Parsing
 {
     /// <summary>
     /// Collada 1.4 parser
+    /// Reads a single mesh from a collada scene file
     /// Specifications: https://www.khronos.org/files/collada_spec_1_4.pdf
+    /// 
+    /// At the moment only works on triangulated collada files, either storing their data in a 
+    /// 'triangle' element or a 'polygons' element with 3 vertices per polygon.
+    /// As far as vertex attributes it can read:
+    /// - POSITION
+    /// - COLOR
+    /// - NORMAL
+    /// - TEXCOORD
+    /// - TEXCOORD2 (it uses 1 from the primitive element and 1 from the vertices element)
     /// 
     /// This uses a multipass approach, first it parses the xml structure of the file and takes note
     /// of the positions of the data in the xml file. Then it looks in the xml structure for the
@@ -343,14 +353,21 @@ namespace HT.Engine.Parsing
                 throw new Exception($"[{nameof(ColladaParser)}] Data is missing");
 
             int componentCount = FloatSetUtils.GetComponentCount<T>();
-            if (componentCount != stride)
+            if (componentCount > stride)
                 throw new Exception(
-                    $"[{nameof(ColladaParser)}] Incorrect float component count, expected: {componentCount}, got: {stride}");
+                    $"[{nameof(ColladaParser)}] Data has too little component for given type, expected: {componentCount}, got: {stride}");
+            int dataToSkip = stride - componentCount;
 
             par.Seek(dataEntry.Value.StartBytePosition);
             for (int i = 0; i < count; i++)
             {
                 output.Add(par.ConsumeFloatSet<T>());
+                //If there is extra data we don't want to load then we skip over that
+                for (int j = 0; j < dataToSkip; j++)
+                {
+                    par.ExpectConsume(' ');
+                    par.ConsumeFloat();
+                }
                 par.ConsumeWhitespace(includeNewline: true);
             }
             if (par.CurrentBytePosition > dataEntry.Value.EndBytePosition)
