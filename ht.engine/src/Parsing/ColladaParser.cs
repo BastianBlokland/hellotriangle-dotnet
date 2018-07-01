@@ -46,6 +46,7 @@ namespace HT.Engine.Parsing
 
         //Vertex data
         private readonly ResizeArray<Float3> positions = new ResizeArray<Float3>();
+        private readonly ResizeArray<Float4> colors = new ResizeArray<Float4>();
         private readonly ResizeArray<Float3> normals = new ResizeArray<Float3>();
         private readonly ResizeArray<Float2> texcoords1 = new ResizeArray<Float2>();
         private readonly ResizeArray<Float2> texcoords2 = new ResizeArray<Float2>();
@@ -121,6 +122,7 @@ namespace HT.Engine.Parsing
                 switch (input.Semantic)
                 {
                 case "POSITION": ParseFloatSetArray(dataElement, positions); break;
+                case "COLOR": ParseFloatSetArray(dataElement, colors); break;
                 case "NORMAL": ParseFloatSetArray(dataElement, normals); break;
                 case "VERTEX_TEXCOORD": ParseFloatSetArray(dataElement, texcoords1); break;
                 case "TEXCOORD": ParseFloatSetArray(dataElement, texcoords2); break;
@@ -142,6 +144,9 @@ namespace HT.Engine.Parsing
                 {
                     Float3 position = GetPosition(i, vertexIndex: j);
                     
+                    int colorIndex = GetIndex(i, vertexIndex: j, semantic: "COLOR");
+                    Float4 color = colorIndex < 0 ? Float4.One : colors.Data[colorIndex];
+
                     int normalIndex = GetIndex(i, vertexIndex: j, semantic: "NORMAL");
                     Float3 normal = normalIndex < 0 ? surfaceNormal : Float3.FastNormalize(normals.Data[normalIndex]);
 
@@ -160,7 +165,7 @@ namespace HT.Engine.Parsing
 
                     meshBuilder.PushVertex(new Vertex(
                         position: position,
-                        color: Float4.One,
+                        color: color,
                         normal: normal,
                         uv1: texcoord1,
                         uv2: texcoord2));
