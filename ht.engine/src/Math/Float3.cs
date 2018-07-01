@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using HT.Engine.Math;
 
 using static System.Math;
+using static System.MathF;
 
 namespace HT.Engine.Math
 {
@@ -24,7 +25,7 @@ namespace HT.Engine.Math
 
         //Properties
         public float SquareMagnitude => X * X + Y * Y + Z * Z;
-        public float Magnitude => (float)Sqrt(SquareMagnitude);
+        public float Magnitude => Sqrt(SquareMagnitude);
 
         //Component swizzling
         public Float2 XY => new Float2(X, Y);

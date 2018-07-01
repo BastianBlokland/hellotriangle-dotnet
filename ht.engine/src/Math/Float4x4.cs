@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using HT.Engine.Math;
 
 using static System.Math;
+using static System.MathF;
 
 namespace HT.Engine.Math
 {
@@ -110,8 +111,8 @@ namespace HT.Engine.Math
 
         public static Float4x4 CreateRotationFromXAngle(float xAngle)
         {
-            float cos = (float)Cos(xAngle);
-            float sin = (float)Sin(xAngle);
+            float cos = Cos(xAngle);
+            float sin = Sin(xAngle);
             return CreateFromRows(
                 row0: (1f, 0f,  0f,   0f),
                 row1: (0f, cos, -sin, 0f),
@@ -121,8 +122,8 @@ namespace HT.Engine.Math
 
         public static Float4x4 CreateRotationFromYAngle(float yAngle)
         {
-            float cos = (float)Cos(yAngle);
-            float sin = (float)Sin(yAngle);
+            float cos = Cos(yAngle);
+            float sin = Sin(yAngle);
             return CreateFromRows(
                 row0: (cos,  0f, sin, 0f),
                 row1: (0f,   1f, 0f,  0f),
@@ -132,8 +133,8 @@ namespace HT.Engine.Math
 
         public static Float4x4 CreateRotationFromZAngle(float zAngle)
         {
-            float cos = (float)Cos(zAngle);
-            float sin = (float)Sin(zAngle);
+            float cos = Cos(zAngle);
+            float sin = Sin(zAngle);
             return CreateFromRows(
                 row0: (cos, -sin, 0f, 0f),
                 row1: (sin, cos,  0f,  0f),
@@ -151,8 +152,8 @@ namespace HT.Engine.Math
         /// </summary>
         public static Float4x4 CreatePerspectiveProjection(Frustum frustum)
         {
-            float yScale = 1f / (float)Tan(frustum.VerticalAngle * .5f);
-            float xScale = 1f / (float)Tan(frustum.HorizontalAngle * .5f);;
+            float yScale = 1f / Tan(frustum.VerticalAngle * .5f);
+            float xScale = 1f / Tan(frustum.HorizontalAngle * .5f);;
             float far = frustum.FarDistance;
             float near = frustum.NearDistance;
             return Float4x4.CreateFromRows(

@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 
 using static System.Math;
+using static System.MathF;
 
 namespace HT.Engine.Math
 {
@@ -47,7 +48,7 @@ namespace HT.Engine.Math
             float nearDistance,
             float farDistance)
         {
-            float horizontalAngle = (float)Atan(Tan(verticalAngle * .5f) * aspect) * 2f;
+            float horizontalAngle = Atan(Tan(verticalAngle * .5f) * aspect) * 2f;
             return new Frustum(
                 verticalAngle: verticalAngle,
                 horizontalAngle: horizontalAngle,
@@ -61,7 +62,7 @@ namespace HT.Engine.Math
             float nearDistance,
             float farDistance)
         {
-            float verticalAngle = (float)Atan(Tan(horizontalAngle * .5f) / aspect) * 2f;
+            float verticalAngle = Atan(Tan(horizontalAngle * .5f) / aspect) * 2f;
             return new Frustum(
                 verticalAngle: verticalAngle,
                 horizontalAngle: horizontalAngle,
