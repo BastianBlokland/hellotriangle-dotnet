@@ -32,8 +32,12 @@ namespace HT.Engine.Parsing
         //that position fast. This means you can save this byte offset and later call 'Seek' to 
         //get back to that point. Can be very usefull for certain parsers
         public long CurrentBytePosition 
-            =>  (stream.Position - byteBufferSize) + 
-                encoding.GetByteCount(
+            => (stream.Position - byteBufferSize) - 
+                encoding.GetByteCount( //Substract the characters that where still left of the previous buffer
+                    chars: charBuffer,
+                    index: 0,
+                    count: (charBufferStartOffset - currentCharIndex).ClampPositive()) +
+                encoding.GetByteCount( //Add the characters that we've allready read from this buffer
                     chars: charBuffer, 
                     index: charBufferStartOffset, 
                     count: (currentCharIndex - charBufferStartOffset).ClampPositive());
