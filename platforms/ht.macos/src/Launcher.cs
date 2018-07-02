@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 
 using HT.Engine.Utils;
 
@@ -8,6 +9,9 @@ namespace HT.MacOS
     {
         static void Main(string[] args)
         {
+            //Give a name to the main-thread (nice for debugging purposes)
+            Thread.CurrentThread.Name = "MacOS-Main";
+
             Logger logger = new Logger();
             logger.Log($"MacOS-{nameof(Launcher)}", "Launching program");
 

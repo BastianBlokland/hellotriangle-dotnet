@@ -12,7 +12,7 @@ namespace HT.Engine.Parsing
     //non triangle faces will be converted to triangles using a simple triangle fan starting from
     //vertex 0 in the face
     //Followed the spec from wikipedia: https://en.wikipedia.org/wiki/Wavefront_.obj_file
-    public sealed class WavefrontObjParser : IParser<Mesh>
+    public sealed class WavefrontObjParser : IParser<Mesh>, IParser
     {
         private readonly struct FaceElement
         {
@@ -36,19 +36,17 @@ namespace HT.Engine.Parsing
         }
 
         private readonly TextParser par;
-        private readonly float scale;
         private readonly ResizeArray<Float3> positions = new ResizeArray<Float3>();
         private readonly ResizeArray<Float3> normals = new ResizeArray<Float3>();
         private readonly ResizeArray<Float2> texcoords = new ResizeArray<Float2>();
         private readonly ResizeArray<Face> faces = new ResizeArray<Face>();
         private readonly ResizeArray<FaceElement> elementCache = new ResizeArray<FaceElement>();
 
-        public WavefrontObjParser(Stream inputStream, float scale = 1f, bool leaveStreamOpen = false)
+        public WavefrontObjParser(Stream inputStream, bool leaveStreamOpen = false)
         {
             if (inputStream == null)
                 throw new ArgumentNullException(nameof(inputStream));
             this.par = new TextParser(inputStream, Encoding.ASCII, leaveStreamOpen);
-            this.scale = scale;
         }
 
         public Mesh Parse()
@@ -63,7 +61,7 @@ namespace HT.Engine.Parsing
                 par.ConsumeWhitespace(); //Ignore whitespace after the id
                 switch (id)
                 {
-                    case "v": positions.Add(par.ConsumeFloatSet<Float3>() * scale); break;
+                    case "v": positions.Add(par.ConsumeFloatSet<Float3>()); break;
                     case "vn": normals.Add(par.ConsumeFloatSet<Float3>()); break;
                     case "vt": texcoords.Add(par.ConsumeFloatSet<Float2>()); break;
                     case "f":
@@ -168,5 +166,7 @@ namespace HT.Engine.Parsing
             }
             return new FaceElement(positionIndex, texcoordIndex, normalIndex);
         }
+
+        object IParser.Parse() => Parse();
     }
 }

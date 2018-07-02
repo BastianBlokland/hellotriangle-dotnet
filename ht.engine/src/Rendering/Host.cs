@@ -24,8 +24,8 @@ namespace HT.Engine.Rendering
 
         public Host(
             Platform.INativeApp nativeApp,
-            string applicationName,
-            int applicationVersion,
+            string appName,
+            int appVersion,
             Logger logger = null)
         {
             if (nativeApp == null)
@@ -66,8 +66,8 @@ namespace HT.Engine.Rendering
 
             InstanceCreateInfo createInfo = new InstanceCreateInfo(
                 appInfo: new ApplicationInfo(
-                    applicationName: applicationName,
-                    applicationVersion: applicationVersion,
+                    applicationName: appName,
+                    applicationVersion: appVersion,
                     engineName: Info.NAME,
                     engineVersion: Info.VERSION,
                     apiVersion: new VulkanCore.Version(major: 1, minor: 0, patch: 69)

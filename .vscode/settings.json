@@ -33,6 +33,7 @@
         "Rasterization",
         "Rasterizer",
         "Rect",
+        "Spir",
         "Texcoord",
         "Texcoords",
         "Unmap",

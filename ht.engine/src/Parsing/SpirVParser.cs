@@ -8,7 +8,7 @@ using HT.Engine.Resources;
 namespace HT.Engine.Parsing
 {
     //Simplest parser ever just reads the raw Spir-V byte-code and load it into a 'ShaderProgram'
-    public sealed class SpirVParser : IParser<ShaderProgram>
+    public sealed class SpirVParser : IParser<ShaderProgram>, IParser
     {
         private readonly Stream inputStream;
         private readonly bool leaveStreamOpen;
@@ -35,5 +35,7 @@ namespace HT.Engine.Parsing
             if (!leaveStreamOpen)
                 inputStream.Dispose();
         }
+
+        object IParser.Parse() => Parse();
     }
 }

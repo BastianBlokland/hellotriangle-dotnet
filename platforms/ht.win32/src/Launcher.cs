@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 
 using HT.Engine.Utils;
 
@@ -8,6 +9,9 @@ namespace HT.Win32
     {
         static void Main(string[] args)
         {
+            //Give a name to the main-thread (nice for debugging purposes)
+            Thread.CurrentThread.Name = "Win32-Main";
+
             Logger logger = new Logger();
             logger.Log($"Win32-{nameof(Launcher)}", "Launching program"); 
 

@@ -191,7 +191,7 @@ namespace HT.Engine.Parsing
     /// Basic xml parser / tokenizer, can be used as the tokenizer in a multi pass parser
     /// Followed basic spec from wiki: https://en.wikipedia.org/wiki/XML
     /// </summary>
-    public sealed class XmlParser : IParser<XmlDocument>
+    public sealed class XmlParser : IParser<XmlDocument>, IParser
     {
         private enum TagType : byte
         {
@@ -343,5 +343,7 @@ namespace HT.Engine.Parsing
                 return result.Trim(); //Trim the whitespace from beginning and end of the comment
             }
         }
+
+        object IParser.Parse() => Parse();
     }
 }

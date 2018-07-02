@@ -11,7 +11,7 @@ namespace HT.Engine.Parsing
     //Followed the spec from wikipedia: https://en.wikipedia.org/wiki/Truevision_TGA
     //About tga colors: http://www.ryanjuckett.com/programming/parsing-colors-in-a-tga-file/
     //About rle compression: https://en.wikipedia.org/wiki/Run-length_encoding
-    public sealed class TruevisionTgaParser : IParser<ByteTexture>
+    public sealed class TruevisionTgaParser : IParser<ByteTexture>, IParser
     {
         private enum ColorMapType : byte
         {
@@ -140,5 +140,7 @@ namespace HT.Engine.Parsing
                     throw par.CreateError($"Unsupported image-type: {header.ImageType}");
             }
         }
+
+        object IParser.Parse() => Parse();
     }
 }

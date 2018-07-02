@@ -35,7 +35,7 @@ namespace HT.Engine.Parsing
     /// of the positions of the data in the xml file. Then it looks in the xml structure for the
     /// data we are interested in the and then we read that data from the stream.
     /// </summary>
-    public sealed class ColladaParser : IParser<Mesh>
+    public sealed class ColladaParser : IParser<Mesh>, IParser
     {
         private readonly struct Input
         {
@@ -55,7 +55,6 @@ namespace HT.Engine.Parsing
 
         private readonly TextParser par;
         private readonly XmlElement colladaElement;
-        private Float4x4 transformation;
 
         //Triangle data
         private readonly ResizeArray<Input> inputs = new ResizeArray<Input>();
@@ -70,7 +69,7 @@ namespace HT.Engine.Parsing
         private readonly ResizeArray<Float2> texcoords1 = new ResizeArray<Float2>();
         private readonly ResizeArray<Float2> texcoords2 = new ResizeArray<Float2>();
 
-        public ColladaParser(Stream inputStream, float scale = 1f, bool leaveStreamOpen = false)
+        public ColladaParser(Stream inputStream, bool leaveStreamOpen = false)
         {
             if (inputStream == null)
                 throw new ArgumentNullException(nameof(inputStream));
@@ -102,14 +101,12 @@ namespace HT.Engine.Parsing
             //Seek the stream back to the beginning and create a parser for getting data out of it
             inputStream.Seek(offset: 0, origin: SeekOrigin.Begin);
             par = new TextParser(inputStream, Encoding.UTF8, leaveStreamOpen);
-
-            //Set transformation matrix based on input scale (file data will be added later)
-            transformation = Float4x4.CreateScale(scale);
         }
 
         public Mesh Parse()
         {
-            ParseAssetMeta();
+            //Get transform to use when reading the data (so we can scale / rotate based on meta-data)
+            Float4x4 transform = GetTransform();
 
             XmlElement geometriesElement = colladaElement.GetChild("library_geometries");
             if (geometriesElement == null)
@@ -120,13 +117,16 @@ namespace HT.Engine.Parsing
             XmlElement geometryElement = geometriesElement.GetChild(index: 0);
             if (geometryElement == null)
                 throw new Exception($"[{nameof(ColladaParser)}] No geometry found");
-            return ParseGeometry(geometryElement);
+            return ParseGeometry(geometryElement, transform);
         }
 
         public void Dispose() => par.Dispose();
 
-        private void ParseAssetMeta()
+        private Float4x4 GetTransform()
         {
+            Float4x4 transform = Float4x4.Identity;
+
+            //Get scale based on asset meta-data
             XmlElement unitElement = colladaElement.GetChild("asset")?.GetChild("unit");
             if (unitElement != null)
             {
@@ -134,9 +134,11 @@ namespace HT.Engine.Parsing
                 if (!string.IsNullOrEmpty(meter))
                 {
                     float meterScale = float.Parse(meter.Replace(',', '.'), NumberStyles.Float);
-                    transformation *= Float4x4.CreateScale(meterScale);
+                    transform *= Float4x4.CreateScale(meterScale);
                 }
             }
+
+            //Get rotation based on asset meta-data
             XmlElement axisElement = colladaElement.GetChild("asset")?.GetChild("up_axis");
             if (axisElement != null && axisElement.FirstData != null)
             {
@@ -145,11 +147,12 @@ namespace HT.Engine.Parsing
                 par.Seek(startPos);
                 string val = par.ConsumeUntil(() => par.CurrentBytePosition >= endPos);
                 if (val == "Z_UP")
-                    transformation *= Float4x4.CreateRotationFromXAngle(-90f * FloatUtils.DEG_TO_RAD);
+                    transform *= Float4x4.CreateRotationFromXAngle(-90f * FloatUtils.DEG_TO_RAD);
             }
+            return transform;
         }
 
-        private Mesh ParseGeometry(XmlElement geometryElement)
+        private Mesh ParseGeometry(XmlElement geometryElement, Float4x4 transform)
         {
             XmlElement meshElement = geometryElement.GetChild("mesh");
             if (meshElement == null)
@@ -203,7 +206,7 @@ namespace HT.Engine.Parsing
                     int normalIndex = GetIndex(i, vertexIndex: j, semantic: "NORMAL");
                     Float3 normal = normalIndex < 0 ? 
                         surfaceNormal :
-                        transformation.TransformVector(Float3.FastNormalize(normals.Data[normalIndex]));
+                        transform.TransformVector(Float3.FastNormalize(normals.Data[normalIndex]));
 
                     int texcoord1Index = GetIndex(i, vertexIndex: j, semantic: "TEXCOORD", set: minTexcoordSet);
                     Float2 texcoord1 = texcoord1Index < 0 ? Float2.Zero : texcoords1.Data[texcoord1Index];
@@ -227,7 +230,7 @@ namespace HT.Engine.Parsing
                 if (index < 0)
                     throw new Exception(
                         $"[{nameof(ColladaParser)}] No position data found for: triangle: {triangleIndex}, vertex: {vertexIndex}");
-                return transformation.TransformPoint(positions.Data[index]);
+                return transform.TransformPoint(positions.Data[index]);
             }
 
             int GetIndex(int triangleIndex, int vertexIndex, string semantic, int set = -1)
@@ -378,5 +381,7 @@ namespace HT.Engine.Parsing
             if (par.CurrentBytePosition > dataEntry.Value.EndBytePosition)
                 throw new Exception($"[{nameof(ColladaParser)}] Data was bigger then expected");
         }
+
+        object IParser.Parse() => Parse();
     }
 }

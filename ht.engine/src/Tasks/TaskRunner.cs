@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 
 using HT.Engine.Utils;
 
@@ -31,7 +32,7 @@ namespace HT.Engine.Tasks
 
             executors = new ExecutorThread[executorsCount];
             for (int i = 0; i < executorsCount; i++)
-                executors[i] = new ExecutorThread(executorId: i, taskSource: this);
+                executors[i] = new ExecutorThread(executorId: i, taskSource: this, logger);
             
             pushLock = new object();
         }
@@ -63,6 +64,8 @@ namespace HT.Engine.Tasks
                 try { info.Value.Execute(); }
                 catch (Exception e) { logger?.Log(nameof(TaskRunner), $"Task exception: {e.Message}"); }
             }
+            else
+                Thread.Yield();
         }
 
         public void Dispose() => executors.DisposeAll();
