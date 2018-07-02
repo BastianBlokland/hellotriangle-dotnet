@@ -6,6 +6,7 @@ using HT.Engine.Platform;
 using HT.Engine.Rendering;
 using HT.Engine.Math;
 using HT.Engine.Utils;
+using HT.Engine.Tasks;
 
 namespace HT.Main
 {
@@ -28,6 +29,7 @@ namespace HT.Main
             ShaderProgram vert = new ShaderProgram(nativeApp, "test.vert");
             ShaderProgram frag = new ShaderProgram(nativeApp, "test.frag");
 
+            using (var taskRunner = new TaskRunner(logger))
             using (var host = new Host(
                 nativeApp: nativeApp,
                 applicationName: "Test",
