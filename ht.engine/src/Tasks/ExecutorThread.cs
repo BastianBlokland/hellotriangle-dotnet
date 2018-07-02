@@ -40,6 +40,9 @@ namespace HT.Engine.Tasks
             //Request cancellation
             cancelTokenSource.Cancel();
 
+            //Wake the thread
+            wakeEvent.Set();
+
             //Wait for the executor thread to cancel itself
             thread.Join();
 

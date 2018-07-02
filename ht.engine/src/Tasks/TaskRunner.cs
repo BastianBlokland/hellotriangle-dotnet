@@ -61,7 +61,7 @@ namespace HT.Engine.Tasks
             if (info.HasValue)
             {
                 try { info.Value.Execute(); }
-                catch (Exception e) { logger?.Log(nameof(SubtaskRunner), $"Task exception: {e.Message}"); }
+                catch (Exception e) { logger?.Log(nameof(TaskRunner), $"Task exception: {e.Message}"); }
             }
         }
 
