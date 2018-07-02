@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 
+using HT.Engine.Math;
 using HT.Engine.Utils;
 using VulkanCore;
 
@@ -63,7 +64,7 @@ namespace HT.Engine.Rendering.Memory
             chunks.Add(newChunk);
 
             logger?.Log("MemoryPool", 
-                $"New chuck allocated, type: {newChunk.MemoryTypeIndex}, size: {newChunk.TotalSize}");
+                $"New chuck allocated, type: {newChunk.MemoryTypeIndex}, size: {ByteUtils.ByteToMegabyte(newChunk.TotalSize)} MB");
     
             //Allocate from the new chunk
             Block? newBlock = newChunk.TryAllocate(requirements);

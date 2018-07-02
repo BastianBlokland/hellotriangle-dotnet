@@ -2,6 +2,10 @@ namespace HT.Engine.Rendering.Memory
 {
     internal readonly struct Block
     {
+        //Properties
+        internal long EndOffset => Offset + Size;
+
+        //Data
         internal readonly Chunk Container;
         internal readonly long Offset;
         internal readonly long Size;

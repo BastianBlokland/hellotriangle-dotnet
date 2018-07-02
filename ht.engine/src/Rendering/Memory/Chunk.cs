@@ -35,7 +35,7 @@ namespace HT.Engine.Rendering.Memory
             Device logicalDevice,
             HostDevice hostDevice,
             int supportedMemoryTypesFilter,
-            long size = 134_217_728)
+            long size = 128 * ByteUtils.MEGABYTE_TO_BYTE)
         {
             if (logicalDevice == null)
                 throw new ArgumentNullException(nameof(logicalDevice));
@@ -117,6 +117,14 @@ namespace HT.Engine.Rendering.Memory
                 throw new ArgumentException(
                     $"[{nameof(Chunk)}] Given block does not belong to this chunk");
             
+            #if DEBUG //Check if the block was freed before
+            for (int i = 0; i < freeBlocks.Count; i++)
+            {
+                if (DoesOverlap(block, freeBlocks.Data[i]))
+                    throw new Exception($"[{nameof(Chunk)}] Given block was allready free");
+            }
+            #endif
+
             //Check if either of out neighbors is also free so we can merge onto there
             for (int i = 0; i < freeBlocks.Count; i++)
             {
@@ -160,6 +168,9 @@ namespace HT.Engine.Rendering.Memory
                 return 0;
             return alignment - remainder;
         }
+
+        private bool DoesOverlap(Block blockA, Block blockB)
+            => blockA.EndOffset > blockB.Offset && blockA.Offset < blockB.EndOffset;
 
         private void ThrowIfDisposed()
         {
