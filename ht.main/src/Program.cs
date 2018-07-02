@@ -14,13 +14,13 @@ namespace HT.Main
     {
         public static void Run(INativeApp nativeApp, Logger logger = null)
         {
-            HT.Engine.Rendering.Model.Mesh mesh;
+            HT.Engine.Resources.Mesh mesh;
             using (var parser = new HT.Engine.Parsing.ColladaParser(
                 inputStream: nativeApp.ReadFile(Path.Combine("models", "spaceship.dae"))))
             {
                 mesh = parser.Parse();
             }
-            HT.Engine.Rendering.Texture texture;
+            HT.Engine.Resources.ByteTexture texture;
             using (var parser = new HT.Engine.Parsing.TruevisionTgaParser(
                 inputStream: nativeApp.ReadFile(Path.Combine("textures", "spaceship_color.tga"))))
             {

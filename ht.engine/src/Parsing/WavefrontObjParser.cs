@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 
 using HT.Engine.Math;
-using HT.Engine.Rendering.Model;
+using HT.Engine.Resources;
 using HT.Engine.Utils;
 
 namespace HT.Engine.Parsing

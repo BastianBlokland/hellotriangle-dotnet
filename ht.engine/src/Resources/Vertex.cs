@@ -4,10 +4,10 @@ using System.Runtime.InteropServices;
 using HT.Engine.Math;
 using VulkanCore;
 
-namespace HT.Engine.Rendering.Model
+namespace HT.Engine.Resources
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
-    internal readonly struct Vertex : IEquatable<Vertex>
+    public readonly struct Vertex : IEquatable<Vertex>
     {
         public const int SIZE = Float3.SIZE * 2 + Float4.SIZE + Float2.SIZE * 2;
 
@@ -18,7 +18,7 @@ namespace HT.Engine.Rendering.Model
         public readonly Float2 Uv1;
         public readonly Float2 Uv2;
 
-        internal Vertex(Float3 position, Float4 color, Float3 normal, Float2 uv1, Float2 uv2)
+        public Vertex(Float3 position, Float4 color, Float3 normal, Float2 uv1, Float2 uv2)
         {
             Position = position;
             Color = color;

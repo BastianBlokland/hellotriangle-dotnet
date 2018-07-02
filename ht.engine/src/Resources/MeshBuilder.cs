@@ -2,14 +2,14 @@ using System;
 using System.Collections.Generic;
 using HT.Engine.Utils;
 
-namespace HT.Engine.Rendering.Model
+namespace HT.Engine.Resources
 {
-    internal sealed class MeshBuilder
+    public sealed class MeshBuilder
     {
         private readonly ResizeArray<Vertex> vertices = new ResizeArray<Vertex>();
         private readonly ResizeArray<UInt16> indices = new ResizeArray<UInt16>();
 
-        internal void PushVertex(Vertex vertex)
+        public void PushVertex(Vertex vertex)
         {
             //Filter out similar vertices to reduce vertex count
             int index = FindSimilar(vertex);
@@ -18,14 +18,13 @@ namespace HT.Engine.Rendering.Model
                 if (vertices.Count >= UInt16.MaxValue)
                     throw new Exception(
                         $"[{nameof(MeshBuilder)}] Only '{UInt16.MaxValue}' vertices are supported");
-
                 index = vertices.Count;
                 vertices.Add(vertex);
             }
             indices.Add((UInt16)index);
         }
 
-        internal Mesh ToMesh() => new Mesh(vertices.ToArray(), indices.ToArray());
+        public Mesh ToMesh() => new Mesh(vertices.ToArray(), indices.ToArray());
 
         private int FindSimilar(Vertex vertex)
         {

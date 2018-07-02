@@ -3,7 +3,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 
 using HT.Engine.Math;
-using HT.Engine.Rendering;
+using HT.Engine.Resources;
 
 namespace HT.Engine.Parsing
 {
@@ -11,7 +11,7 @@ namespace HT.Engine.Parsing
     //Followed the spec from wikipedia: https://en.wikipedia.org/wiki/Truevision_TGA
     //About tga colors: http://www.ryanjuckett.com/programming/parsing-colors-in-a-tga-file/
     //About rle compression: https://en.wikipedia.org/wiki/Run-length_encoding
-    public sealed class TruevisionTgaParser : IParser<Texture>
+    public sealed class TruevisionTgaParser : IParser<ByteTexture>
     {
         private enum ColorMapType : byte
         {
@@ -53,7 +53,7 @@ namespace HT.Engine.Parsing
             par = new BinaryParser(inputStream, leaveStreamOpen);
         }
 
-        public Texture Parse()
+        public ByteTexture Parse()
         {
             //Read the header
             header = par.Consume<Header>();
@@ -103,7 +103,7 @@ namespace HT.Engine.Parsing
                 else
                     pixels[i] = ConsumePixel();
             }
-            return new Texture(pixels, header.ImageWidth, header.ImageHeight);
+            return new ByteTexture(pixels, header.ImageWidth, header.ImageHeight);
         }
 
         public void Dispose() => par.Dispose();

@@ -1,18 +1,21 @@
 using System;
 
 using HT.Engine.Math;
+using HT.Engine.Resources;
 using VulkanCore;
 
 namespace HT.Engine.Rendering
 {
     public sealed class RenderObject : IDisposable
     {
-        private readonly Model.Mesh mesh;
-        private readonly Texture texture;
+        private readonly Mesh mesh;
+        private readonly ByteTexture texture;
         private readonly ShaderProgram vertProg;
         private readonly ShaderProgram fragProg;
 
         private bool initialized;
+        private DeviceMesh deviceMesh;
+        private DeviceTexture deviceTexture;
         private Memory.StagingBuffer stagingBuffer;
         private Memory.DeviceBuffer transformationBuffer;
         private DescriptorSetLayout descriptorSetLayout;
@@ -22,8 +25,8 @@ namespace HT.Engine.Rendering
         private float yAngle;
 
         public RenderObject(
-            Model.Mesh mesh,
-            Texture texture,
+            Mesh mesh,
+            ByteTexture texture,
             ShaderProgram vertProg,
             ShaderProgram fragProg)
         {
@@ -74,12 +77,8 @@ namespace HT.Engine.Rendering
             this.stagingBuffer = stagingBuffer;
 
             //Upload our mesh to the gpu
-            if (!mesh.Uploaded)
-                mesh.Upload(logicalDevice, memoryPool, stagingBuffer);
-
-            //Upload our texture to the gpu
-            if (!texture.Uploaded)
-                texture.Upload(logicalDevice, memoryPool, stagingBuffer);
+            deviceMesh = new DeviceMesh(mesh, logicalDevice, memoryPool, stagingBuffer);
+            deviceTexture = new DeviceTexture(texture, logicalDevice, memoryPool, stagingBuffer);
 
             //Allocate a buffer for our transformation
             transformationBuffer = new Memory.DeviceBuffer(
@@ -99,7 +98,7 @@ namespace HT.Engine.Rendering
         internal void Record(CommandBuffer commandbuffer)
         {
             //Bind data
-            mesh.RecordBind(commandbuffer);
+            deviceMesh.RecordBind(commandbuffer);
             commandbuffer.CmdBindDescriptorSet(
                 PipelineBindPoint.Graphics,
                 pipelineLayout,
@@ -109,7 +108,7 @@ namespace HT.Engine.Rendering
             commandbuffer.CmdBindPipeline(PipelineBindPoint.Graphics, pipeline);
 
             //Draw
-            mesh.RecordDraw(commandbuffer);
+            deviceMesh.RecordDraw(commandbuffer);
         }
 
         internal void Update(Float4x4 viewMatrix, Float4x4 projectionMatrix)
@@ -130,8 +129,8 @@ namespace HT.Engine.Rendering
                 throw new Exception(
                     $"[{nameof(RenderObject)}] Unable to deinitialize as we haven't initialized");
             
-            mesh.ClearUpload();
-            texture.ClearUpload();
+            deviceMesh.Dispose();
+            deviceTexture.Dispose();
             transformationBuffer.Dispose();
             descriptorSetLayout.Dispose();
             pipelineLayout.Dispose();
@@ -183,8 +182,8 @@ namespace HT.Engine.Rendering
                     descriptorCount: 1,
                     descriptorType: DescriptorType.CombinedImageSampler,
                     imageInfo: new [] { new DescriptorImageInfo(
-                        sampler: texture.ImageSampler,
-                        imageView: texture.ImageView,
+                        sampler: deviceTexture.Sampler,
+                        imageView: deviceTexture.View,
                         imageLayout: ImageLayout.ShaderReadOnlyOptimal) })
             }, descriptorCopies: null);
         }
@@ -216,7 +215,7 @@ namespace HT.Engine.Rendering
                 depthClampEnable: false,
                 polygonMode: PolygonMode.Fill,
                 cullMode: CullModes.Back,
-                frontFace: mesh.GetFrontFace(),
+                frontFace: deviceMesh.GetFrontFace(),
                 lineWidth: 1f
             );
             var blending = new PipelineColorBlendStateCreateInfo(
@@ -247,8 +246,8 @@ namespace HT.Engine.Rendering
                 renderPass: renderpass,
                 subpass: 0,
                 stages: shaderStages,
-                inputAssemblyState: mesh.GetInputAssemblyStateInfo(),
-                vertexInputState: mesh.GetVertexInputStateInfo(),
+                inputAssemblyState: deviceMesh.GetInputAssemblyStateInfo(),
+                vertexInputState: deviceMesh.GetVertexInputStateInfo(),
                 rasterizationState: rasterizer,
                 tessellationState: null,
                 //Pass empty viewport and scissor-rect as we set them dynamically
