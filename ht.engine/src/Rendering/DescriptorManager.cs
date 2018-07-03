@@ -8,17 +8,17 @@ namespace HT.Engine.Rendering
 {
     internal sealed class DescriptorManager : IDisposable
     {
-        internal readonly struct DescriptorBlock
+        internal readonly struct Block
         {
             //Properties
             internal DescriptorSetLayout Layout => Container.Layout;
             internal DescriptorSet Set => Container.GetDescriptorSet(this);
 
             //Data
-            internal readonly DescriptorChunk Container;
+            internal readonly Chunk Container;
             internal readonly int Id;
 
-            public DescriptorBlock(DescriptorChunk container, int id)
+            public Block(Chunk container, int id)
             {
                 Container = container;
                 Id = id;
@@ -31,7 +31,7 @@ namespace HT.Engine.Rendering
             public void Free() => Container.Free(this);
         }
 
-        internal sealed class DescriptorChunk : IDisposable
+        internal sealed class Chunk : IDisposable
         {
             //Properties
             internal DescriptorBinding Binding => binding;
@@ -44,7 +44,7 @@ namespace HT.Engine.Rendering
             private readonly DescriptorSet[] sets;
             private readonly bool[] isFree;
 
-            internal DescriptorChunk(Device logicalDevice, DescriptorBinding binding, int size = 25)
+            internal Chunk(Device logicalDevice, DescriptorBinding binding, int size = 25)
             {
                 this.binding = binding;
                 
@@ -81,56 +81,56 @@ namespace HT.Engine.Rendering
                     isFree[i] = true;
             }
 
-            internal DescriptorBlock? TryAllocate()
+            internal Block? TryAllocate()
             {
                 for (int i = 0; i < isFree.Length; i++)
                 {
                     if (isFree[i])
                     {
                         isFree[i] = false;
-                        return new DescriptorBlock(this, id: i);
+                        return new Block(this, id: i);
                     }
                 }
                 return null;
             }
 
-            internal void Free(DescriptorBlock block)
+            internal void Free(Block block)
             {
                 if (block.Container != this)
                     throw new ArgumentException(
-                        $"[{nameof(DescriptorChunk)}] Given block was not allocated from this pool", nameof(block));
+                        $"[{nameof(Chunk)}] Given block was not allocated from this pool", nameof(block));
                 if (isFree[block.Id])
                     throw new ArgumentException(
-                        $"[{nameof(DescriptorChunk)}] Given block was allready freed", nameof(block));
+                        $"[{nameof(Chunk)}] Given block was allready freed", nameof(block));
                 isFree[block.Id] = true;
             }
 
-            internal DescriptorSet GetDescriptorSet(DescriptorBlock block)
+            internal DescriptorSet GetDescriptorSet(Block block)
             {
                 if (block.Container != this)
                     throw new ArgumentException(
-                        $"[{nameof(DescriptorChunk)}] Given block was not allocated from this pool", nameof(block));
+                        $"[{nameof(Chunk)}] Given block was not allocated from this pool", nameof(block));
                 return sets[block.Id];
             }
             
             internal void UpdateSet(
-                DescriptorBlock block,
+                Block block,
                 Memory.DeviceBuffer[] buffers,
                 DeviceSampler[] samplers,
                 DeviceTexture[] textures)
             {
                 if (block.Container != this)
                     throw new ArgumentException(
-                        $"[{nameof(DescriptorChunk)}] Given block was not allocated from this pool", nameof(block));
+                        $"[{nameof(Chunk)}] Given block was not allocated from this pool", nameof(block));
                 if (buffers.Length != binding.UniformBufferCount)
                     throw new ArgumentException(
-                        $"[{nameof(DescriptorChunk)}] Incorrect number of buffers provided", nameof(buffers));
+                        $"[{nameof(Chunk)}] Incorrect number of buffers provided", nameof(buffers));
                 if (samplers.Length != binding.ImageSamplerCount)
                     throw new ArgumentException(
-                        $"[{nameof(DescriptorChunk)}] Incorrect number of samplers provided", nameof(samplers));
+                        $"[{nameof(Chunk)}] Incorrect number of samplers provided", nameof(samplers));
                 if (textures.Length != binding.ImageSamplerCount)
                     throw new ArgumentException(
-                        $"[{nameof(DescriptorChunk)}] Incorrect number of images provided", nameof(textures));
+                        $"[{nameof(Chunk)}] Incorrect number of images provided", nameof(textures));
 
                 var set = sets[block.Id];
                 var writes = new WriteDescriptorSet[binding.TotalBindings];
@@ -186,7 +186,7 @@ namespace HT.Engine.Rendering
         //Data
         private readonly Device logicalDevice;
         private readonly Logger logger;
-        private readonly List<DescriptorChunk> chunks = new List<DescriptorChunk>();
+        private readonly List<Chunk> chunks = new List<Chunk>();
         private bool disposed;
 
         internal DescriptorManager(Device logicalDevice, Logger logger = null)
@@ -197,7 +197,7 @@ namespace HT.Engine.Rendering
             this.logicalDevice = logicalDevice;
         }
 
-        internal DescriptorBlock Allocate(DescriptorBinding binding)
+        internal Block Allocate(DescriptorBinding binding)
         {
             ThrowIfDisposed();
 
@@ -206,14 +206,14 @@ namespace HT.Engine.Rendering
             {
                 if (chunks[i].Binding == binding)
                 {
-                    DescriptorBlock? block = chunks[i].TryAllocate();
+                    Block? block = chunks[i].TryAllocate();
                     if (block != null)
                         return block.Value;
                 }
             }
 
             //If there is no existing chunk that matches given binding, then we allocate a new chunk
-            DescriptorChunk newChunk = new DescriptorChunk(logicalDevice, binding);
+            Chunk newChunk = new Chunk(logicalDevice, binding);
             chunks.Add(newChunk);
 
             logger?.Log(nameof(DescriptorManager), 

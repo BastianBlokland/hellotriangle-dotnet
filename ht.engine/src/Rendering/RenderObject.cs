@@ -8,29 +8,26 @@ namespace HT.Engine.Rendering
 {
     public sealed class RenderObject : IDisposable
     {
-        private readonly Mesh mesh;
-        private readonly ByteTexture texture;
-        private readonly ShaderProgram vertProg;
-        private readonly ShaderProgram fragProg;
-
-        private bool initialized;
-        private DeviceMesh deviceMesh;
-        private DeviceTexture deviceTexture;
-        private DeviceSampler deviceSampler;
-        private Memory.StagingBuffer stagingBuffer;
-        private Memory.DeviceBuffer transformationBuffer;
-        private DescriptorSetLayout descriptorSetLayout;
-        private DescriptorSet descriptorSet;
-        private PipelineLayout pipelineLayout;
-        private Pipeline pipeline;
-        private float yAngle;
+        private readonly ShaderModule vertModule;
+        private readonly ShaderModule fragModule;
+        private readonly DeviceMesh deviceMesh;
+        private readonly DeviceTexture deviceTexture;
+        private readonly DeviceSampler deviceSampler;
+        private readonly Memory.DeviceBuffer transformationBuffer;
+        private readonly DescriptorManager.Block descriptorBlock;
+        private readonly PipelineLayout pipelineLayout;
+        private readonly Pipeline pipeline;
+        private bool disposed;
 
         public RenderObject(
+            RenderScene scene,
             Mesh mesh,
             ByteTexture texture,
             ShaderProgram vertProg,
             ShaderProgram fragProg)
         {
+            if (scene == null)
+                throw new ArgumentNullException(nameof(scene));
             if (mesh == null)
                 throw new ArgumentNullException(nameof(mesh));
             if (texture == null)
@@ -39,62 +36,61 @@ namespace HT.Engine.Rendering
                 throw new ArgumentNullException(nameof(vertProg));
             if (fragProg == null)
                 throw new ArgumentNullException(nameof(fragProg));
-            this.mesh = mesh;
-            this.texture = texture;
-            this.vertProg = vertProg;
-            this.fragProg = fragProg;
+
+            //Create the shader modules
+            vertModule = vertProg.CreateModule(scene.LogicalDevice);
+            fragModule = fragProg.CreateModule(scene.LogicalDevice);
+
+            //Upload our mesh to the gpu
+            deviceMesh = new DeviceMesh(mesh, scene.LogicalDevice, scene.MemoryPool, scene.StagingBuffer);
+            deviceTexture = DeviceTexture.UploadTexture(texture, scene.LogicalDevice, scene.MemoryPool, scene.StagingBuffer);
+            deviceSampler = new DeviceSampler(scene.LogicalDevice);
+
+            //Allocate a buffer for our transformation
+            transformationBuffer = new Memory.DeviceBuffer(
+                logicalDevice: scene.LogicalDevice,
+                memoryPool: scene.MemoryPool,
+                size: Transformation.SIZE,
+                usages: BufferUsages.UniformBuffer);
+
+            //Create the descriptor binding
+            var binding = new DescriptorBinding(uniformBufferCount: 1, imageSamplerCount: 1);
+            descriptorBlock = scene.DescriptorManager.Allocate(binding);
+            descriptorBlock.Update(
+                new [] { transformationBuffer },
+                new [] { deviceSampler },
+                new [] { deviceTexture });
+
+            //Create the pipeline
+            pipelineLayout = scene.LogicalDevice.CreatePipelineLayout(new PipelineLayoutCreateInfo(
+                setLayouts: new [] { descriptorBlock.Layout }));
+            pipeline = CreatePipeline(scene.LogicalDevice, scene.RenderPass);
+
+            //Create a transformation entry
+            Float4x4 viewMatrix =   Float4x4.CreateRotationFromXAngle(FloatUtils.DegreesToRadians(15f)) * 
+                                    Float4x4.CreateTranslation((x: 0f, y: -.5f, z: -2));
+            Float4x4 projectionMatrix = Float4x4.CreatePerspectiveProjection(
+                Frustum.CreateFromVerticalAngleAndAspect(
+                    verticalAngle: FloatUtils.DegreesToRadians(45f),
+                    aspect: (float)scene.SwapchainSize.X / scene.SwapchainSize.Y,
+                    nearDistance: .1f,
+                    farDistance: 100f));
+            scene.StagingBuffer.Upload(new [] {
+                new Transformation(Float4x4.Identity, viewMatrix, projectionMatrix) }, transformationBuffer);
         }
 
         public void Dispose()
         {
-            if (initialized)
-                Deinitialize();
-        }
+            ThrowIfDisposed();
 
-        internal void Initialize(
-            Device logicalDevice,
-            HostDevice hostDevice,
-            DescriptorPool descriptorPool,
-            RenderPass renderpass,
-            Memory.Pool memoryPool,
-            Memory.StagingBuffer stagingBuffer)
-        {
-            if (logicalDevice == null)
-                throw new ArgumentNullException(nameof(logicalDevice));
-            if (hostDevice == null)
-                throw new ArgumentNullException(nameof(hostDevice));
-            if (descriptorPool == null)
-                throw new ArgumentNullException(nameof(descriptorPool));
-            if (renderpass == null)
-                throw new ArgumentNullException(nameof(renderpass));
-            if (memoryPool == null)
-                throw new ArgumentNullException(nameof(memoryPool));
-            if (stagingBuffer == null)
-                throw new ArgumentNullException(nameof(stagingBuffer));
-            if (initialized)
-                throw new Exception(
-                    $"[{nameof(RenderObject)}] Allready initialized");
-            
-            this.stagingBuffer = stagingBuffer;
-
-            //Upload our mesh to the gpu
-            deviceMesh = new DeviceMesh(mesh, logicalDevice, memoryPool, stagingBuffer);
-            deviceTexture = DeviceTexture.UploadTexture(texture, logicalDevice, memoryPool, stagingBuffer);
-            deviceSampler = new DeviceSampler(logicalDevice);
-
-            //Allocate a buffer for our transformation
-            transformationBuffer = new Memory.DeviceBuffer(
-                logicalDevice: logicalDevice,
-                memoryPool: memoryPool,
-                size: Transformation.SIZE,
-                usages: BufferUsages.UniformBuffer);
-
-            CreateDescriptorSet(logicalDevice, descriptorPool);
-
-            //Create the pipeline
-            CreatePipeline(logicalDevice, renderpass);
-
-            initialized = true;
+            deviceMesh.Dispose();
+            deviceSampler.Dispose();
+            deviceTexture.Dispose();
+            transformationBuffer.Dispose();
+            descriptorBlock.Free();
+            pipelineLayout.Dispose();
+            pipeline.Dispose();
+            disposed = true;
         }
 
         internal void Record(CommandBuffer commandbuffer)
@@ -104,7 +100,7 @@ namespace HT.Engine.Rendering
             commandbuffer.CmdBindDescriptorSet(
                 PipelineBindPoint.Graphics,
                 pipelineLayout,
-                descriptorSet);
+                descriptorBlock.Set);
 
             //Bind pipeline
             commandbuffer.CmdBindPipeline(PipelineBindPoint.Graphics, pipeline);
@@ -113,93 +109,8 @@ namespace HT.Engine.Rendering
             deviceMesh.RecordDraw(commandbuffer);
         }
 
-        internal void Update(Float4x4 viewMatrix, Float4x4 projectionMatrix)
+        private Pipeline CreatePipeline(Device logicalDevice, RenderPass renderpass)
         {
-            ThrowIfNotInitialized();
-
-            yAngle += FloatUtils.DegreesToRadians(.5f);
-            Transformation trans = new Transformation(
-                model: Float4x4.CreateRotationFromYAngle(yAngle),
-                view: viewMatrix,
-                projection: projectionMatrix);
-            stagingBuffer.Upload(new [] { trans }, transformationBuffer);
-        }
-
-        internal void Deinitialize()
-        {
-            if (!initialized)
-                throw new Exception(
-                    $"[{nameof(RenderObject)}] Unable to deinitialize as we haven't initialized");
-            
-            deviceMesh.Dispose();
-            deviceSampler.Dispose();
-            deviceTexture.Dispose();
-            transformationBuffer.Dispose();
-            descriptorSetLayout.Dispose();
-            pipelineLayout.Dispose();
-            pipeline.Dispose();
-            initialized = false;
-        }
-
-        private void CreateDescriptorSet(Device logicalDevice, DescriptorPool descriptorPool)
-        {
-            //Create layout
-            descriptorSetLayout = logicalDevice.CreateDescriptorSetLayout(
-                new DescriptorSetLayoutCreateInfo(
-                    bindings: new []
-                    { 
-                        new DescriptorSetLayoutBinding(
-                            binding: 0,
-                            descriptorType: DescriptorType.UniformBuffer,
-                            descriptorCount: 1,
-                            stageFlags: ShaderStages.Vertex),
-                        new DescriptorSetLayoutBinding(
-                            binding: 1,
-                            descriptorType: DescriptorType.CombinedImageSampler,
-                            descriptorCount: 1,
-                            stageFlags: ShaderStages.Fragment) 
-                    }));
-
-            //Allocate the set
-            descriptorSet = descriptorPool.AllocateSets(new DescriptorSetAllocateInfo(
-                    descriptorSetCount: 1,
-                    setLayouts: descriptorSetLayout))[0];
-
-            //Bind data to the set
-            descriptorPool.UpdateSets(descriptorWrites: new []
-            {
-                new WriteDescriptorSet(
-                    dstSet: descriptorSet,
-                    dstBinding: 0,
-                    dstArrayElement: 0,
-                    descriptorCount: 1,
-                    descriptorType: DescriptorType.UniformBuffer,
-                    bufferInfo: new [] { new DescriptorBufferInfo(
-                            buffer: transformationBuffer.Buffer,
-                            offset: 0,
-                            range: transformationBuffer.Size) }),
-                new WriteDescriptorSet(
-                    dstSet: descriptorSet,
-                    dstBinding: 1,
-                    dstArrayElement: 0,
-                    descriptorCount: 1,
-                    descriptorType: DescriptorType.CombinedImageSampler,
-                    imageInfo: new [] { new DescriptorImageInfo(
-                        sampler: deviceSampler.Sampler,
-                        imageView: deviceTexture.View,
-                        imageLayout: ImageLayout.ShaderReadOnlyOptimal) })
-            }, descriptorCopies: null);
-        }
-
-        private void CreatePipeline(Device logicalDevice, RenderPass renderpass)
-        {
-            //Create the pipeline layout (empty atm as we have no dynamic state yet)
-            pipelineLayout = logicalDevice.CreatePipelineLayout(new PipelineLayoutCreateInfo(
-                setLayouts: new [] { descriptorSetLayout }));
-
-            ShaderModule vertModule = vertProg.CreateModule(logicalDevice);
-            ShaderModule fragModule = fragProg.CreateModule(logicalDevice);
-
             var shaderStages = new []
             {
                 new PipelineShaderStageCreateInfo(
@@ -243,8 +154,7 @@ namespace HT.Engine.Rendering
                 DynamicState.Scissor
             );
             
-            //Create the pipeline
-            pipeline = logicalDevice.CreateGraphicsPipeline(new GraphicsPipelineCreateInfo(
+            return logicalDevice.CreateGraphicsPipeline(new GraphicsPipelineCreateInfo(
                 layout: pipelineLayout,
                 renderPass: renderpass,
                 subpass: 0,
@@ -261,16 +171,12 @@ namespace HT.Engine.Rendering
                 dynamicState: dynamicState,
                 flags: PipelineCreateFlags.None
             ));
-            
-            //After pipeline creation we no longer need the shader modules
-            vertModule.Dispose();
-            fragModule.Dispose();
         }
 
-        private void ThrowIfNotInitialized()
+        private void ThrowIfDisposed()
         {
-            if (!initialized)
-                throw new Exception($"[{nameof(RenderObject)}] Not yet initialized");
+            if (disposed)
+                throw new Exception($"[{nameof(RenderObject)}] Allready disposed");
         }
     }
 }

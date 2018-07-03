@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 using HT.Engine.Math;
 using HT.Engine.Utils;
@@ -8,6 +9,17 @@ namespace HT.Engine.Rendering
 {
     public sealed class RenderScene : IDisposable
     {
+        //Properties
+        internal Device LogicalDevice => window.LogicalDevice;
+        internal HostDevice HostDevice => window.HostDevice;
+        internal DescriptorManager DescriptorManager => descriptorManager;
+        internal RenderPass RenderPass => renderpass;
+        internal Memory.Pool MemoryPool => memoryPool;
+        internal Memory.StagingBuffer StagingBuffer => stagingBuffer;
+        internal Int2 SwapchainSize => swapchainSize;
+        internal bool Dirty => dirty;
+
+        //Data
         private readonly Window window;
         private readonly Byte4 clearColor;
         private readonly Logger logger;
@@ -15,11 +27,12 @@ namespace HT.Engine.Rendering
         private readonly Memory.Pool memoryPool;
         private readonly Memory.StagingBuffer stagingBuffer;
         private readonly DescriptorManager descriptorManager;
-        private readonly Format depthFormat;
+        private readonly List<RenderObject> renderObjects = new List<RenderObject>();
 
         private RenderPass renderpass;
         private Int2 swapchainSize;
         private DeviceTexture depthTexture;
+        private bool dirty;
         private bool disposed;
         
         public RenderScene(Window window, Byte4 clearColor, Logger logger = null)
@@ -36,19 +49,21 @@ namespace HT.Engine.Rendering
             stagingBuffer = new Memory.StagingBuffer(window.LogicalDevice, window.HostDevice, copier);
             descriptorManager = new DescriptorManager(window.LogicalDevice, logger);
 
-            //Pick a depth format
-            depthFormat = Format.D32SFloat;
-            if (!window.HostDevice.IsFormatSupported(depthFormat, ImageTiling.Optimal, FormatFeatures.DepthStencilAttachment))
-                throw new Exception($"[{nameof(RenderScene)}] Device does not support target depth format");
-
             //Create the renderpass
             CreateRenderpass(window.LogicalDevice, window.SurfaceFormat);
+        }
+
+        public void AddObject(RenderObject renderObject)
+        {
+            renderObjects.Add(renderObject);
+            dirty = true;
         }
 
         public void Dispose()
         {
             ThrowIfDisposed();
 
+            renderObjects.DisposeAll();
             depthTexture?.Dispose();
             renderpass.Dispose();
             descriptorManager.Dispose();
@@ -109,9 +124,13 @@ namespace HT.Engine.Rendering
             commandbuffer.CmdSetScissor(
                 new Rect2D(x: 0, y: 0, width: swapchainSize.X, height: swapchainSize.Y));
 
-            //TODO: Draw all the renderobjects
+            for (int i = 0; i < renderObjects.Count; i++)
+                renderObjects[i].Record(commandbuffer);
             
             commandbuffer.CmdEndRenderPass();
+
+            //After recording all objects we unset the dirty flag
+            dirty = false;
         }
 
         private void CreateRenderpass(Device logicalDevice, Format surfaceFormat)
@@ -131,7 +150,7 @@ namespace HT.Engine.Rendering
             //Description of our depth-buffer attachment
             var depthAttachment = new AttachmentDescription(
                 flags: AttachmentDescriptions.MayAlias,
-                format: depthFormat,
+                format: DeviceTexture.DepthFormat,
                 samples: SampleCounts.Count1,
                 loadOp: AttachmentLoadOp.Clear,
                 storeOp: AttachmentStoreOp.DontCare,

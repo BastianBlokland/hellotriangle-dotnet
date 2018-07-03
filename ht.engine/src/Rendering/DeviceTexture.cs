@@ -11,6 +11,10 @@ namespace HT.Engine.Rendering
     //NOTE: Does not hold on to the cpu representation of the texture so it can be garbage collected
     internal sealed class DeviceTexture : IDisposable
     {
+        public static Format DepthFormat = Format.D32SFloat;
+        public static Format ByteTextureFormat = Format.R8G8B8A8UNorm;
+        public static Format FloatTextureFormat = Format.R32G32B32A32SFloat;
+
         //Properties
         internal ImageView View => view;
 
@@ -37,15 +41,14 @@ namespace HT.Engine.Rendering
             if (stagingBuffer == null)
                 throw new ArgumentNullException(nameof(stagingBuffer));
             
-            var format = Format.R8G8B8A8UNorm;
             var aspects = ImageAspects.Color;
             var image = CreateImage(
-                logicalDevice, format, texture.Size, ImageUsages.TransferDst | ImageUsages.Sampled);
+                logicalDevice, ByteTextureFormat, texture.Size, ImageUsages.TransferDst | ImageUsages.Sampled);
             var memory = memoryPool.AllocateAndBind(image);
             texture.Upload(stagingBuffer, image, aspects);
-            var view = CreateView(image, format, aspects);
+            var view = CreateView(image, ByteTextureFormat, aspects);
 
-            return new DeviceTexture(format, aspects, image, memory, view);
+            return new DeviceTexture(ByteTextureFormat, aspects, image, memory, view);
         }
 
         internal static DeviceTexture UploadTexture(
@@ -63,15 +66,14 @@ namespace HT.Engine.Rendering
             if (stagingBuffer == null)
                 throw new ArgumentNullException(nameof(stagingBuffer));
             
-            var format = Format.R32G32B32A32SFloat;
             var aspects = ImageAspects.Color;
             var image = CreateImage(
-                logicalDevice, format, texture.Size, ImageUsages.TransferDst | ImageUsages.Sampled);
+                logicalDevice, FloatTextureFormat, texture.Size, ImageUsages.TransferDst | ImageUsages.Sampled);
             var memory = memoryPool.AllocateAndBind(image);
             texture.Upload(stagingBuffer, image, aspects);
-            var view = CreateView(image, format, aspects);
+            var view = CreateView(image, FloatTextureFormat, aspects);
 
-            return new DeviceTexture(format, aspects, image, memory, view);
+            return new DeviceTexture(FloatTextureFormat, aspects, image, memory, view);
         }
 
         internal static DeviceTexture CreateDepthTexture(
@@ -87,11 +89,10 @@ namespace HT.Engine.Rendering
             if (copier == null)
                 throw new ArgumentNullException(nameof(copier));
 
-            var format = Format.D32SFloat;
             var aspects = ImageAspects.Depth;
-            var image = CreateImage(logicalDevice, format, size, ImageUsages.DepthStencilAttachment);
+            var image = CreateImage(logicalDevice, DepthFormat, size, ImageUsages.DepthStencilAttachment);
             var memory = memoryPool.AllocateAndBind(image);
-            var view = CreateView(image, format, aspects);
+            var view = CreateView(image, DepthFormat, aspects);
 
             //Transition the image to the depth layout
             copier.TransitionImageLayout(
@@ -100,7 +101,7 @@ namespace HT.Engine.Rendering
                 oldLayout: ImageLayout.Undefined,
                 newLayout: ImageLayout.DepthStencilAttachmentOptimal);
 
-            return new DeviceTexture(format, aspects, image, memory, view);
+            return new DeviceTexture(DepthFormat, aspects, image, memory, view);
         }
 
         public void Dispose()

@@ -113,6 +113,10 @@ namespace HT.Engine.Rendering
                 throw new Exception($"[{nameof(Window)}] No command buffers have been created yet");
             ThrowIfDisposed();
 
+            //If the scene is dirty we re-record the command-buffers
+            if (scene?.Dirty == true)
+                CreateRenderCommands(scene);
+
             int nextImage = swapchain.AcquireNextImage(semaphore: imageAvailableSemaphore);
 
             //Wait for the previous submit of this buffer to be done
@@ -190,6 +194,8 @@ namespace HT.Engine.Rendering
                 scene.Record(commandbuffers[i], framebuffers[i]);
                 commandbuffers[i].End();
             }
+
+            logger?.Log(nameof(Window), $"Rendercommands recorded ({commandbuffers.Length} command-buffers)");
         }
 
         private void CreateSwapchain()
