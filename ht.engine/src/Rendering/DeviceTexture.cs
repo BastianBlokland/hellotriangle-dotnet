@@ -1,6 +1,7 @@
 using System;
 
 using HT.Engine.Math;
+using HT.Engine.Rendering.Memory;
 using HT.Engine.Resources;
 using VulkanCore;
 
@@ -8,13 +9,10 @@ namespace HT.Engine.Rendering
 {
     //GPU size representation of a texture
     //NOTE: Does not hold on to the cpu representation of the texture so it can be garbage collected
-    //TODO: Sampler createion can be moved out of here so the texture can be used with different
-    //sampler as they are not really tied together
     internal sealed class DeviceTexture : IDisposable
     {
         //Properties
         internal ImageView View => view;
-        internal Sampler Sampler => sampler;
 
         //Data
         private readonly Format format;
@@ -22,11 +20,10 @@ namespace HT.Engine.Rendering
         private readonly Image image;
         private readonly Memory.Block memory;
         private readonly ImageView view;
-        private readonly Sampler sampler;
         private bool disposed;
 
-        internal DeviceTexture(
-            ByteTexture texture, 
+        internal static DeviceTexture UploadTexture(
+            ByteTexture texture,
             Device logicalDevice,
             Memory.Pool memoryPool,
             Memory.StagingBuffer stagingBuffer)
@@ -40,17 +37,19 @@ namespace HT.Engine.Rendering
             if (stagingBuffer == null)
                 throw new ArgumentNullException(nameof(stagingBuffer));
             
-            format = Format.R8G8B8A8UNorm;
-            aspects = ImageAspects.Color;
-            image = CreateImage(logicalDevice, format, texture.Size);
-            memory = memoryPool.AllocateAndBind(image);
+            var format = Format.R8G8B8A8UNorm;
+            var aspects = ImageAspects.Color;
+            var image = CreateImage(
+                logicalDevice, format, texture.Size, ImageUsages.TransferDst | ImageUsages.Sampled);
+            var memory = memoryPool.AllocateAndBind(image);
             texture.Upload(stagingBuffer, image, aspects);
-            view = CreateView(image, format, aspects);
-            sampler = CreateSampler(logicalDevice);
+            var view = CreateView(image, format, aspects);
+
+            return new DeviceTexture(format, aspects, image, memory, view);
         }
 
-        internal DeviceTexture(
-            FloatTexture texture, 
+        internal static DeviceTexture UploadTexture(
+            FloatTexture texture,
             Device logicalDevice,
             Memory.Pool memoryPool,
             Memory.StagingBuffer stagingBuffer)
@@ -64,20 +63,50 @@ namespace HT.Engine.Rendering
             if (stagingBuffer == null)
                 throw new ArgumentNullException(nameof(stagingBuffer));
             
-            format = Format.R32G32B32A32SFloat;
-            aspects = ImageAspects.Color;
-            image = CreateImage(logicalDevice, format, texture.Size);
-            memory = memoryPool.AllocateAndBind(image);
+            var format = Format.R32G32B32A32SFloat;
+            var aspects = ImageAspects.Color;
+            var image = CreateImage(
+                logicalDevice, format, texture.Size, ImageUsages.TransferDst | ImageUsages.Sampled);
+            var memory = memoryPool.AllocateAndBind(image);
             texture.Upload(stagingBuffer, image, aspects);
-            view = CreateView(image, format, aspects);
-            sampler = CreateSampler(logicalDevice);
+            var view = CreateView(image, format, aspects);
+
+            return new DeviceTexture(format, aspects, image, memory, view);
+        }
+
+        internal static DeviceTexture CreateDepthTexture(
+            Int2 size,
+            Device logicalDevice,
+            Memory.Pool memoryPool,
+            Copier copier)
+        {
+            if (logicalDevice == null)
+                throw new ArgumentNullException(nameof(logicalDevice));
+            if (memoryPool == null)
+                throw new ArgumentNullException(nameof(memoryPool));
+            if (copier == null)
+                throw new ArgumentNullException(nameof(copier));
+
+            var format = Format.D32SFloat;
+            var aspects = ImageAspects.Depth;
+            var image = CreateImage(logicalDevice, format, size, ImageUsages.DepthStencilAttachment);
+            var memory = memoryPool.AllocateAndBind(image);
+            var view = CreateView(image, format, aspects);
+
+            //Transition the image to the depth layout
+            copier.TransitionImageLayout(
+                image: image,
+                subresource: new ImageSubresourceLayers(ImageAspects.Depth, mipLevel: 0, baseArrayLayer: 0, layerCount: 1),
+                oldLayout: ImageLayout.Undefined,
+                newLayout: ImageLayout.DepthStencilAttachmentOptimal);
+
+            return new DeviceTexture(format, aspects, image, memory, view);
         }
 
         public void Dispose()
         {
             ThrowIfDisposed();
 
-            sampler.Dispose();
             view.Dispose();
             image.Dispose();
             memory.Free();
@@ -85,7 +114,21 @@ namespace HT.Engine.Rendering
             disposed = true;
         }
 
-        private static Image CreateImage(Device logicalDevice, Format format, Int2 size)
+        private DeviceTexture(
+            Format format,
+            ImageAspects aspects,
+            Image image,
+            Block memory,
+            ImageView view)
+        {
+            this.format = format;
+            this.aspects = aspects;
+            this.image = image;
+            this.memory = memory;
+            this.view = view;
+        }
+
+        private static Image CreateImage(Device logicalDevice, Format format, Int2 size, ImageUsages usage)
             => logicalDevice.CreateImage(new ImageCreateInfo {
                 Flags = ImageCreateFlags.None,
                 ImageType = ImageType.Image2D,
@@ -95,7 +138,7 @@ namespace HT.Engine.Rendering
                 ArrayLayers = 1,
                 Samples = SampleCounts.Count1,
                 Tiling = ImageTiling.Optimal,
-                Usage = ImageUsages.TransferDst | ImageUsages.Sampled,
+                Usage = usage,
                 SharingMode = SharingMode.Exclusive,
                 InitialLayout = ImageLayout.Undefined});
 
@@ -110,24 +153,7 @@ namespace HT.Engine.Rendering
                     g: ComponentSwizzle.G,
                     b: ComponentSwizzle.B,
                     a: ComponentSwizzle.A)));
-
-        private static Sampler CreateSampler(Device logicalDevice)
-            => logicalDevice.CreateSampler(new SamplerCreateInfo {
-                MagFilter = Filter.Linear,
-                MinFilter = Filter.Linear,
-                AddressModeU = SamplerAddressMode.Repeat,
-                AddressModeV = SamplerAddressMode.Repeat,
-                AddressModeW = SamplerAddressMode.Repeat,
-                AnisotropyEnable = true,
-                MaxAnisotropy = 8f,
-                CompareEnable = false,
-                MipmapMode = SamplerMipmapMode.Linear,
-                MipLodBias = 0f,
-                MinLod = 0f,
-                MaxLod = 0f,
-                BorderColor = BorderColor.IntOpaqueBlack,
-                UnnormalizedCoordinates = false});
-
+        
         private void ThrowIfDisposed()
         {
             if (disposed)

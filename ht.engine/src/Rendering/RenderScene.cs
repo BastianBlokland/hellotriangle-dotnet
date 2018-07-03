@@ -18,8 +18,7 @@ namespace HT.Engine.Rendering
 
         private RenderPass renderpass;
         private Int2 swapchainSize;
-        private Image depthImage;
-        private ImageView depthImageView;
+        private DeviceTexture depthTexture;
         private bool disposed;
         
         public RenderScene(Window window, Byte4 clearColor, Logger logger = null)
@@ -50,8 +49,7 @@ namespace HT.Engine.Rendering
         {
             ThrowIfDisposed();
 
-            depthImageView?.Dispose();
-            depthImage?.Dispose();
+            depthTexture?.Dispose();
             renderpass.Dispose();
             stagingBuffer.Dispose();
             memoryPool.Dispose();
@@ -65,43 +63,15 @@ namespace HT.Engine.Rendering
 
             if (this.swapchainSize != swapchainSize)
             {
-                //Dispose of the old depth image
-                depthImageView?.Dispose();
-                depthImage?.Dispose();
-
-                //Create depth image
-                depthImage = window.LogicalDevice.CreateImage(new ImageCreateInfo {
-                    Flags = ImageCreateFlags.None,
-                    ImageType = ImageType.Image2D,
-                    Format = depthFormat,
-                    Extent = new Extent3D(swapchainSize.X, swapchainSize.Y, 1),
-                    MipLevels = 1,
-                    ArrayLayers = 1,
-                    Samples = SampleCounts.Count1,
-                    Tiling = ImageTiling.Optimal,
-                    Usage = ImageUsages.DepthStencilAttachment,
-                    SharingMode = SharingMode.Exclusive,
-                    InitialLayout = ImageLayout.Undefined});
-                //Allocate memory for it
-                memoryPool.AllocateAndBind(depthImage);
-                //Create view on top of it
-                depthImageView = depthImage.CreateView(new ImageViewCreateInfo(
-                    format: depthFormat,
-                    subresourceRange: new ImageSubresourceRange(
-                        aspectMask: ImageAspects.Depth, baseMipLevel: 0, levelCount: 1, baseArrayLayer: 0, layerCount: 1),
-                    viewType: ImageViewType.Image2D));
-                //Transition the image to the depth layout
-                copier.TransitionImageLayout(
-                    image: depthImage,
-                    subresource: new ImageSubresourceLayers(ImageAspects.Depth, mipLevel: 0, baseArrayLayer: 0, layerCount: 1),
-                    oldLayout: ImageLayout.Undefined,
-                    newLayout: ImageLayout.DepthStencilAttachmentOptimal);
-                
+                //Dispose of the old depth texture
+                depthTexture?.Dispose();
+                depthTexture = DeviceTexture.CreateDepthTexture(
+                    swapchainSize, window.LogicalDevice, memoryPool, copier);
                 this.swapchainSize = swapchainSize;
             }
 
             return renderpass.CreateFramebuffer(new FramebufferCreateInfo(
-                attachments: new [] { swapchainImageView, depthImageView },
+                attachments: new [] { swapchainImageView, depthTexture.View },
                 width: swapchainSize.X,
                 height: swapchainSize.Y));
         }

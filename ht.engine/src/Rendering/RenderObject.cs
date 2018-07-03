@@ -16,6 +16,7 @@ namespace HT.Engine.Rendering
         private bool initialized;
         private DeviceMesh deviceMesh;
         private DeviceTexture deviceTexture;
+        private DeviceSampler deviceSampler;
         private Memory.StagingBuffer stagingBuffer;
         private Memory.DeviceBuffer transformationBuffer;
         private DescriptorSetLayout descriptorSetLayout;
@@ -78,7 +79,8 @@ namespace HT.Engine.Rendering
 
             //Upload our mesh to the gpu
             deviceMesh = new DeviceMesh(mesh, logicalDevice, memoryPool, stagingBuffer);
-            deviceTexture = new DeviceTexture(texture, logicalDevice, memoryPool, stagingBuffer);
+            deviceTexture = DeviceTexture.UploadTexture(texture, logicalDevice, memoryPool, stagingBuffer);
+            deviceSampler = new DeviceSampler(logicalDevice);
 
             //Allocate a buffer for our transformation
             transformationBuffer = new Memory.DeviceBuffer(
@@ -130,6 +132,7 @@ namespace HT.Engine.Rendering
                     $"[{nameof(RenderObject)}] Unable to deinitialize as we haven't initialized");
             
             deviceMesh.Dispose();
+            deviceSampler.Dispose();
             deviceTexture.Dispose();
             transformationBuffer.Dispose();
             descriptorSetLayout.Dispose();
@@ -182,7 +185,7 @@ namespace HT.Engine.Rendering
                     descriptorCount: 1,
                     descriptorType: DescriptorType.CombinedImageSampler,
                     imageInfo: new [] { new DescriptorImageInfo(
-                        sampler: deviceTexture.Sampler,
+                        sampler: deviceSampler.Sampler,
                         imageView: deviceTexture.View,
                         imageLayout: ImageLayout.ShaderReadOnlyOptimal) })
             }, descriptorCopies: null);
