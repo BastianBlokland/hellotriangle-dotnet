@@ -14,6 +14,7 @@ namespace HT.Engine.Rendering
         private readonly Memory.Copier copier;
         private readonly Memory.Pool memoryPool;
         private readonly Memory.StagingBuffer stagingBuffer;
+        private readonly DescriptorManager descriptorManager;
         private readonly Format depthFormat;
 
         private RenderPass renderpass;
@@ -29,12 +30,11 @@ namespace HT.Engine.Rendering
             this.clearColor = clearColor;
             this.logger = logger;
 
-            //Create memory resources
+            //Create resources
             copier = new Memory.Copier(window.LogicalDevice, window.GraphicsFamilyIndex);
             memoryPool = new Memory.Pool(window.LogicalDevice, window.HostDevice, logger);
             stagingBuffer = new Memory.StagingBuffer(window.LogicalDevice, window.HostDevice, copier);
-
-            //TODO: Create descriptor pool
+            descriptorManager = new DescriptorManager(window.LogicalDevice, logger);
 
             //Pick a depth format
             depthFormat = Format.D32SFloat;
@@ -51,6 +51,7 @@ namespace HT.Engine.Rendering
 
             depthTexture?.Dispose();
             renderpass.Dispose();
+            descriptorManager.Dispose();
             stagingBuffer.Dispose();
             memoryPool.Dispose();
             copier.Dispose();
