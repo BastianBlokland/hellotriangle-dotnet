@@ -68,7 +68,7 @@ namespace HT.Engine.Tasks
                 } while (task.HasValue);
 
                 //No tasks left, go to sleep and wait to be woken
-                wakeEvent.Wait(token);
+                wakeEvent.Wait();
                 wakeEvent.Reset();
             }
         }
