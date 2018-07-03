@@ -90,6 +90,8 @@ namespace HT.Engine.Rendering
             descriptorBlock.Free();
             pipelineLayout.Dispose();
             pipeline.Dispose();
+            vertModule.Dispose();
+            fragModule.Dispose();
             disposed = true;
         }
 

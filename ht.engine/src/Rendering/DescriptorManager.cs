@@ -160,7 +160,11 @@ namespace HT.Engine.Rendering
                 pool.UpdateSets(writes, descriptorCopies: null);
             }
 
-            public void Dispose() => pool.Dispose();
+            public void Dispose()
+            {
+                layout.Dispose();
+                pool.Dispose();
+            }
 
             private static DescriptorSetLayout CreateLayout(Device logicalDevice, DescriptorBinding binding)
             {
