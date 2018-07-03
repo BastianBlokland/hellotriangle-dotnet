@@ -13,6 +13,9 @@ namespace HT.Main
 {
     public static class Program
     {
+        private static readonly HostDeviceRequirements deviceRequirements 
+            = new HostDeviceRequirements(samplerAnisotropy: true);
+        
         public static void Run(INativeApp nativeApp, Logger logger = null)
         {
             using (var taskRunner = new TaskRunner(logger))
@@ -31,6 +34,7 @@ namespace HT.Main
 
                 using (var window = host.CreateWindow(
                     windowSize: (x: 800, y: 600),
+                    deviceRequirements: deviceRequirements,
                     scene: new RenderScene(
                         clearColor: ColorUtils.Yellow,
                         renderobjects: new [] { new RenderObject(

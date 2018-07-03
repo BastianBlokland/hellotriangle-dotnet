@@ -8,9 +8,6 @@ namespace HT.Engine.Rendering
 {
     public sealed class RenderScene : IDisposable
     {
-        internal readonly HostDeviceRequirements DeviceRequirements = new HostDeviceRequirements(
-            samplerAnisotropy: true);
-
         private readonly Byte4 clearColor;
         private readonly RenderObject[] renderobjects;
 

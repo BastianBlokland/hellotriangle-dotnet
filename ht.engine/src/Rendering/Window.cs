@@ -41,6 +41,7 @@ namespace HT.Engine.Rendering
             SurfaceKhr surface,
             HostDevice hostDevice,
             RenderScene scene,
+            HostDeviceRequirements deviceRequirements,
             Logger logger = null)
         {
             if (nativeWindow == null)
@@ -64,7 +65,7 @@ namespace HT.Engine.Rendering
             //Create a logical device (and queues on the device)
             (logicalDevice, graphicsQueue, presentQueue) = hostDevice.CreateLogicalDevice(
                 surface: surface, 
-                deviceRequirements: scene.DeviceRequirements);
+                deviceRequirements: deviceRequirements);
             //Get a presentmode to use
             presentMode = hostDevice.GetPresentMode(surface);
             //Get the surfaceformat to use

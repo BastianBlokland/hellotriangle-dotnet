@@ -104,6 +104,7 @@ namespace HT.Engine.Rendering
         public Window CreateWindow(
             Int2 windowSize,
             RenderScene scene,
+            HostDeviceRequirements deviceRequirements,
             bool preferDiscreteDevice = true)
         {
             ThrowIfDisposed();
@@ -114,9 +115,9 @@ namespace HT.Engine.Rendering
             SurfaceKhr surface = CreateSurface(nativeWindow);
             HostDevice graphicsDevice = FindSuitableDevice(
                 surface,
-                scene.DeviceRequirements,
+                deviceRequirements,
                 preferDiscreteDevice);
-            return new Window(nativeWindow, surface, graphicsDevice, scene, logger);
+            return new Window(nativeWindow, surface, graphicsDevice, scene, deviceRequirements, logger);
         }
 
         public void Dispose()
