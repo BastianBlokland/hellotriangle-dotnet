@@ -85,8 +85,8 @@ namespace HT.MacOS
                 }
             }
         }
-        public bool Minimized { get; private set; }
-        public bool Maximized { get; private set; }
+        public bool IsMinimized { get; private set; }
+        public bool IsMaximized { get; private set; }
         public bool IsMovingOrResizing { get; private set; }
         public IntRect ClientRect { get; private set; }
 
@@ -217,13 +217,13 @@ namespace HT.MacOS
             initialPosSet = true;
         }
 
-        private void OnMinimized() => Minimized = true;
+        private void OnMinimized() => IsMinimized = true;
         
-        private void OnDeminimized() => Minimized = false;
+        private void OnDeminimized() => IsMinimized = false;
 
-        private void OnMaximized() => Maximized = true;
+        private void OnMaximized() => IsMaximized = true;
 
-        private void OnDemaximized() => Maximized = false;
+        private void OnDemaximized() => IsMaximized = false;
 
         private void OnCloseRequested() => invokeCloseRequestedEvent = true;
 

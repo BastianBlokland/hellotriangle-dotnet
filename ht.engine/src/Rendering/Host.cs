@@ -14,6 +14,8 @@ namespace HT.Engine.Rendering
     public sealed class Host : IDisposable
     {
         private readonly Platform.INativeApp nativeApp;
+        private readonly string appName;
+        private readonly int appVersion;
         private readonly Logger logger;
         private readonly LayerProperties[] availableLayers;
         private readonly ExtensionProperties[] availbleExtensions;
@@ -31,6 +33,8 @@ namespace HT.Engine.Rendering
             if (nativeApp == null)
                 throw new ArgumentNullException(nameof(nativeApp));
             this.nativeApp = nativeApp;
+            this.appName = appName;
+            this.appVersion = appVersion;
             this.logger = logger;
 
             availableLayers = Instance.EnumerateLayerProperties();
@@ -103,7 +107,6 @@ namespace HT.Engine.Rendering
 
         public Window CreateWindow(
             Int2 windowSize,
-            RenderScene scene,
             HostDeviceRequirements deviceRequirements,
             bool preferDiscreteDevice = true)
         {
@@ -117,7 +120,9 @@ namespace HT.Engine.Rendering
                 surface,
                 deviceRequirements,
                 preferDiscreteDevice);
-            return new Window(nativeWindow, surface, graphicsDevice, scene, deviceRequirements, logger);
+            return new Window(
+                title: $"{appName} - {appVersion}",
+                nativeWindow, surface, graphicsDevice, deviceRequirements, logger);
         }
 
         public void Dispose()

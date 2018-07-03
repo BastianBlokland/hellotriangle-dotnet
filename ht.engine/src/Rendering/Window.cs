@@ -10,12 +10,23 @@ namespace HT.Engine.Rendering
 {
     public sealed class Window : IDisposable
     {
+        //Events
         public event Action CloseRequested;
 
+        //Properties
+        public bool IsCloseRequested => isCloseRequested;
+        public bool IsMinimized => nativeWindow.IsMinimized;
+
+        internal Device LogicalDevice => logicalDevice;
+        internal HostDevice HostDevice => hostDevice;
+        internal Format SurfaceFormat => surfaceFormat;
+        internal int GraphicsFamilyIndex => graphicsQueue.FamilyIndex;
+
+        //Data
+        private readonly string title;
         private readonly INativeWindow nativeWindow;
         private readonly SurfaceKhr surface;
         private readonly HostDevice hostDevice;
-        private readonly RenderScene scene;
         private readonly Logger logger;
         private readonly Device logicalDevice;
         private readonly Queue graphicsQueue;
@@ -24,6 +35,7 @@ namespace HT.Engine.Rendering
         private readonly Format surfaceFormat;
         private readonly ColorSpaceKhr surfaceColorspace;
 
+        private RenderScene scene;
         private SwapchainKhr swapchain;
         private Int2 swapchainSize;
         private VulkanCore.Image[] swapchainImages;
@@ -34,13 +46,14 @@ namespace HT.Engine.Rendering
         private Semaphore imageAvailableSemaphore;
         private Semaphore renderFinishedSemaphore;
         private Fence[] waitFences;
+        private bool isCloseRequested;
         private bool disposed;
 
         internal Window(
+            string title,
             INativeWindow nativeWindow,
             SurfaceKhr surface,
             HostDevice hostDevice,
-            RenderScene scene,
             HostDeviceRequirements deviceRequirements,
             Logger logger = null)
         {
@@ -50,12 +63,10 @@ namespace HT.Engine.Rendering
                 throw new ArgumentNullException(nameof(surface));
             if (hostDevice == null)
                 throw new ArgumentNullException(nameof(hostDevice));
-            if (scene == null)
-                throw new ArgumentNullException(nameof(scene));
+            this.title = title;
             this.nativeWindow = nativeWindow;
             this.surface = surface;
             this.hostDevice = hostDevice;
-            this.scene = scene;
             this.logger = logger;
 
             //Subscribe to callbacks for the native window
@@ -77,27 +88,30 @@ namespace HT.Engine.Rendering
                 flags: CommandPoolCreateFlags.None
             ));
 
-            //Initialize the scene (so it can create its renderpass and pipelines etc)
-            //Note: currently using the graphicsQueue also for transfering data
-            scene.Initialize(logicalDevice, hostDevice, surfaceFormat, 
-                transferQueueFamilyIndex: graphicsQueue.FamilyIndex, logger: logger);
-
-            //Initialize the entire setup
-            CreateSwapchainSetup();
+            //Create the swapchain (images to present to the screen)
+            CreateSwapchain();
+            //Synchronization objects are used to sync the rendering and presenting
+            CreateSynchronizationObjects(); 
         }
 
-        public void Update()
-        {
-            ThrowIfDisposed();
-            scene.Update();
-        }
-
-        public bool Draw()
+        public void AttachScene(RenderScene scene)
         {
             ThrowIfDisposed();
 
-            if (nativeWindow.Minimized)
-                return false;
+            //Release resources that are tied to the previous scene
+            this.scene?.Dispose();
+            framebuffers?.DisposeAll();
+            framebuffers = null;
+
+            this.scene = scene;
+            CreateRenderCommands(scene);
+        }
+
+        public void Draw()
+        {
+            if (commandbuffers == null || commandbuffers.Length == 0)
+                throw new Exception($"[{nameof(Window)}] No command buffers have been created yet");
+            ThrowIfDisposed();
 
             int nextImage = swapchain.AcquireNextImage(semaphore: imageAvailableSemaphore);
 
@@ -117,8 +131,6 @@ namespace HT.Engine.Rendering
             //Once rendering to the framebuffer is done we can present it
             presentQueue.PresentKhr(
                 waitSemaphore: renderFinishedSemaphore, swapchain: swapchain, imageIndex: nextImage);
-
-            return true;
         }
 
         public void Dispose()
@@ -128,52 +140,63 @@ namespace HT.Engine.Rendering
                 //Wait for all rendering to stop before we start disposing of resources
                 logicalDevice.WaitIdle();
 
-                DisposeSwapchainSetup();
+                //Dispose of the synchronization objects
+                imageAvailableSemaphore.Dispose();
+                renderFinishedSemaphore.Dispose();
+                waitFences.DisposeAll();
 
-                scene.Deinitialize();
+                //Dispose of the scene resources
+                scene?.Dispose();
+                framebuffers?.DisposeAll();
+
+                //Dispose of the swapchain
+                swapchainImageViews.DisposeAll();
+                swapchain.Dispose();
+
+                //Dispose of command-pool (will automatically also dispose of the commandbuffers that
+                //where recreated from it)
                 commandPool.Dispose();
+
+                //Dispose the Vulkan device and dispose of the os window
                 logicalDevice.Dispose();
                 nativeWindow.Dispose();
                 disposed = true;
             }
         }
 
-        private void CreateSwapchainSetup()
+        private void CreateRenderCommands(RenderScene scene)
         {
-            CreateSwapchain(nativeWindow.ClientRect.Size);
-            scene.SetupSwapchain(swapchainSize);
-            CreateFramebuffers();
-            CreateCommandbuffers();
-            CreateSynchronizationObjects();
+            //If we have no framebuffers then first create those, can also happen during window resize
+            if (framebuffers == null || framebuffers.Length == 0)
+            {
+                framebuffers = new Framebuffer[swapchainImages.Length];
+                for (int i = 0; i < framebuffers.Length; i++)
+                    framebuffers[i] = scene.CreateFramebuffer(swapchainImageViews[i], swapchainSize);
+            }
 
-            nativeWindow.Title = $"{hostDevice.Name} - {nativeWindow.ClientRect.Size}";
-        }
-
-        private void DisposeSwapchainSetup()
-        {
-            imageAvailableSemaphore.Dispose();
-            renderFinishedSemaphore.Dispose();
-            waitFences.DisposeAll();
+            //Reset the pool (to release any previously created buffers)
             commandPool.Reset(CommandPoolResetFlags.ReleaseResources);
-            framebuffers.DisposeAll();
-            swapchainImageViews.DisposeAll();
-            swapchain.Dispose();
+
+            //Allocate new command buffers
+            commandbuffers = commandPool.AllocateBuffers(new CommandBufferAllocateInfo(
+                level: CommandBufferLevel.Primary,
+                count: framebuffers.Length
+            ));
+
+            //Record the primary command-buffers
+            for (int i = 0; i < commandbuffers.Length; i++)
+            {
+                commandbuffers[i].Begin(new CommandBufferBeginInfo(flags: CommandBufferUsages.None));
+                scene.Record(commandbuffers[i], framebuffers[i]);
+                commandbuffers[i].End();
+            }
         }
 
-        private void RecreateRenderSetup()
-        {
-            //Wait for all rendering to stop
-            logicalDevice.WaitIdle();
-
-            DisposeSwapchainSetup();
-            CreateSwapchainSetup();
-        }
-
-        private void CreateSwapchain(Int2 size)
+        private void CreateSwapchain()
         {
             SurfaceCapabilitiesKhr capabilities = hostDevice.GetCurrentCapabilities(surface);
             //Clamp the size to within the min and max extends reported by the surface capabilities
-            swapchainSize = size.Clamp(
+            swapchainSize = nativeWindow.ClientRect.Size.Clamp(
                 new Int2(capabilities.MinImageExtent.Width, capabilities.MinImageExtent.Height),
                 new Int2(capabilities.MaxImageExtent.Width, capabilities.MaxImageExtent.Height));
 
@@ -230,6 +253,9 @@ namespace HT.Engine.Rendering
                         layerCount: 1)
                 ));
             
+            //Set the window title mostly for debugging purposes
+            nativeWindow.Title = $"{title} - {hostDevice.Name} - {nativeWindow.ClientRect.Size}";
+
             logger?.Log(nameof(Window), 
 $@"Swapchain created:
 {{
@@ -239,31 +265,6 @@ $@"Swapchain created:
     format: {surfaceFormat},
     colorSpace: {surfaceColorspace}
 }}");
-        }
-
-        private void CreateFramebuffers()
-        {
-            framebuffers = new Framebuffer[swapchainImages.Length];
-            for (int i = 0; i < framebuffers.Length; i++)
-                framebuffers[i] = scene.CreateFramebuffer(swapchainImageViews[i], swapchainSize);
-        }
-
-        private void CreateCommandbuffers()
-        {
-            commandbuffers = commandPool.AllocateBuffers(new CommandBufferAllocateInfo(
-                level: CommandBufferLevel.Primary,
-                count: framebuffers.Length
-            ));
-
-            //Record the primary command-buffers
-            for (int i = 0; i < commandbuffers.Length; i++)
-            {
-                commandbuffers[i].Begin(new CommandBufferBeginInfo(flags: CommandBufferUsages.None));
-
-                scene.Record(commandbuffers[i], framebuffers[i]);
-
-                commandbuffers[i].End();
-            }
         }
 
         private void CreateSynchronizationObjects()
@@ -278,10 +279,46 @@ $@"Swapchain created:
 
         private void OnNativeWindowResized()
         {
-            if (!nativeWindow.Minimized)
-                RecreateRenderSetup();
+            if (!nativeWindow.IsMinimized)
+            {
+                //Wait for all rendering to stop
+                logicalDevice.WaitIdle();
+
+                //Dispose the previous synchronization objects, the only reason we do this is because
+                //the number of wait-fences is tied to the number of swapchain images, and while
+                //recreating the swapchain there is no promise that there will be the same amount of
+                //swapchain images (altough i cannot think of a case where that would not be true)
+                //luckily creating this is pretty cheap
+                imageAvailableSemaphore.Dispose();
+                renderFinishedSemaphore.Dispose();
+                waitFences.DisposeAll();
+            
+                //Dispose the old swapchain setup
+                swapchainImageViews.DisposeAll();
+                swapchain.Dispose();
+
+                //Recreate the swapchain
+                CreateSwapchain();
+                CreateSynchronizationObjects();
+
+                if (scene != null)
+                {
+                    //We have to dispose the framebuffers because they are tied to the old swapchain
+                    framebuffers.DisposeAll();
+                    framebuffers = null;
+
+                    //Create new render-commands on this new setup (will automatically create new 
+                    //framebuffers too)
+                    CreateRenderCommands(scene);
+                }
+            }
         }
-        private void OnNativeWindowCloseRequested() => CloseRequested?.Invoke();
+
+        private void OnNativeWindowCloseRequested()
+        {
+            isCloseRequested = true;
+            CloseRequested?.Invoke();
+        }
 
         private void ThrowIfDisposed()
         {

@@ -15,8 +15,8 @@ namespace HT.Engine.Platform
         event Action Moved;
 
         string Title { get; set; }
-        bool Minimized { get; }
-        bool Maximized { get; }
+        bool IsMinimized { get; }
+        bool IsMaximized { get; }
         bool IsMovingOrResizing { get; }
         IntRect ClientRect { get; }
         

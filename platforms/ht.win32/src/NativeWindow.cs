@@ -110,8 +110,8 @@ namespace HT.Win32
                 }
             }
         }
-        public bool Minimized { get; private set; }
-        public bool Maximized { get; private set; }
+        public bool IsMinimized { get; private set; }
+        public bool IsMaximized { get; private set; }
         public bool IsMovingOrResizing { get; private set; }
         public IntRect ClientRect { get; private set; }
 
@@ -305,8 +305,8 @@ namespace HT.Win32
                     const int SIZE_MINIMIZED = 1;
 
                     int sizeType = wParam.ToInt32();
-                    Minimized = sizeType == SIZE_MINIMIZED;
-                    Maximized = sizeType == SIZE_MAXIMIZED;
+                    IsMinimized = sizeType == SIZE_MINIMIZED;
+                    IsMaximized = sizeType == SIZE_MAXIMIZED;
                    
                     short width, height;
                     LongUtils.Split(lParam.ToInt64(), out width, out height);

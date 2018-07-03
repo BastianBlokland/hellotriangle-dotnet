@@ -20,41 +20,30 @@ namespace HT.Main
         {
             using (var taskRunner = new TaskRunner(logger))
             using (var host = new Host(nativeApp, appName: "Test", appVersion: 1, logger: logger))
+            using (var window = host.CreateWindow(windowSize: (800, 600), deviceRequirements))
             {
-                var loader = new Loader(nativeApp,
-                    "models/spaceship.dae",
-                    "textures/spaceship_color.tga",
-                    "shaders/bin/test.vert.spv",
-                    "shaders/bin/test.frag.spv");
-                loader.StartLoading(taskRunner);
+                RenderScene renderScene = new RenderScene(window, clearColor: ColorUtils.Yellow, logger);
+                window.AttachScene(renderScene);
 
-                //Let the main thread help out until we've loaded our assets
-                while (!loader.IsFinished)
-                    taskRunner.Help();
+                // var loader = new Loader(nativeApp,
+                //     "models/spaceship.dae",
+                //     "textures/spaceship_color.tga",
+                //     "shaders/bin/test.vert.spv",
+                //     "shaders/bin/test.frag.spv");
+                // loader.StartLoading(taskRunner);
 
-                using (var window = host.CreateWindow(
-                    windowSize: (x: 800, y: 600),
-                    deviceRequirements: deviceRequirements,
-                    scene: new RenderScene(
-                        clearColor: ColorUtils.Yellow,
-                        renderobjects: new [] { new RenderObject(
-                            loader.GetResult<Mesh>("models/spaceship.dae"),
-                            loader.GetResult<ByteTexture>("textures/spaceship_color.tga"),
-                            loader.GetResult<ShaderProgram>("shaders/bin/test.vert.spv"),
-                            loader.GetResult<ShaderProgram>("shaders/bin/test.frag.spv")) })))
+                while (!window.IsCloseRequested)
                 {
-                    bool running = true;
-                    window.CloseRequested += () => running = false;
+                    //Call the os update loop to get os events about our windows
+                    //Like input, resize, or close
+                    nativeApp.Update();
 
-                    while (running)
-                    {
-                        nativeApp.Update();
-                        
-                        window.Update();
-                        bool hasDrawn = window.Draw();
-                        if (!hasDrawn)
-                            Thread.Sleep(100);
-                    }
+                    //Draw the window (if its minimized there is no real point atm so we just
+                    //sleep the cpu a bit)
+                    if (!window.IsMinimized)
+                        window.Draw();
+                    else
+                        Thread.Sleep(100);
                 }
             }
         }
