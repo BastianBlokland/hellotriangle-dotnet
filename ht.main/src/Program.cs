@@ -25,23 +25,11 @@ namespace HT.Main
                 RenderScene scene = new RenderScene(window, clearColor: ColorUtils.Yellow, logger);
                 window.AttachScene(scene);
 
-                var loader = new Loader(nativeApp,
-                    "models/spaceship.dae",
-                    "textures/spaceship_color.tga",
-                    "shaders/bin/test.vert.spv",
-                    "shaders/bin/test.frag.spv");
-                loader.StartLoading(taskRunner);
-
-                while (!loader.IsFinished)
-                    taskRunner.Help();
-
-                RenderObject renderObject = new RenderObject(
-                    scene,
-                    loader.GetResult<Mesh>("models/spaceship.dae"),
-                    loader.GetResult<ByteTexture>("textures/spaceship_color.tga"),
-                    loader.GetResult<ShaderProgram>("shaders/bin/test.vert.spv"),
-                    loader.GetResult<ShaderProgram>("shaders/bin/test.frag.spv"));
-                scene.AddObject(renderObject);
+                AddObject(nativeApp, taskRunner, scene,
+                    modelPath: "models/spaceship.dae",
+                    texturePath: "textures/spaceship_color.tga",
+                    vertShaderPath: "shaders/bin/test.vert.spv",
+                    fragShaderPath: "shaders/bin/test.frag.spv");
 
                 while (!window.IsCloseRequested)
                 {
@@ -57,6 +45,36 @@ namespace HT.Main
                         Thread.Sleep(100);
                 }
             }
+        }
+
+        private static void AddObject(
+            INativeApp app,
+            TaskRunner taskRunner,
+            RenderScene scene,
+            string modelPath,
+            string texturePath,
+            string vertShaderPath,
+            string fragShaderPath)
+        {
+            var loader = new Loader(app, modelPath, texturePath, vertShaderPath, fragShaderPath);
+            loader.StartLoading(taskRunner);
+
+            while (!loader.IsFinished)
+                taskRunner.Help();
+
+            //NOTE: At the moment 'RenderObject' creation is a fully single threaded thing because it
+            //uses resources that are shared, like the staging buffer and also allot of the api is
+            //still single threaded (like the MemoryPool and DescriptorManager), so for now it has to
+            //be like this but in the future i would like to update the api so we can have object
+            //creation happening from multiple threads so we can load multiple objects at the same 
+            //time and also creating objects while the main loop is still going on
+            RenderObject renderObject = new RenderObject(
+                scene, 
+                loader.GetResult<Mesh>(modelPath),
+                loader.GetResult<ByteTexture>(texturePath),
+                loader.GetResult<ShaderProgram>(vertShaderPath),
+                loader.GetResult<ShaderProgram>(fragShaderPath));
+            scene.AddObject(renderObject);
         }
     }
 }
