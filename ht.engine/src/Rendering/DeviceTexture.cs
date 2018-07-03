@@ -30,7 +30,8 @@ namespace HT.Engine.Rendering
             ByteTexture texture,
             Device logicalDevice,
             Memory.Pool memoryPool,
-            Memory.StagingBuffer stagingBuffer)
+            Memory.StagingBuffer stagingBuffer,
+            TransientExecutor executor)
         {
             if (texture == null)
                 throw new ArgumentNullException(nameof(texture));
@@ -40,14 +41,40 @@ namespace HT.Engine.Rendering
                 throw new ArgumentNullException(nameof(memoryPool));
             if (stagingBuffer == null)
                 throw new ArgumentNullException(nameof(stagingBuffer));
+            if (executor == null)
+                throw new ArgumentNullException(nameof(executor));
             
             var aspects = ImageAspects.Color;
             var image = CreateImage(
                 logicalDevice, ByteTextureFormat, texture.Size, ImageUsages.TransferDst | ImageUsages.Sampled);
             var memory = memoryPool.AllocateAndBind(image);
+            
+            //Transition the image to a layout where it can receive data
+            TransitionImageLayout(
+                    image: image, 
+                    subresource: new ImageSubresourceLayers(
+                        aspectMask: aspects,
+                        mipLevel: 0,
+                        baseArrayLayer: 0,
+                        layerCount: 1),
+                    oldLayout: ImageLayout.Undefined,
+                    newLayout: ImageLayout.TransferDstOptimal,
+                    executor: executor);
+            //Upload the data
             texture.Upload(stagingBuffer, image, aspects);
-            var view = CreateView(image, ByteTextureFormat, aspects);
+            //Transition the image to a layout so it can be read from
+            TransitionImageLayout(
+                    image: image, 
+                    subresource: new ImageSubresourceLayers(
+                        aspectMask: aspects,
+                        mipLevel: 0,
+                        baseArrayLayer: 0,
+                        layerCount: 1),
+                    oldLayout: ImageLayout.TransferDstOptimal,
+                    newLayout: ImageLayout.ShaderReadOnlyOptimal,
+                    executor: executor);
 
+            var view = CreateView(image, ByteTextureFormat, aspects);
             return new DeviceTexture(ByteTextureFormat, aspects, image, memory, view);
         }
 
@@ -55,7 +82,8 @@ namespace HT.Engine.Rendering
             FloatTexture texture,
             Device logicalDevice,
             Memory.Pool memoryPool,
-            Memory.StagingBuffer stagingBuffer)
+            Memory.StagingBuffer stagingBuffer,
+            TransientExecutor executor)
         {
             if (texture == null)
                 throw new ArgumentNullException(nameof(texture));
@@ -65,14 +93,40 @@ namespace HT.Engine.Rendering
                 throw new ArgumentNullException(nameof(memoryPool));
             if (stagingBuffer == null)
                 throw new ArgumentNullException(nameof(stagingBuffer));
+            if (executor == null)
+                throw new ArgumentNullException(nameof(executor));
             
             var aspects = ImageAspects.Color;
             var image = CreateImage(
                 logicalDevice, FloatTextureFormat, texture.Size, ImageUsages.TransferDst | ImageUsages.Sampled);
             var memory = memoryPool.AllocateAndBind(image);
-            texture.Upload(stagingBuffer, image, aspects);
-            var view = CreateView(image, FloatTextureFormat, aspects);
 
+            //Transition the image to a layout where it can receive data
+            TransitionImageLayout(
+                    image: image, 
+                    subresource: new ImageSubresourceLayers(
+                        aspectMask: aspects,
+                        mipLevel: 0,
+                        baseArrayLayer: 0,
+                        layerCount: 1),
+                    oldLayout: ImageLayout.Undefined,
+                    newLayout: ImageLayout.TransferDstOptimal,
+                    executor: executor);
+            //Upload the data
+            texture.Upload(stagingBuffer, image, aspects);
+            //Transition the image to a layout so it can be read from
+            TransitionImageLayout(
+                    image: image, 
+                    subresource: new ImageSubresourceLayers(
+                        aspectMask: aspects,
+                        mipLevel: 0,
+                        baseArrayLayer: 0,
+                        layerCount: 1),
+                    oldLayout: ImageLayout.TransferDstOptimal,
+                    newLayout: ImageLayout.ShaderReadOnlyOptimal,
+                    executor: executor);
+
+            var view = CreateView(image, FloatTextureFormat, aspects);
             return new DeviceTexture(FloatTextureFormat, aspects, image, memory, view);
         }
 
@@ -80,27 +134,32 @@ namespace HT.Engine.Rendering
             Int2 size,
             Device logicalDevice,
             Memory.Pool memoryPool,
-            Copier copier)
+            TransientExecutor executor)
         {
             if (logicalDevice == null)
                 throw new ArgumentNullException(nameof(logicalDevice));
             if (memoryPool == null)
                 throw new ArgumentNullException(nameof(memoryPool));
-            if (copier == null)
-                throw new ArgumentNullException(nameof(copier));
+            if (executor == null)
+                throw new ArgumentNullException(nameof(executor));
 
             var aspects = ImageAspects.Depth;
             var image = CreateImage(logicalDevice, DepthFormat, size, ImageUsages.DepthStencilAttachment);
             var memory = memoryPool.AllocateAndBind(image);
+            
+            //Transition the image to the depth attachment layout
+            TransitionImageLayout(
+                    image: image, 
+                    subresource: new ImageSubresourceLayers(
+                        aspectMask: aspects,
+                        mipLevel: 0,
+                        baseArrayLayer: 0,
+                        layerCount: 1),
+                    oldLayout: ImageLayout.Undefined,
+                    newLayout: ImageLayout.DepthStencilAttachmentOptimal,
+                    executor: executor);
+
             var view = CreateView(image, DepthFormat, aspects);
-
-            //Transition the image to the depth layout
-            copier.TransitionImageLayout(
-                image: image,
-                subresource: new ImageSubresourceLayers(ImageAspects.Depth, mipLevel: 0, baseArrayLayer: 0, layerCount: 1),
-                oldLayout: ImageLayout.Undefined,
-                newLayout: ImageLayout.DepthStencilAttachmentOptimal);
-
             return new DeviceTexture(DepthFormat, aspects, image, memory, view);
         }
 
@@ -155,6 +214,70 @@ namespace HT.Engine.Rendering
                     b: ComponentSwizzle.B,
                     a: ComponentSwizzle.A)));
         
+        private static void TransitionImageLayout(
+            Image image, 
+            ImageSubresourceLayers subresource,
+            ImageLayout oldLayout,
+            ImageLayout newLayout,
+            TransientExecutor executor)
+        {
+            //Get where this transition has to wait and what has to wait for this transition
+            Accesses sourceAccess, destinationAccess;
+            PipelineStages sourcePipelineStages, destinationPipelineStages;
+            if (oldLayout == ImageLayout.Undefined && newLayout == ImageLayout.TransferDstOptimal)
+            {
+                sourceAccess = Accesses.None;
+                destinationAccess = Accesses.TransferWrite;
+                sourcePipelineStages = PipelineStages.TopOfPipe;
+                destinationPipelineStages = PipelineStages.Transfer;
+            }
+            else
+            if (oldLayout == ImageLayout.Undefined && newLayout == ImageLayout.DepthStencilAttachmentOptimal)
+            {
+                sourceAccess = Accesses.None;
+                destinationAccess = Accesses.DepthStencilAttachmentRead | Accesses.DepthStencilAttachmentWrite;
+                sourcePipelineStages = PipelineStages.TopOfPipe;
+                destinationPipelineStages = PipelineStages.EarlyFragmentTests;
+            }
+            else
+            if (oldLayout == ImageLayout.TransferDstOptimal && newLayout == ImageLayout.ShaderReadOnlyOptimal)
+            {
+                sourceAccess = Accesses.TransferWrite;
+                destinationAccess = Accesses.ShaderRead;
+                sourcePipelineStages = PipelineStages.Transfer;
+                destinationPipelineStages = PipelineStages.FragmentShader;
+            }
+            else
+                throw new Exception(
+                    $"[{nameof(DeviceTexture)}] Unsupported image transition: from: {oldLayout} to: {newLayout}");
+            
+            //Create the transition barrier
+            var imageMemoryBarrier = new ImageMemoryBarrier(
+                image: image,
+                subresourceRange: new ImageSubresourceRange(
+                    aspectMask: subresource.AspectMask,
+                    baseMipLevel: subresource.MipLevel,
+                    levelCount: 1,
+                    baseArrayLayer: subresource.BaseArrayLayer,
+                    layerCount: subresource.LayerCount),
+                srcAccessMask: sourceAccess,
+                dstAccessMask: destinationAccess,
+                oldLayout: oldLayout,
+                newLayout: newLayout);
+
+            //Execute the barrier
+            executor.ExecuteBlocking(commandBuffer =>
+            {
+                commandBuffer.CmdPipelineBarrier(
+                    srcStageMask: sourcePipelineStages,
+                    dstStageMask: destinationPipelineStages,
+                    dependencyFlags: Dependencies.None,
+                    memoryBarriers: null,
+                    bufferMemoryBarriers: null,
+                    imageMemoryBarriers: new [] { imageMemoryBarrier });
+            });
+        }
+
         private void ThrowIfDisposed()
         {
             if (disposed)

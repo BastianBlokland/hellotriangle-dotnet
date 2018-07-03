@@ -9,7 +9,7 @@ namespace HT.Engine.Rendering.Memory
 {
     internal sealed class StagingBuffer : IDisposable
     {
-        private readonly Copier copier;
+        private readonly TransientExecutor executor;
         private readonly long size;
         private readonly VulkanCore.Buffer buffer;
         private readonly DeviceMemory memory;
@@ -19,16 +19,16 @@ namespace HT.Engine.Rendering.Memory
         internal StagingBuffer(
             Device logicalDevice,
             HostDevice hostDevice,
-            Copier copier,
+            TransientExecutor executor,
             long size = 1_048_576)
         {
             if (logicalDevice == null)
                 throw new ArgumentNullException(nameof(logicalDevice));
             if (hostDevice == null)
                 throw new ArgumentNullException(nameof(hostDevice));
-            if (copier == null)
-                throw new ArgumentNullException(nameof(copier));
-            this.copier = copier;
+            if (executor == null)
+                throw new ArgumentNullException(nameof(executor));
+            this.executor = executor;
             this.size = size;
 
             //Create the buffer
@@ -53,9 +53,8 @@ namespace HT.Engine.Rendering.Memory
             buffer.BindMemory(memory);
         }
 
-        internal void Upload<T>(T[] data, Image destination, ImageLayout destinationLayout,
-            ImageSubresourceLayers subresource,
-            Int2 imageExtents)
+        internal void Upload<T>(
+            T[] data, Image destination, ImageSubresourceLayers subresource, Int2 imageExtents)
             where T : struct
         {
             ThrowIfDisposed();
@@ -63,13 +62,24 @@ namespace HT.Engine.Rendering.Memory
             //Write to our staging buffer
             Write(data);
 
-            //Copy our staging buffer to the destination
-            copier.Copy(
-                source: buffer,
-                destination: destination,
-                destinationLayout: destinationLayout,
-                subresource: subresource,
-                imageExtents: imageExtents);
+            //Copy our staging buffer to the image
+            executor.ExecuteBlocking(commandBuffer =>
+            {
+                commandBuffer.CmdCopyBufferToImage(
+                    srcBuffer: buffer,
+                    dstImage: destination,
+                    dstImageLayout: ImageLayout.TransferDstOptimal,
+                    regions: new BufferImageCopy {
+                        BufferOffset = 0,
+                        BufferRowLength = 0,
+                        BufferImageHeight = 0,
+                        ImageSubresource = subresource,
+                        ImageOffset = new Offset3D(x: 0, y: 0, z: 0),
+                        ImageExtent = new Extent3D(
+                            width: imageExtents.X,
+                            height: imageExtents.Y,
+                            depth: 1)});
+            });        
         }
 
         internal void Upload<T>(T[] data, DeviceBuffer destination)
@@ -81,12 +91,13 @@ namespace HT.Engine.Rendering.Memory
             int dataSize = Write(data);
 
             //Copy our staging buffer to the destination
-            copier.Copy(
-                source: buffer,
-                sourceOffset: 0,
-                destination: destination.Buffer,
-                destinationOffset: 0,
-                size: dataSize);
+            executor.ExecuteBlocking(commandBuffer =>
+            {
+                commandBuffer.CmdCopyBuffer(
+                    srcBuffer: buffer,
+                    dstBuffer: destination.Buffer,
+                    new BufferCopy(size: dataSize, srcOffset: 0, dstOffset: 0));
+            });
         }
 
         public void Dispose()

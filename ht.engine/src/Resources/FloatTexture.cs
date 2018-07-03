@@ -39,7 +39,6 @@ namespace HT.Engine.Resources
             stagingBuffer.Upload(
                 data: pixels,
                 destination: image,
-                destinationLayout: ImageLayout.ShaderReadOnlyOptimal,
                 subresource: new ImageSubresourceLayers(
                     aspectMask: aspects, mipLevel: 0, baseArrayLayer: 0, layerCount: 1),
                 imageExtents: (width, height));

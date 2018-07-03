@@ -43,7 +43,12 @@ namespace HT.Engine.Rendering
 
             //Upload our mesh to the gpu
             deviceMesh = new DeviceMesh(mesh, scene.LogicalDevice, scene.MemoryPool, scene.StagingBuffer);
-            deviceTexture = DeviceTexture.UploadTexture(texture, scene.LogicalDevice, scene.MemoryPool, scene.StagingBuffer);
+            deviceTexture = DeviceTexture.UploadTexture(
+                texture: texture, 
+                logicalDevice: scene.LogicalDevice,
+                memoryPool: scene.MemoryPool,
+                stagingBuffer: scene.StagingBuffer,
+                executor: scene.Executor);
             deviceSampler = new DeviceSampler(scene.LogicalDevice);
 
             //Allocate a buffer for our transformation

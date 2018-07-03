@@ -15,6 +15,7 @@ namespace HT.Engine.Rendering
         internal DescriptorManager DescriptorManager => descriptorManager;
         internal RenderPass RenderPass => renderpass;
         internal Memory.Pool MemoryPool => memoryPool;
+        internal TransientExecutor Executor => executor;
         internal Memory.StagingBuffer StagingBuffer => stagingBuffer;
         internal Int2 SwapchainSize => swapchainSize;
         internal bool Dirty => dirty;
@@ -23,7 +24,7 @@ namespace HT.Engine.Rendering
         private readonly Window window;
         private readonly Byte4 clearColor;
         private readonly Logger logger;
-        private readonly Memory.Copier copier;
+        private readonly TransientExecutor executor;
         private readonly Memory.Pool memoryPool;
         private readonly Memory.StagingBuffer stagingBuffer;
         private readonly DescriptorManager descriptorManager;
@@ -44,9 +45,9 @@ namespace HT.Engine.Rendering
             this.logger = logger;
 
             //Create resources
-            copier = new Memory.Copier(window.LogicalDevice, window.GraphicsFamilyIndex);
+            executor = new TransientExecutor(window.LogicalDevice, window.GraphicsFamilyIndex);
             memoryPool = new Memory.Pool(window.LogicalDevice, window.HostDevice, logger);
-            stagingBuffer = new Memory.StagingBuffer(window.LogicalDevice, window.HostDevice, copier);
+            stagingBuffer = new Memory.StagingBuffer(window.LogicalDevice, window.HostDevice, executor);
             descriptorManager = new DescriptorManager(window.LogicalDevice, logger);
 
             //Create the renderpass
@@ -69,7 +70,7 @@ namespace HT.Engine.Rendering
             descriptorManager.Dispose();
             stagingBuffer.Dispose();
             memoryPool.Dispose();
-            copier.Dispose();
+            executor.Dispose();
             disposed = true;
         }
 
@@ -82,7 +83,7 @@ namespace HT.Engine.Rendering
                 //Dispose of the old depth texture
                 depthTexture?.Dispose();
                 depthTexture = DeviceTexture.CreateDepthTexture(
-                    swapchainSize, window.LogicalDevice, memoryPool, copier);
+                    swapchainSize, window.LogicalDevice, memoryPool, executor);
                 this.swapchainSize = swapchainSize;
             }
 
