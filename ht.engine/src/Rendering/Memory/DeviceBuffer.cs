@@ -38,7 +38,7 @@ namespace HT.Engine.Rendering.Memory
                 sharingMode: SharingMode.Exclusive
             ));
             //Bind memory from our pool to this buffer
-            memory = memoryPool.AllocateAndBind(buffer);
+            memory = memoryPool.AllocateAndBind(buffer, Chunk.Location.Device);
         }
 
         public void Dispose()

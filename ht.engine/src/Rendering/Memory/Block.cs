@@ -1,3 +1,5 @@
+using System;
+
 namespace HT.Engine.Rendering.Memory
 {
     internal readonly struct Block
@@ -16,6 +18,10 @@ namespace HT.Engine.Rendering.Memory
             Offset = offset;
             Size = size;
         }
+        
+        internal IntPtr Map() => Container.Map(this);
+
+        internal void Unmap() => Container.Unmap();
 
         internal void Free() => Container.Free(this);
     }

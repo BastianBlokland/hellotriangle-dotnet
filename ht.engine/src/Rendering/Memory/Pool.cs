@@ -26,32 +26,32 @@ namespace HT.Engine.Rendering.Memory
             this.logger = logger;
         }
 
-        internal Block AllocateAndBind(VulkanCore.Image image)
+        internal Block AllocateAndBind(VulkanCore.Image image, Chunk.Location location)
         {
             ThrowIfDisposed();
 
             var memRequirements = image.GetMemoryRequirements();
-            Block block = Allocate(memRequirements);
+            Block block = Allocate(location, memRequirements);
             image.BindMemory(block.Container.Memory, block.Offset);
             return block;
         }
 
-        internal Block AllocateAndBind(VulkanCore.Buffer buffer)
+        internal Block AllocateAndBind(VulkanCore.Buffer buffer, Chunk.Location location)
         {
             ThrowIfDisposed();
 
             var memRequirements = buffer.GetMemoryRequirements();
-            Block block = Allocate(memRequirements);
+            Block block = Allocate(location, memRequirements);
             buffer.BindMemory(block.Container.Memory, block.Offset);
             return block;
         }
 
-        internal Block Allocate(MemoryRequirements requirements)
+        internal Block Allocate(Chunk.Location location, MemoryRequirements requirements)
         {
             //Allocate in the first chunk that supports this requirement
             for (int i = 0; i < chunks.Count; i++)
             {
-                if (chunks[i].IsSupported(requirements))
+                if (chunks[i].MemoryLocation == location && chunks[i].IsSupported(requirements))
                 {
                     Block? block = chunks[i].TryAllocate(requirements);
                     if (block != null)
@@ -60,11 +60,11 @@ namespace HT.Engine.Rendering.Memory
             }
 
             //If non supported the requirements then create a new chunk
-            Chunk newChunk = new Chunk(logicalDevice, hostDevice, requirements.MemoryTypeBits);
+            Chunk newChunk = new Chunk(logicalDevice, hostDevice, location, requirements.MemoryTypeBits);
             chunks.Add(newChunk);
 
             logger?.Log("MemoryPool", 
-                $"New chuck allocated, type: {newChunk.MemoryTypeIndex}, size: {ByteUtils.ByteToMegabyte(newChunk.TotalSize)} MB");
+                $"New chuck allocated, location: {newChunk.MemoryLocation}, type: {newChunk.MemoryTypeIndex}, size: {ByteUtils.ByteToMegabyte(newChunk.TotalSize)} MB");
     
             //Allocate from the new chunk
             Block? newBlock = newChunk.TryAllocate(requirements);

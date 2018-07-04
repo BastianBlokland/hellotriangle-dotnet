@@ -55,7 +55,7 @@ namespace HT.Engine.Rendering
             //Create resources
             executor = new TransientExecutor(window.LogicalDevice, window.GraphicsFamilyIndex);
             memoryPool = new Memory.Pool(window.LogicalDevice, window.HostDevice, logger);
-            stagingBuffer = new Memory.StagingBuffer(window.LogicalDevice, window.HostDevice, executor);
+            stagingBuffer = new Memory.StagingBuffer(window.LogicalDevice, memoryPool, executor);
             descriptorManager = new DescriptorManager(window.LogicalDevice, logger);
 
             //Create the renderpass

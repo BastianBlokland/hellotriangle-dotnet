@@ -47,7 +47,7 @@ namespace HT.Engine.Rendering
             var aspects = ImageAspects.Color;
             var image = CreateImage(
                 logicalDevice, ByteTextureFormat, texture.Size, ImageUsages.TransferDst | ImageUsages.Sampled);
-            var memory = memoryPool.AllocateAndBind(image);
+            var memory = memoryPool.AllocateAndBind(image, Chunk.Location.Device);
             
             //Transition the image to a layout where it can receive data
             TransitionImageLayout(
@@ -99,7 +99,7 @@ namespace HT.Engine.Rendering
             var aspects = ImageAspects.Color;
             var image = CreateImage(
                 logicalDevice, FloatTextureFormat, texture.Size, ImageUsages.TransferDst | ImageUsages.Sampled);
-            var memory = memoryPool.AllocateAndBind(image);
+            var memory = memoryPool.AllocateAndBind(image, Chunk.Location.Device);
 
             //Transition the image to a layout where it can receive data
             TransitionImageLayout(
@@ -145,7 +145,7 @@ namespace HT.Engine.Rendering
 
             var aspects = ImageAspects.Depth;
             var image = CreateImage(logicalDevice, DepthFormat, size, ImageUsages.DepthStencilAttachment);
-            var memory = memoryPool.AllocateAndBind(image);
+            var memory = memoryPool.AllocateAndBind(image, Chunk.Location.Device);
             
             //Transition the image to the depth attachment layout
             TransitionImageLayout(

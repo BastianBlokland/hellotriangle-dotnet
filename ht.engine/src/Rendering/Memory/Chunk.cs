@@ -8,8 +8,15 @@ namespace HT.Engine.Rendering.Memory
 {
     internal sealed class Chunk : IDisposable
     {
+        internal enum Location
+        {
+            Device,
+            Host
+        }
+
         //Properties
         internal DeviceMemory Memory => memory;
+        internal Location MemoryLocation => location;
         internal int MemoryTypeIndex => memoryTypeIndex;
         internal long TotalSize => totalSize;
         internal long FreeSize
@@ -26,14 +33,17 @@ namespace HT.Engine.Rendering.Memory
         //Data
         private readonly long totalSize;
         private readonly ResizeArray<Block> freeBlocks = new ResizeArray<Block>(initialCapacity: 100);
+        private readonly Location location;
         private readonly int memoryTypeIndex;
         private readonly DeviceMemory memory;
 
+        private bool currentlyMapped;
         private bool disposed;
 
         internal Chunk(
             Device logicalDevice,
             HostDevice hostDevice,
+            Location location,
             int supportedMemoryTypesFilter,
             long size = 128 * ByteUtils.MEGABYTE_TO_BYTE)
         {
@@ -41,6 +51,7 @@ namespace HT.Engine.Rendering.Memory
                 throw new ArgumentNullException(nameof(logicalDevice));
             if (hostDevice == null)
                 throw new ArgumentNullException(nameof(hostDevice));
+            this.location = location;
             totalSize = size;
 
             //Add a block the size of the entire chunk to the free set
@@ -48,12 +59,37 @@ namespace HT.Engine.Rendering.Memory
 
             //Find the memory type on the gpu to place this pool in
             memoryTypeIndex = hostDevice.GetMemoryType(
-                properties: MemoryProperties.DeviceLocal,
+                properties: location == Location.Device ? 
+                    MemoryProperties.DeviceLocal :
+                    MemoryProperties.HostVisible | MemoryProperties.HostCoherent,
                 supportedTypesFilter: supportedMemoryTypesFilter);
             //Allocate the memory
             memory = logicalDevice.AllocateMemory(new MemoryAllocateInfo(
                 allocationSize: size,
                 memoryTypeIndex: memoryTypeIndex));
+        }
+
+        internal IntPtr Map(Block block)
+        {
+            if (block.Container != this)
+                throw new ArgumentException(
+                    $"[{nameof(Chunk)}] Given block does not belong to this chunk");
+            if (location != Chunk.Location.Host)
+                throw new Exception($"[{nameof(Chunk)}] Only host memory can be mapped");
+            if (currentlyMapped)
+                throw new Exception($"[{nameof(Chunk)}] Memory is allready mapped");
+            currentlyMapped = true;
+            return memory.Map(block.Offset, block.Size);
+        }
+
+        internal void Unmap()
+        {
+            if (location != Chunk.Location.Host)
+                throw new Exception($"[{nameof(Chunk)}] Only host memory can be mapped");
+            if (!currentlyMapped)
+                throw new Exception($"[{nameof(Chunk)}] Memory is not currently mapped");
+            memory.Unmap();
+            currentlyMapped = false;
         }
 
         internal bool IsSupported(MemoryRequirements requirements)

@@ -12,20 +12,20 @@ namespace HT.Engine.Rendering.Memory
         private readonly TransientExecutor executor;
         private readonly long size;
         private readonly VulkanCore.Buffer buffer;
-        private readonly DeviceMemory memory;
+        private readonly Block memory;
 
         private bool disposed;
 
         internal StagingBuffer(
             Device logicalDevice,
-            HostDevice hostDevice,
+            Pool memoryPool,
             TransientExecutor executor,
             long size = 1_048_576)
         {
             if (logicalDevice == null)
                 throw new ArgumentNullException(nameof(logicalDevice));
-            if (hostDevice == null)
-                throw new ArgumentNullException(nameof(hostDevice));
+            if (memoryPool == null)
+                throw new ArgumentNullException(nameof(memoryPool));
             if (executor == null)
                 throw new ArgumentNullException(nameof(executor));
             this.executor = executor;
@@ -38,19 +38,8 @@ namespace HT.Engine.Rendering.Memory
                 flags: BufferCreateFlags.None,
                 sharingMode: SharingMode.Exclusive
             ));
-            //Find the requirements for this buffer
-            var memRequirements = buffer.GetMemoryRequirements();
-            //Find a memory type that can support this buffer and is also host visible so we can
-            //write to it from the cpu
-            int memTypeIndex = hostDevice.GetMemoryType(
-                properties: MemoryProperties.HostVisible | MemoryProperties.HostCoherent,
-                supportedTypesFilter: memRequirements.MemoryTypeBits);
-            //Allocate the memory
-            memory = logicalDevice.AllocateMemory(new MemoryAllocateInfo(
-                allocationSize: memRequirements.Size,
-                memoryTypeIndex: memTypeIndex));
-            //Bind the memory to the buffer
-            buffer.BindMemory(memory);
+            //Allocate memory for this buffer
+            memory = memoryPool.AllocateAndBind(buffer, Chunk.Location.Host);
         }
 
         internal void Upload<T>(
@@ -105,7 +94,7 @@ namespace HT.Engine.Rendering.Memory
             ThrowIfDisposed();
 
             buffer.Dispose();
-            memory.Dispose();
+            memory.Free();
             disposed = true;
         }
 
@@ -127,7 +116,7 @@ namespace HT.Engine.Rendering.Memory
             unsafe
             {
                 //Map the memory to a cpu pointer
-                void* stagingPointer = memory.Map(offset: 0, size: dataSize).ToPointer();
+                void* stagingPointer = memory.Map().ToPointer();
                 
                 //Copy the data over
                 void* dataPointer = Unsafe.AsPointer(ref data[0]);
