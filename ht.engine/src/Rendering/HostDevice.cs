@@ -11,9 +11,14 @@ namespace HT.Engine.Rendering
 {
     public sealed class HostDevice
     {
+        //Properties
         public string Name => properties.DeviceName;
         public bool IsDiscreteGPU => properties.DeviceType == PhysicalDeviceType.DiscreteGpu;
 
+        //Internal properties
+        internal PhysicalDeviceLimits Limits => properties.Limits;
+
+        //Data
         private readonly PhysicalDevice physicalDevice;
         private readonly SurfaceType surfaceType;
         private readonly Logger logger;

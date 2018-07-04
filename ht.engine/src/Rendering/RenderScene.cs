@@ -18,6 +18,7 @@ namespace HT.Engine.Rendering
         internal TransientExecutor Executor => executor;
         internal Memory.StagingBuffer StagingBuffer => stagingBuffer;
         internal Int2 SwapchainSize => swapchainSize;
+        internal SceneData Data => sceneData;
         internal bool Dirty => dirty;
 
         //Data
@@ -33,6 +34,7 @@ namespace HT.Engine.Rendering
         private RenderPass renderpass;
         private Int2 swapchainSize;
         private DeviceTexture depthTexture;
+        private SceneData sceneData;
         private bool dirty;
         private bool disposed;
         
@@ -43,6 +45,12 @@ namespace HT.Engine.Rendering
             this.window = window;
             this.clearColor = clearColor;
             this.logger = logger;
+
+            //The spec has a min limit of 128 and that is plenty for us but let's check the limit
+            //anyway for sanity reasons
+            if (window.HostDevice.Limits.MaxPushConstantsSize < SceneData.SIZE)
+                throw new Exception(
+                    $"[{nameof(RenderScene)}] 'SceneData' does not fit in pushconstants limit");
 
             //Create resources
             executor = new TransientExecutor(window.LogicalDevice, window.GraphicsFamilyIndex);
@@ -125,6 +133,18 @@ namespace HT.Engine.Rendering
             commandbuffer.CmdSetScissor(
                 new Rect2D(x: 0, y: 0, width: swapchainSize.X, height: swapchainSize.Y));
 
+            //Setup scene-data
+            Float4x4 viewMatrix =   Float4x4.CreateRotationFromXAngle(FloatUtils.DegreesToRadians(15f)) * 
+                                    Float4x4.CreateTranslation((x: 0f, y: -.5f, z: -2));
+            Float4x4 projectionMatrix = Float4x4.CreatePerspectiveProjection(
+                Frustum.CreateFromVerticalAngleAndAspect(
+                    verticalAngle: FloatUtils.DegreesToRadians(45f),
+                    aspect: (float)swapchainSize.X / swapchainSize.Y,
+                    nearDistance: .1f,
+                    farDistance: 100f));
+            sceneData = new SceneData(projectionMatrix * viewMatrix);
+
+            //Record all individual objects
             for (int i = 0; i < renderObjects.Count; i++)
                 renderObjects[i].Record(commandbuffer);
             

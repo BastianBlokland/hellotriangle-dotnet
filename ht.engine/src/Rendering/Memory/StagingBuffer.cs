@@ -132,7 +132,7 @@ namespace HT.Engine.Rendering.Memory
                 //Copy the data over
                 void* dataPointer = Unsafe.AsPointer(ref data[0]);
                 System.Buffer.MemoryCopy(dataPointer, stagingPointer, dataSize, dataSize);
-                
+
                 //Release the cpu memory
                 memory.Unmap();
             }

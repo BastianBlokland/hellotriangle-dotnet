@@ -1,5 +1,5 @@
 using System;
-
+using System.Runtime.CompilerServices;
 using HT.Engine.Math;
 using HT.Engine.Resources;
 using VulkanCore;
@@ -8,12 +8,13 @@ namespace HT.Engine.Rendering
 {
     public sealed class RenderObject : IDisposable
     {
+        private readonly RenderScene scene;
         private readonly ShaderModule vertModule;
         private readonly ShaderModule fragModule;
         private readonly DeviceMesh deviceMesh;
         private readonly DeviceTexture deviceTexture;
         private readonly DeviceSampler deviceSampler;
-        private readonly Memory.DeviceBuffer transformationBuffer;
+        private readonly Memory.DeviceBuffer objectDataBuffer;
         private readonly DescriptorManager.Block descriptorBlock;
         private readonly PipelineLayout pipelineLayout;
         private readonly Pipeline pipeline;
@@ -36,6 +37,7 @@ namespace HT.Engine.Rendering
                 throw new ArgumentNullException(nameof(vertProg));
             if (fragProg == null)
                 throw new ArgumentNullException(nameof(fragProg));
+            this.scene = scene;
 
             //Create the shader modules
             vertModule = vertProg.CreateModule(scene.LogicalDevice);
@@ -51,24 +53,28 @@ namespace HT.Engine.Rendering
                 executor: scene.Executor);
             deviceSampler = new DeviceSampler(scene.LogicalDevice);
 
-            //Allocate a buffer for our transformation
-            transformationBuffer = new Memory.DeviceBuffer(
+            //Allocate a buffer for our object data
+            objectDataBuffer = new Memory.DeviceBuffer(
                 logicalDevice: scene.LogicalDevice,
                 memoryPool: scene.MemoryPool,
-                size: Transformation.SIZE,
+                size: Float4x4.SIZE,
                 usages: BufferUsages.UniformBuffer);
 
             //Create the descriptor binding
             var binding = new DescriptorBinding(uniformBufferCount: 1, imageSamplerCount: 1);
             descriptorBlock = scene.DescriptorManager.Allocate(binding);
             descriptorBlock.Update(
-                new [] { transformationBuffer },
+                new [] { objectDataBuffer },
                 new [] { deviceSampler },
                 new [] { deviceTexture });
 
             //Create the pipeline
             pipelineLayout = scene.LogicalDevice.CreatePipelineLayout(new PipelineLayoutCreateInfo(
-                setLayouts: new [] { descriptorBlock.Layout }));
+                setLayouts: new [] { 
+                    descriptorBlock.Layout },
+                pushConstantRanges: new [] { 
+                    new PushConstantRange(ShaderStages.Vertex, offset: 0, size: SceneData.SIZE) }));
+
             pipeline = CreatePipeline(scene.LogicalDevice, scene.RenderPass);
 
             //Create a transformation entry
@@ -80,8 +86,7 @@ namespace HT.Engine.Rendering
                     aspect: (float)scene.SwapchainSize.X / scene.SwapchainSize.Y,
                     nearDistance: .1f,
                     farDistance: 100f));
-            scene.StagingBuffer.Upload(new [] {
-                new Transformation(Float4x4.Identity, viewMatrix, projectionMatrix) }, transformationBuffer);
+            scene.StagingBuffer.Upload(new [] { Float4x4.Identity }, objectDataBuffer);
         }
 
         public void Dispose()
@@ -91,7 +96,7 @@ namespace HT.Engine.Rendering
             deviceMesh.Dispose();
             deviceSampler.Dispose();
             deviceTexture.Dispose();
-            transformationBuffer.Dispose();
+            objectDataBuffer.Dispose();
             descriptorBlock.Free();
             pipelineLayout.Dispose();
             pipeline.Dispose();
@@ -102,6 +107,19 @@ namespace HT.Engine.Rendering
 
         internal void Record(CommandBuffer commandbuffer)
         {
+            //Push scene-data
+            unsafe
+            {
+                SceneData sceneData = scene.Data;
+                void* dataPointer = Unsafe.AsPointer(ref sceneData);
+                commandbuffer.CmdPushConstants(
+                    pipelineLayout,
+                    ShaderStages.Vertex,
+                    offset: 0,
+                    size: SceneData.SIZE,
+                    values: (IntPtr)dataPointer);
+            }
+
             //Bind data
             deviceMesh.RecordBind(commandbuffer);
             commandbuffer.CmdBindDescriptorSet(
