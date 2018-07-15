@@ -16,13 +16,11 @@ Note: MacOS runs through the MoltenVK wrapper to run vulkan on metal devices.
 # environment setup
 - Install dotnet-core 2.1 sdk (https://www.microsoft.com/net/download)
 - Install the vulkan sdk (https://vulkan.lunarg.com/sdk/home)
-    Mac-note: On macos this will automatically include molten-vk now
-- Make sure the vulkan library (win: vulkan-1.dll, macos: libMoltenVK.dylib) is linked to a os lib folder.
-    Win-note: The installer should do this automatically.
-    Mac-note: Create a link from [sdkroot]/MoltenVK/macOSlibMoltenVK.dylib to /usr/lib/libMoltenVK.dylib
-- Make sure 'glslangValidator' in the PATH variable
-    Win-note: The installer should do this automatically
-    Mac-note: Either add [sdkroot]/macOS/bin/glslangValidator to path or install separately using brew (brew install glslang)
+    Mac-note: you need to set some environment variables: (the getting started guide in the sdk contains more info)
+        -Add 'vulkansdk/macOS/bin' to the PATH environment variable (used for things like the 'glslangValidator')
+        -Set 'vulkansdk/macOS/lib' to the variable: 'DYLD_LIBRARY_PATH' (used by the vulkan-loader)
+        -Set 'vulkansdk/macOS/etc/vulkan/explicit_layer.d' to the variable: 'VK_LAYER_PATH' (used by the vulkan-loader)
+        -Set 'vulkansdk/macOS/etc/vulkan/icd.d/MoltenVK_icd.json' to the variable: 'VK_ICD_FILENAMES' (used by the vulkan-loader)
 - Windows: Set script execution policy, because for shader compilation it uses a small powershell script
     run 'set-executionpolicy remotesigned' in a shell with administrator rights, more info can be found here: http://go.microsoft.com/fwlink/?LinkID=135170
 

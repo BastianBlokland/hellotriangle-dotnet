@@ -218,7 +218,7 @@ namespace HT.Engine.Rendering
             switch (surfaceType)
             {
                 case SurfaceType.HkrWin32: return new string[0];
-                case SurfaceType.MvkMacOS: return new [] { "MoltenVK" };
+                case SurfaceType.MvkMacOS: return new string[0];
             }
             throw new Exception($"[{nameof(Host)}] Unknown surfaceType: {surfaceType}");
         }

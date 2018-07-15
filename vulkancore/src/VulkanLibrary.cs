@@ -90,7 +90,7 @@ namespace VulkanCore
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                yield return "libMoltenVK.dylib"; //Using MoltenVK on macOS
+                yield return "libvulkan.1.dylib";
             }
             throw new NotImplementedException("Ran out of places to look for the vulkan native library");
         }
