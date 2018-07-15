@@ -66,10 +66,10 @@ namespace HT.Engine.Rendering
                 usages: BufferUsages.UniformBuffer);
 
             //Create the descriptor binding
-            var binding = new DescriptorBinding(uniformBufferCount: 1, imageSamplerCount: 1);
+            var binding = new DescriptorBinding(uniformBufferCount: 2, imageSamplerCount: 1);
             descriptorBlock = scene.DescriptorManager.Allocate(binding);
             descriptorBlock.Update(
-                new [] { objectDataBuffer },
+                new Memory.IBuffer[] { scene.SceneDataBuffer, objectDataBuffer },
                 new [] { deviceSampler },
                 new [] { deviceTexture });
 
@@ -77,8 +77,7 @@ namespace HT.Engine.Rendering
             pipelineLayout = scene.LogicalDevice.CreatePipelineLayout(new PipelineLayoutCreateInfo(
                 setLayouts: new [] { 
                     descriptorBlock.Layout },
-                pushConstantRanges: new [] { 
-                    new PushConstantRange(ShaderStages.Vertex, offset: 0, size: SceneData.SIZE) }));
+                pushConstantRanges:  null ));
 
             pipeline = CreatePipeline(scene.LogicalDevice, scene.RenderPass);
 
@@ -87,8 +86,8 @@ namespace HT.Engine.Rendering
             scene.Executor.ExecuteBlocking(commandBuffer =>
             {
                 commandBuffer.CmdCopyBuffer(
-                    srcBuffer: scene.StagingBuffer.Buffer,
-                    dstBuffer: objectDataBuffer.Buffer,
+                    srcBuffer: scene.StagingBuffer.VulkanBuffer,
+                    dstBuffer: objectDataBuffer.VulkanBuffer,
                     new BufferCopy(size: stagingSize, srcOffset: 0, dstOffset: 0));
             });
         }
@@ -111,19 +110,6 @@ namespace HT.Engine.Rendering
 
         internal void Record(CommandBuffer commandbuffer)
         {
-            //Push scene-data
-            unsafe
-            {
-                SceneData sceneData = scene.Data;
-                void* dataPointer = Unsafe.AsPointer(ref sceneData);
-                commandbuffer.CmdPushConstants(
-                    pipelineLayout,
-                    ShaderStages.Vertex,
-                    offset: 0,
-                    size: SceneData.SIZE,
-                    values: (IntPtr)dataPointer);
-            }
-
             //Bind data
             deviceMesh.RecordBind(commandbuffer);
             commandbuffer.CmdBindDescriptorSet(

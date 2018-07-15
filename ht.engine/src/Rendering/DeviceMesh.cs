@@ -54,8 +54,8 @@ namespace HT.Engine.Rendering
             ThrowIfDisposed();
 
             //Bind our the vertex and index buffer with our uploaded data
-            commandbuffer.CmdBindVertexBuffer(vertexBuffer.Buffer, offset: 0);
-            commandbuffer.CmdBindIndexBuffer(indexBuffer.Buffer, offset: 0, indexType: IndexType.UInt16);
+            commandbuffer.CmdBindVertexBuffer(vertexBuffer.VulkanBuffer, offset: 0);
+            commandbuffer.CmdBindIndexBuffer(indexBuffer.VulkanBuffer, offset: 0, indexType: IndexType.UInt16);
         }
 
         internal void RecordDraw(CommandBuffer commandbuffer)

@@ -25,7 +25,7 @@ namespace HT.Engine.Rendering
             }
 
             public void Update(
-                Memory.DeviceBuffer[] buffers,
+                Memory.IBuffer[] buffers,
                 DeviceSampler[] samplers,
                 DeviceTexture[] textures) => Container.UpdateSet(this, buffers, samplers, textures);
             public void Free() => Container.Free(this);
@@ -115,7 +115,7 @@ namespace HT.Engine.Rendering
             
             internal void UpdateSet(
                 Block block,
-                Memory.DeviceBuffer[] buffers,
+                Memory.IBuffer[] buffers,
                 DeviceSampler[] samplers,
                 DeviceTexture[] textures)
             {
@@ -152,7 +152,7 @@ namespace HT.Engine.Rendering
                                 imageLayout: ImageLayout.ShaderReadOnlyOptimal) },
                         bufferInfo: !isBuffer ? null : new [] {
                             new DescriptorBufferInfo(
-                                buffer: buffers[i].Buffer,
+                                buffer: buffers[i].VulkanBuffer,
                                 offset: 0,
                                 range: buffers[i].Size) },
                         texelBufferView: null);

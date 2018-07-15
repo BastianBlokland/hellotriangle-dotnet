@@ -55,8 +55,8 @@ namespace HT.Engine.Resources
             executor.ExecuteBlocking(commandBuffer =>
             {
                 commandBuffer.CmdCopyBuffer(
-                    srcBuffer: stagingBuffer.Buffer,
-                    dstBuffer: vertexBuffer.Buffer,
+                    srcBuffer: stagingBuffer.VulkanBuffer,
+                    dstBuffer: vertexBuffer.VulkanBuffer,
                     new BufferCopy(size: stagingSize, srcOffset: 0, dstOffset: 0));
             });
             return vertexBuffer;
@@ -90,8 +90,8 @@ namespace HT.Engine.Resources
             executor.ExecuteBlocking(commandBuffer =>
             {
                 commandBuffer.CmdCopyBuffer(
-                    srcBuffer: stagingBuffer.Buffer,
-                    dstBuffer: indexBuffer.Buffer,
+                    srcBuffer: stagingBuffer.VulkanBuffer,
+                    dstBuffer: indexBuffer.VulkanBuffer,
                     new BufferCopy(size: stagingSize, srcOffset: 0, dstOffset: 0));
             });
             return indexBuffer;

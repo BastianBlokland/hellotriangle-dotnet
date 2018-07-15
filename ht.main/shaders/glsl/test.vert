@@ -2,11 +2,12 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 //Input
-layout(push_constant) uniform SceneData 
+layout(binding = 0) uniform SceneData 
 {
-	mat4 viewProjectionMatrix;
+	mat4 viewMatrix;
+    mat4 projectionMatrix;
 } sceneData;
-layout(binding = 0) uniform ObjectData
+layout(binding = 1) uniform ObjectData
 {
     mat4 modelMatrix;
 } objData;
@@ -26,6 +27,6 @@ layout(location = 0) out vec2 fragUv;
 
 void main()
 {
-    gl_Position = sceneData.viewProjectionMatrix * objData.modelMatrix * vec4(vertPosition, 1.0);
+    gl_Position = sceneData.projectionMatrix * sceneData.viewMatrix * objData.modelMatrix * vec4(vertPosition, 1.0);
     fragUv = vertUv1;
 }

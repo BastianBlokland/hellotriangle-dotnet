@@ -4,11 +4,11 @@ using VulkanCore;
 
 namespace HT.Engine.Rendering.Memory
 {
-    internal sealed class DeviceBuffer : IDisposable
+    internal sealed class DeviceBuffer : IBuffer, IDisposable
     {
         //Properties
-        internal VulkanCore.Buffer Buffer => buffer;
-        internal long Size => size;
+        public VulkanCore.Buffer VulkanBuffer => buffer;
+        public long Size => size;
 
         //Data
         private long size;

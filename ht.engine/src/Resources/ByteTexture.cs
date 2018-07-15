@@ -50,7 +50,7 @@ namespace HT.Engine.Resources
             executor.ExecuteBlocking(commandBuffer =>
             {
                 commandBuffer.CmdCopyBufferToImage(
-                    srcBuffer: stagingBuffer.Buffer,
+                    srcBuffer: stagingBuffer.VulkanBuffer,
                     dstImage: image,
                     dstImageLayout: ImageLayout.TransferDstOptimal,
                     regions: new BufferImageCopy {

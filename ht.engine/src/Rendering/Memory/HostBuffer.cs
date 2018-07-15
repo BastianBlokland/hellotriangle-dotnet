@@ -6,11 +6,11 @@ using VulkanCore;
 
 namespace HT.Engine.Rendering.Memory
 {
-    internal sealed class HostBuffer : IDisposable
+    internal sealed class HostBuffer : IBuffer, IDisposable
     {
         //Properties
-        internal VulkanCore.Buffer Buffer => buffer;
-        internal long Size => size;
+        public VulkanCore.Buffer VulkanBuffer => buffer;
+        public long Size => size;
 
         //Data
         private readonly VulkanCore.Buffer buffer;
