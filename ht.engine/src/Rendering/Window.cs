@@ -123,6 +123,9 @@ namespace HT.Engine.Rendering
             waitFences[nextImage].Wait();
             waitFences[nextImage].Reset();
 
+            //Give the scene a chance to prepare some data for drawing
+            scene?.PreDraw();
+
             //Once we have acquired an image we submit a commandbuffer for writing to it
             graphicsQueue.Submit(
                 waitSemaphore: imageAvailableSemaphore,

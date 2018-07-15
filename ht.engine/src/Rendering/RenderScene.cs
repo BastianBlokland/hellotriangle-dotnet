@@ -9,7 +9,10 @@ namespace HT.Engine.Rendering
 {
     public sealed class RenderScene : IDisposable
     {
-        //Properties
+        //Public properties
+        public Camera Camera => camera;
+
+        //Internal properties
         internal Device LogicalDevice => window.LogicalDevice;
         internal HostDevice HostDevice => window.HostDevice;
         internal DescriptorManager DescriptorManager => descriptorManager;
@@ -22,6 +25,7 @@ namespace HT.Engine.Rendering
         internal bool Dirty => dirty;
 
         //Data
+        private readonly Camera camera;
         private readonly Window window;
         private readonly Byte4 clearColor;
         private readonly Logger logger;
@@ -45,6 +49,7 @@ namespace HT.Engine.Rendering
             this.window = window;
             this.clearColor = clearColor;
             this.logger = logger;
+            camera = new Camera();
 
             //Create resources
             executor = new TransientExecutor(window.LogicalDevice, window.GraphicsFamilyIndex);
@@ -137,17 +142,6 @@ namespace HT.Engine.Rendering
             commandbuffer.CmdSetScissor(
                 new Rect2D(x: 0, y: 0, width: swapchainSize.X, height: swapchainSize.Y));
 
-            //Setup scene-data
-            Float4x4 viewMatrix =   Float4x4.CreateRotationFromXAngle(FloatUtils.DegreesToRadians(15f)) * 
-                                    Float4x4.CreateTranslation((x: 0f, y: -.5f, z: -2));
-            Float4x4 projectionMatrix = Float4x4.CreatePerspectiveProjection(
-                Frustum.CreateFromVerticalAngleAndAspect(
-                    verticalAngle: FloatUtils.DegreesToRadians(45f),
-                    aspect: (float)swapchainSize.X / swapchainSize.Y,
-                    nearDistance: .1f,
-                    farDistance: 100f));
-            sceneDataBuffer.Write(new SceneData(viewMatrix, projectionMatrix));
-
             //Record all individual objects
             for (int i = 0; i < renderObjects.Count; i++)
                 renderObjects[i].Record(commandbuffer);
@@ -156,6 +150,16 @@ namespace HT.Engine.Rendering
 
             //After recording all objects we unset the dirty flag
             dirty = false;
+        }
+
+        internal void PreDraw()
+        {
+            //Update the scene data
+            float aspect = (float)swapchainSize.X / swapchainSize.Y;
+            Float4x4 viewMatrix = camera.Transformation;
+            Float4x4 projectionMatrix = camera.GetProjection(aspect);
+            SceneData sceneData = new SceneData(viewMatrix, projectionMatrix);
+            sceneDataBuffer.Write(sceneData);
         }
 
         private void CreateRenderpass(Device logicalDevice, Format surfaceFormat)

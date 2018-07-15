@@ -23,6 +23,9 @@ namespace HT.Main
             using (var window = host.CreateWindow(windowSize: (800, 600), deviceRequirements))
             {
                 RenderScene scene = new RenderScene(window, clearColor: ColorUtils.Yellow, logger);
+                scene.Camera.Transformation = 
+                    Float4x4.CreateRotationFromXAngle(FloatUtils.DegreesToRadians(15f)) *
+                    Float4x4.CreateTranslation(new Float3(0f, -.5f, -2f));
                 window.AttachScene(scene);
 
                 AddObject(nativeApp, taskRunner, scene,
