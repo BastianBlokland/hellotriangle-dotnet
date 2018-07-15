@@ -44,7 +44,12 @@ namespace HT.Engine.Rendering
             fragModule = fragProg.CreateModule(scene.LogicalDevice);
 
             //Upload our mesh to the gpu
-            deviceMesh = new DeviceMesh(mesh, scene.LogicalDevice, scene.MemoryPool, scene.StagingBuffer);
+            deviceMesh = new DeviceMesh(
+                mesh, 
+                scene.LogicalDevice,
+                scene.MemoryPool,
+                scene.StagingBuffer,
+                scene.Executor);
             deviceTexture = DeviceTexture.UploadTexture(
                 texture: texture, 
                 logicalDevice: scene.LogicalDevice,
@@ -78,15 +83,14 @@ namespace HT.Engine.Rendering
             pipeline = CreatePipeline(scene.LogicalDevice, scene.RenderPass);
 
             //Create a transformation entry
-            Float4x4 viewMatrix =   Float4x4.CreateRotationFromXAngle(FloatUtils.DegreesToRadians(15f)) * 
-                                    Float4x4.CreateTranslation((x: 0f, y: -.5f, z: -2));
-            Float4x4 projectionMatrix = Float4x4.CreatePerspectiveProjection(
-                Frustum.CreateFromVerticalAngleAndAspect(
-                    verticalAngle: FloatUtils.DegreesToRadians(45f),
-                    aspect: (float)scene.SwapchainSize.X / scene.SwapchainSize.Y,
-                    nearDistance: .1f,
-                    farDistance: 100f));
-            scene.StagingBuffer.Upload(new [] { Float4x4.Identity }, objectDataBuffer);
+            int stagingSize = scene.StagingBuffer.Write(Float4x4.Identity);
+            scene.Executor.ExecuteBlocking(commandBuffer =>
+            {
+                commandBuffer.CmdCopyBuffer(
+                    srcBuffer: scene.StagingBuffer.Buffer,
+                    dstBuffer: objectDataBuffer.Buffer,
+                    new BufferCopy(size: stagingSize, srcOffset: 0, dstOffset: 0));
+            });
         }
 
         public void Dispose()

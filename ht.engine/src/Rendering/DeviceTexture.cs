@@ -30,7 +30,7 @@ namespace HT.Engine.Rendering
             ByteTexture texture,
             Device logicalDevice,
             Memory.Pool memoryPool,
-            Memory.StagingBuffer stagingBuffer,
+            Memory.HostBuffer stagingBuffer,
             TransientExecutor executor)
         {
             if (texture == null)
@@ -61,7 +61,7 @@ namespace HT.Engine.Rendering
                     newLayout: ImageLayout.TransferDstOptimal,
                     executor: executor);
             //Upload the data
-            texture.Upload(stagingBuffer, image, aspects);
+            texture.Upload(stagingBuffer, executor, image, aspects);
             //Transition the image to a layout so it can be read from
             TransitionImageLayout(
                     image: image, 
@@ -82,7 +82,7 @@ namespace HT.Engine.Rendering
             FloatTexture texture,
             Device logicalDevice,
             Memory.Pool memoryPool,
-            Memory.StagingBuffer stagingBuffer,
+            Memory.HostBuffer stagingBuffer,
             TransientExecutor executor)
         {
             if (texture == null)
@@ -113,7 +113,7 @@ namespace HT.Engine.Rendering
                     newLayout: ImageLayout.TransferDstOptimal,
                     executor: executor);
             //Upload the data
-            texture.Upload(stagingBuffer, image, aspects);
+            texture.Upload(stagingBuffer, executor, image, aspects);
             //Transition the image to a layout so it can be read from
             TransitionImageLayout(
                     image: image, 

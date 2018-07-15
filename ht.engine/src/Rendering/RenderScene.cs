@@ -16,7 +16,7 @@ namespace HT.Engine.Rendering
         internal RenderPass RenderPass => renderpass;
         internal Memory.Pool MemoryPool => memoryPool;
         internal TransientExecutor Executor => executor;
-        internal Memory.StagingBuffer StagingBuffer => stagingBuffer;
+        internal Memory.HostBuffer StagingBuffer => stagingBuffer;
         internal Int2 SwapchainSize => swapchainSize;
         internal SceneData Data => sceneData;
         internal bool Dirty => dirty;
@@ -27,7 +27,7 @@ namespace HT.Engine.Rendering
         private readonly Logger logger;
         private readonly TransientExecutor executor;
         private readonly Memory.Pool memoryPool;
-        private readonly Memory.StagingBuffer stagingBuffer;
+        private readonly Memory.HostBuffer stagingBuffer;
         private readonly DescriptorManager descriptorManager;
         private readonly List<RenderObject> renderObjects = new List<RenderObject>();
 
@@ -55,7 +55,11 @@ namespace HT.Engine.Rendering
             //Create resources
             executor = new TransientExecutor(window.LogicalDevice, window.GraphicsFamilyIndex);
             memoryPool = new Memory.Pool(window.LogicalDevice, window.HostDevice, logger);
-            stagingBuffer = new Memory.StagingBuffer(window.LogicalDevice, memoryPool, executor);
+            stagingBuffer = new Memory.HostBuffer(
+                window.LogicalDevice,
+                memoryPool,
+                BufferUsages.TransferSrc,
+                size: ByteUtils.MegabyteToByte(16));
             descriptorManager = new DescriptorManager(window.LogicalDevice, logger);
 
             //Create the renderpass

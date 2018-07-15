@@ -1,6 +1,7 @@
 using System;
 
 using HT.Engine.Math;
+using HT.Engine.Rendering;
 using HT.Engine.Rendering.Memory;
 using VulkanCore;
 
@@ -31,17 +32,39 @@ namespace HT.Engine.Resources
             this.height = height;
         }
 
-        internal void Upload(StagingBuffer stagingBuffer, Image image, ImageAspects aspects)
+        internal void Upload(
+            HostBuffer stagingBuffer,
+            TransientExecutor executor,
+            Image image,
+            ImageAspects aspects)
         {
             if (stagingBuffer == null)
                 throw new ArgumentNullException(nameof(stagingBuffer));
+            if (executor == null)
+                throw new ArgumentNullException(nameof(executor));
 
-            stagingBuffer.Upload(
-                data: pixels,
-                destination: image,
-                subresource: new ImageSubresourceLayers(
-                    aspectMask: aspects, mipLevel: 0, baseArrayLayer: 0, layerCount: 1),
-                imageExtents: (width, height));
+            //Write to our staging buffer
+            stagingBuffer.Write(pixels);
+
+            //Copy our staging buffer to the image
+            executor.ExecuteBlocking(commandBuffer =>
+            {
+                commandBuffer.CmdCopyBufferToImage(
+                    srcBuffer: stagingBuffer.Buffer,
+                    dstImage: image,
+                    dstImageLayout: ImageLayout.TransferDstOptimal,
+                    regions: new BufferImageCopy {
+                        BufferOffset = 0,
+                        BufferRowLength = 0,
+                        BufferImageHeight = 0,
+                        ImageSubresource = new ImageSubresourceLayers(
+                            aspectMask: aspects, mipLevel: 0, baseArrayLayer: 0, layerCount: 1),
+                        ImageOffset = new Offset3D(x: 0, y: 0, z: 0),
+                        ImageExtent = new Extent3D(
+                            width: width,
+                            height: height,
+                            depth: 1)});
+            });
         }
     }
 }

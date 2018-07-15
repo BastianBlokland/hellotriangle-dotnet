@@ -20,7 +20,8 @@ namespace HT.Engine.Rendering
             Mesh mesh,
             Device logicalDevice,
             Memory.Pool memoryPool,
-            Memory.StagingBuffer stagingBuffer)
+            Memory.HostBuffer stagingBuffer,
+            TransientExecutor executor)
         {
             if (mesh == null)
                 throw new ArgumentNullException(nameof(mesh));
@@ -30,11 +31,13 @@ namespace HT.Engine.Rendering
                 throw new ArgumentNullException(nameof(memoryPool));
             if (stagingBuffer == null)
                 throw new ArgumentNullException(nameof(stagingBuffer));
+            if (executor == null)
+                throw new ArgumentNullException(nameof(stagingBuffer));
 
             vertexCount = mesh.VertexCount;
             indexCount = mesh.IndexCount;
-            vertexBuffer = mesh.UploadVertices(logicalDevice, memoryPool, stagingBuffer);
-            indexBuffer = mesh.UploadIndices(logicalDevice, memoryPool, stagingBuffer);
+            vertexBuffer = mesh.UploadVertices(logicalDevice, memoryPool, stagingBuffer, executor);
+            indexBuffer = mesh.UploadIndices(logicalDevice, memoryPool, stagingBuffer, executor);
         }
 
         public void Dispose()

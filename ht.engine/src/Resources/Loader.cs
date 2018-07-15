@@ -80,7 +80,7 @@ namespace HT.Engine.Resources
             using (var parser = ResourceUtils.CreateParser(app, path))
                 results[taskId] = parser.Parse();
 
-            if(Interlocked.Decrement(ref remainingTasks) == 0)
+            if (Interlocked.Decrement(ref remainingTasks) == 0)
 				Complete();
         }
 
