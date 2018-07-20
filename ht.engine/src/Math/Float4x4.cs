@@ -103,6 +103,18 @@ namespace HT.Engine.Math
             row2: (0f,      0f,      scale.Z, centerPoint.Z * (1 - scale.Z)),
             row3: (0f,      0f,      0f,      1f));
 
+        public static Float4x4 CreateLookAt(Float3 position, Float3 lookTarget, Float3 up)
+        {
+            Float3 zAxis = Float3.FastNormalize(position - lookTarget);
+            Float3 xAxis = Float3.FastNormalize(Float3.Cross(up, zAxis));
+            Float3 yAxis = Float3.Cross(zAxis, xAxis);
+            return CreateFromRows(
+                row0: (xAxis.X, yAxis.X, zAxis.X, -Float3.Dot(xAxis, position)),
+                row1: (xAxis.Y, yAxis.Y, zAxis.Y, -Float3.Dot(yAxis, position)),
+                row2: (xAxis.Z, yAxis.Z, zAxis.Z, -Float3.Dot(zAxis, position)),
+                row3: (0f,      0f,      0f,      1f));
+        }
+
         public static Float4x4 CreateRotationFromAxis(Float3 forward, Float3 up)
         {
             Float3 zAxis = Float3.FastNormalize(-forward);
