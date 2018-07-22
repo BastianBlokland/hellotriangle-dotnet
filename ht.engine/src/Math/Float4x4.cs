@@ -60,6 +60,66 @@ namespace HT.Engine.Math
             Column3 = column3;
         }
 
+        //Utilities
+        public Float4x4 Invert()
+        {
+            //Based on microsofts implemention:
+            //https://referencesource.microsoft.com/#System.Numerics/System/Numerics/Matrix4x4.cs
+            float a = Column0.X, b = Column1.X, c = Column2.X, d = Column3.X;
+            float e = Column0.Y, f = Column1.Y, g = Column2.Y, h = Column3.Y;
+            float i = Column0.Z, j = Column1.Z, k = Column2.Z, l = Column3.Z;
+            float m = Column0.W, n = Column1.W, o = Column2.W, p = Column3.W;
+ 
+            float kp_lo = k * p - l * o;
+            float jp_ln = j * p - l * n;
+            float jo_kn = j * o - k * n;
+            float ip_lm = i * p - l * m;
+            float io_km = i * o - k * m;
+            float in_jm = i * n - j * m;
+ 
+            float a11 = (f * kp_lo - g * jp_ln + h * jo_kn);
+            float a12 = -(e * kp_lo - g * ip_lm + h * io_km);
+            float a13 = (e * jp_ln - f * ip_lm + h * in_jm);
+            float a14 = -(e * jo_kn - f * io_km + g * in_jm);
+ 
+            float det = a * a11 + b * a12 + c * a13 + d * a14;
+ 
+            if (MathF.Abs(det) < float.Epsilon)
+                throw new Exception($"[{nameof(Float4x4)}] Matrix has no inverse!");
+ 
+            float invDet = 1f / det;
+            float gp_ho = g * p - h * o;
+            float fp_hn = f * p - h * n;
+            float fo_gn = f * o - g * n;
+            float ep_hm = e * p - h * m;
+            float eo_gm = e * o - g * m;
+            float en_fm = e * n - f * m;
+            float gl_hk = g * l - h * k;
+            float fl_hj = f * l - h * j;
+            float fk_gj = f * k - g * j;
+            float el_hi = e * l - h * i;
+            float ek_gi = e * k - g * i;
+            float ej_fi = e * j - f * i;
+ 
+            return CreateFromRows(
+                row0: ( x: a11 * invDet,
+                        y: -(b * kp_lo - c * jp_ln + d * jo_kn) * invDet,
+                        z: (b * gp_ho - c * fp_hn + d * fo_gn) * invDet,
+                        w: -(b * gl_hk - c * fl_hj + d * fk_gj) * invDet),
+                row1: ( x: a12 * invDet,
+                        y: (a * kp_lo - c * ip_lm + d * io_km) * invDet,
+                        z: -(a * gp_ho - c * ep_hm + d * eo_gm) * invDet,
+                        w: (a * gl_hk - c * el_hi + d * ek_gi) * invDet),
+                row2: ( x: a13 * invDet,
+                        y: -(a * jp_ln - b * ip_lm + d * in_jm) * invDet,
+                        z: (a * fp_hn - b * ep_hm + d * en_fm) * invDet,
+                        w: -(a * fl_hj - b * el_hi + d * ej_fi) * invDet),
+                row3: ( x: a14 * invDet,
+                        y: (a * jo_kn - b * io_km + c * in_jm) * invDet,
+                        z: -(a * fo_gn - b * eo_gm + c * en_fm) * invDet,
+                        w: (a * fk_gj - b * ek_gi + c * ej_fi) * invDet));
+        }
+
         //Tranformations
         public Float3 TransformVector(Float3 vector)
             => new Float3(
@@ -103,16 +163,10 @@ namespace HT.Engine.Math
             row2: (0f,      0f,      scale.Z, centerPoint.Z * (1 - scale.Z)),
             row3: (0f,      0f,      0f,      1f));
 
-        public static Float4x4 CreateLookAt(Float3 position, Float3 lookTarget, Float3 up)
+        public static Float4x4 CreateOrbit(Float3 center, Float3 offset, Float3 axis, float angle)
         {
-            Float3 zAxis = Float3.FastNormalize(position - lookTarget);
-            Float3 xAxis = Float3.FastNormalize(Float3.Cross(up, zAxis));
-            Float3 yAxis = Float3.Cross(zAxis, xAxis);
-            return CreateFromRows(
-                row0: (xAxis.X, yAxis.X, zAxis.X, -Float3.Dot(xAxis, position)),
-                row1: (xAxis.Y, yAxis.Y, zAxis.Y, -Float3.Dot(yAxis, position)),
-                row2: (xAxis.Z, yAxis.Z, zAxis.Z, -Float3.Dot(zAxis, position)),
-                row3: (0f,      0f,      0f,      1f));
+            Float3 position = center + CreateRotationAngleAxis(axis, angle).TransformVector(offset);
+            return CreateTranslation(position) * CreateRotationFromAxis(center - position, axis);
         }
 
         public static Float4x4 CreateRotationFromAxis(Float3 forward, Float3 up)
@@ -125,6 +179,19 @@ namespace HT.Engine.Math
                 row1: (xAxis.Y, yAxis.Y, zAxis.Y, 0f),
                 row2: (xAxis.Z, yAxis.Z, zAxis.Z, 0f),
                 row3: (0f,      0f,      0f,      1f));
+        }
+
+        public static Float4x4 CreateRotationAngleAxis(Float3 axis, float angle)
+        {
+            float s = Sin(angle), c = Cos(angle);
+            float x = axis.X, y = axis.Y, z = axis.Z;
+            float xx = x * x, yy = y * y, zz = z * z;
+            float xy = x * y, xz = x * z, yz = y * z;
+            return Float4x4.CreateFromRows(
+                row0: (xx + c * (1f - xx),      xy - c * xy - s * z,    xz - c * xz + s * y,  0f),
+                row1: (xy - c * xy + s * z,     yy + c * (1.0f - yy),   yz - c * yz - s * x,  0f),
+                row2: (xz - c * xz - s * y,     yz - c * yz + s * x,    zz + c * (1f - zz),   0f),
+                row3: (0f,                      0f,                     0f,                   1f));
         }
 
         public static Float4x4 CreateRotationFromXAngle(float xAngle)

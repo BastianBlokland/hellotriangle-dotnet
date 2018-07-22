@@ -156,9 +156,10 @@ namespace HT.Engine.Rendering
         {
             //Update the scene data
             float aspect = (float)swapchainSize.X / swapchainSize.Y;
-            Float4x4 viewMatrix = camera.Transformation;
+            Float4x4 cameraMatrix = camera.Transformation;
+            Float4x4 viewMatrix = camera.Transformation.Invert();
             Float4x4 projectionMatrix = camera.GetProjection(aspect);
-            SceneData sceneData = new SceneData(viewMatrix, projectionMatrix);
+            SceneData sceneData = new SceneData(cameraMatrix, viewMatrix, projectionMatrix);
             sceneDataBuffer.Write(sceneData);
         }
 

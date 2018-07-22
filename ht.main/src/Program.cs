@@ -23,8 +23,11 @@ namespace HT.Main
             using (var window = host.CreateWindow(windowSize: (800, 600), deviceRequirements))
             {
                 RenderScene scene = new RenderScene(window, clearColor: ColorUtils.Yellow, logger);
-                scene.Camera.Transformation = 
-                    Float4x4.CreateLookAt(new Float3(0f, .5f, -2f), Float3.Zero, Float3.Up);
+                scene.Camera.Transformation = Float4x4.CreateOrbit(
+                    center: Float3.Zero,
+                    offset: (0f, .5f, -2f),
+                    axis: Float3.Up,
+                    angle: 0f);
                 window.AttachScene(scene);
 
                 AddObject(nativeApp, taskRunner, scene,

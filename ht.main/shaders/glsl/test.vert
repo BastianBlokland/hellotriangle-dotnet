@@ -4,8 +4,10 @@
 //Input
 layout(binding = 0) uniform SceneData 
 {
+    mat4 cameraMatrix;
 	mat4 viewMatrix;
     mat4 projectionMatrix;
+    mat4 viewProjectionMatrix;
 } sceneData;
 layout(binding = 1) uniform ObjectData
 {
@@ -27,6 +29,6 @@ layout(location = 0) out vec2 fragUv;
 
 void main()
 {
-    gl_Position = sceneData.projectionMatrix * sceneData.viewMatrix * objData.modelMatrix * vec4(vertPosition, 1.0);
+    gl_Position = sceneData.viewProjectionMatrix * objData.modelMatrix * vec4(vertPosition, 1.0);
     fragUv = vertUv1;
 }
