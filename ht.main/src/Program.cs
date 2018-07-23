@@ -23,11 +23,6 @@ namespace HT.Main
             using (var window = host.CreateWindow(windowSize: (800, 600), deviceRequirements))
             {
                 RenderScene scene = new RenderScene(window, clearColor: ColorUtils.Yellow, logger);
-                scene.Camera.Transformation = Float4x4.CreateOrbit(
-                    center: Float3.Zero,
-                    offset: (0f, .5f, -2f),
-                    axis: Float3.Up,
-                    angle: 0f);
                 window.AttachScene(scene);
 
                 AddObject(nativeApp, taskRunner, scene,
@@ -36,8 +31,16 @@ namespace HT.Main
                     vertShaderPath: "shaders/bin/test.vert.spv",
                     fragShaderPath: "shaders/bin/test.frag.spv");
 
+                var frameTracker = new FrameTracker();
                 while (!window.IsCloseRequested)
                 {
+                    //Rotate the camera
+                    scene.Camera.Transformation = Float4x4.CreateOrbit(
+                        center: Float3.Zero,
+                        offset: (0f, .5f, -2f),
+                        axis: Float3.Up,
+                        angle: (float)frameTracker.ElapsedTime);
+
                     //Call the os update loop to get os events about our windows
                     //Like input, resize, or close
                     nativeApp.Update();
@@ -45,9 +48,12 @@ namespace HT.Main
                     //Draw the window (if its minimized there is no real point atm so we just
                     //sleep the cpu a bit)
                     if (!window.IsMinimized)
-                        window.Draw();
+                        window.Draw(frameTracker);
                     else
                         Thread.Sleep(100);
+
+                    //Track frame-number, deltatime, etc..
+                    frameTracker.TrackFrame();
                 }
             }
         }

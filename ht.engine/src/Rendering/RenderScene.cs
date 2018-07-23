@@ -152,7 +152,7 @@ namespace HT.Engine.Rendering
             dirty = false;
         }
 
-        internal void PreDraw()
+        internal void PreDraw(FrameTracker tracker)
         {
             //Update the scene data
             float aspect = (float)swapchainSize.X / swapchainSize.Y;

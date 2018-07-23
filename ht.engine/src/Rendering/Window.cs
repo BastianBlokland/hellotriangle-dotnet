@@ -107,7 +107,7 @@ namespace HT.Engine.Rendering
             CreateRenderCommands(scene);
         }
 
-        public void Draw()
+        public void Draw(FrameTracker frameTracker)
         {
             if (commandbuffers == null || commandbuffers.Length == 0)
                 throw new Exception($"[{nameof(Window)}] No command buffers have been created yet");
@@ -124,7 +124,7 @@ namespace HT.Engine.Rendering
             waitFences[nextImage].Reset();
 
             //Give the scene a chance to prepare some data for drawing
-            scene?.PreDraw();
+            scene?.PreDraw(frameTracker);
 
             //Once we have acquired an image we submit a commandbuffer for writing to it
             graphicsQueue.Submit(
@@ -138,6 +138,10 @@ namespace HT.Engine.Rendering
             //Once rendering to the framebuffer is done we can present it
             presentQueue.PresentKhr(
                 waitSemaphore: renderFinishedSemaphore, swapchain: swapchain, imageIndex: nextImage);
+
+            //Set the window title mostly for debugging purposes
+            nativeWindow.Title = 
+                $"{title} - {hostDevice.Name} - {nativeWindow.ClientRect.Size} - Fps: {frameTracker.SmoothedFps:N1}";
         }
 
         public void Dispose()
@@ -261,9 +265,6 @@ namespace HT.Engine.Rendering
                         baseArrayLayer: 0,
                         layerCount: 1)
                 ));
-            
-            //Set the window title mostly for debugging purposes
-            nativeWindow.Title = $"{title} - {hostDevice.Name} - {nativeWindow.ClientRect.Size}";
 
             logger?.Log(nameof(Window), 
 $@"Swapchain created:
