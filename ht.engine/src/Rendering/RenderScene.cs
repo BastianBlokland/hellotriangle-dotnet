@@ -159,7 +159,13 @@ namespace HT.Engine.Rendering
             Float4x4 cameraMatrix = camera.Transformation;
             Float4x4 viewMatrix = camera.Transformation.Invert();
             Float4x4 projectionMatrix = camera.GetProjection(aspect);
-            SceneData sceneData = new SceneData(cameraMatrix, viewMatrix, projectionMatrix);
+            SceneData sceneData = new SceneData(
+                cameraMatrix,
+                viewMatrix,
+                projectionMatrix,
+                tracker.FrameNumber,
+                (float)tracker.ElapsedTime,
+                tracker.DeltaTime);
             sceneDataBuffer.Write(sceneData);
         }
 

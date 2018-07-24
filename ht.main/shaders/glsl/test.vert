@@ -8,6 +8,9 @@ layout(binding = 0) uniform SceneData
 	mat4 viewMatrix;
     mat4 projectionMatrix;
     mat4 viewProjectionMatrix;
+    int frame;
+    float time;
+    float deltaTime;
 } sceneData;
 layout(binding = 1) uniform ObjectData
 {
