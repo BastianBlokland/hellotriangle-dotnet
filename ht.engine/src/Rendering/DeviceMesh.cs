@@ -10,6 +10,11 @@ namespace HT.Engine.Rendering
     //NOTE: Does not hold on to the cpu representation of the mesh so it can be garbage collected
     internal sealed class DeviceMesh : IDisposable
     {
+        //Internal properties
+        internal int VertexCount => vertexCount;
+        internal int IndexCount => indexCount;
+
+        //Data
         private readonly int vertexCount;
         private readonly int indexCount;
         private readonly Memory.DeviceBuffer vertexBuffer;
@@ -49,31 +54,14 @@ namespace HT.Engine.Rendering
             disposed = true;
         }
 
-        internal void RecordBind(CommandBuffer commandbuffer)
+        internal void RecordBind(CommandBuffer commandbuffer, int binding)
         {
             ThrowIfDisposed();
 
             //Bind our the vertex and index buffer with our uploaded data
-            commandbuffer.CmdBindVertexBuffer(vertexBuffer.VulkanBuffer, offset: 0);
+            commandbuffer.CmdBindVertexBuffer(vertexBuffer.VulkanBuffer, firstBinding: binding, offset: 0);
             commandbuffer.CmdBindIndexBuffer(indexBuffer.VulkanBuffer, offset: 0, indexType: IndexType.UInt16);
         }
-
-        internal void RecordDraw(CommandBuffer commandbuffer)
-        {
-            ThrowIfDisposed();
-
-            //Draw all our indices
-            commandbuffer.CmdDrawIndexed(
-                indexCount: indexCount,
-                instanceCount: 1,
-                firstIndex: 0,
-                firstInstance: 0);
-        }
-
-        internal PipelineVertexInputStateCreateInfo GetVertexInputStateInfo()
-            => new PipelineVertexInputStateCreateInfo(
-                vertexBindingDescriptions: new [] { Resources.Vertex.GetBindingDescription() }, 
-                vertexAttributeDescriptions: Resources.Vertex.GetAttributeDescriptions());
 
         internal PipelineInputAssemblyStateCreateInfo GetInputAssemblyStateInfo()
             => new PipelineInputAssemblyStateCreateInfo(

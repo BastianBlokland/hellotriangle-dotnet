@@ -19,8 +19,8 @@ namespace HT.Engine.Rendering.Memory
         internal DeviceBuffer(
             Device logicalDevice,
             Pool memoryPool,
-            long size,
-            BufferUsages usages)
+            BufferUsages usages,
+            long size)
         {
             if (logicalDevice == null)
                 throw new ArgumentNullException(nameof(logicalDevice));

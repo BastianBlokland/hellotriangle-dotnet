@@ -25,11 +25,17 @@ namespace HT.Main
                 RenderScene scene = new RenderScene(window, clearColor: ColorUtils.Yellow, logger);
                 window.AttachScene(scene);
 
-                AddObject(nativeApp, taskRunner, scene,
+                var spaceship = AddObject(nativeApp, taskRunner, scene,
                     modelPath: "models/spaceship.dae",
                     texturePath: "textures/spaceship_color.tga",
                     vertShaderPath: "shaders/bin/test.vert.spv",
                     fragShaderPath: "shaders/bin/test.frag.spv");
+                InstanceData[] spaceshipInstances = new InstanceData[64 * 64];
+                for (int x = 0; x < 64; x++)
+                for (int y = 0; y < 64; y++)
+                    spaceshipInstances[y * 64 + x] = new InstanceData(
+                        Float4x4.CreateTranslation((x - 32f, 0f, y - 32f)));
+                spaceship.UpdateInstances(spaceshipInstances);
 
                 var frameTracker = new FrameTracker();
                 while (!window.IsCloseRequested)
@@ -58,7 +64,7 @@ namespace HT.Main
             }
         }
 
-        private static void AddObject(
+        private static RenderObject AddObject(
             INativeApp app,
             TaskRunner taskRunner,
             RenderScene scene,
@@ -86,6 +92,7 @@ namespace HT.Main
                 loader.GetResult<ShaderProgram>(vertShaderPath),
                 loader.GetResult<ShaderProgram>(fragShaderPath));
             scene.AddObject(renderObject);
+            return renderObject;
         }
     }
 }

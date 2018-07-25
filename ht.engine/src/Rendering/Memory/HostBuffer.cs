@@ -77,7 +77,9 @@ namespace HT.Engine.Rendering.Memory
             return dataSize;
         }
 
-        public int Write<T>(T[] data)
+        public int Write<T>(T[] data) where T : struct => Write((Span<T>)data);
+        
+        public int Write<T>(Span<T> data)
             where T : struct
         {
             ThrowIfDisposed();

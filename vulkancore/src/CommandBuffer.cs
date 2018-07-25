@@ -361,10 +361,10 @@ namespace VulkanCore
         /// </summary>
         /// <param name="buffer">The <see cref="Buffer"/> handle.</param>
         /// <param name="offset">The <see cref="Buffer"/> offsets.</param>
-        public void CmdBindVertexBuffer(Buffer buffer, long offset = 0)
+        public void CmdBindVertexBuffer(Buffer buffer, int firstBinding, long offset = 0)
         {
             long handle = buffer.Handle;
-            vkCmdBindVertexBuffers(this, 0, 1, &handle, &offset);
+            vkCmdBindVertexBuffers(this, firstBinding, 1, &handle, &offset);
         }
 
         /// <summary>

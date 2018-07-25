@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 
 using HT.Engine.Math;
+using HT.Engine.Utils;
 using VulkanCore;
 
 namespace HT.Engine.Resources
@@ -58,64 +59,57 @@ namespace HT.Engine.Resources
         public override string ToString() => 
             $"(Position: {Position}, Color: {Color}, Normal: {Normal}, Uv1: {Uv1}, Uv2: {Uv2})";
 
-        //Shader bindings
-        internal static VertexInputBindingDescription GetBindingDescription()
-            => new VertexInputBindingDescription(
-                binding: 0,
-                stride: SIZE,
-                inputRate: VertexInputRate.Vertex);
-
-        internal static VertexInputAttributeDescription[] GetAttributeDescriptions()
+        internal static void AddAttributeDescriptions(
+            int binding,
+            ResizeArray<VertexInputAttributeDescription> attributes)
         {
-            var attributes = new VertexInputAttributeDescription[5];
             int offset = 0;
-            for (int i = 0; i < attributes.Length; i++)
+            for (int i = 0; i < 5; i++)
             {
                 switch(i)
                 {
                 case 0: //Position
-                    attributes[i] = new VertexInputAttributeDescription(
-                        location: i,
-                        binding: 0,
+                    attributes.Add(new VertexInputAttributeDescription(
+                        location: attributes.Count,
+                        binding: binding,
                         format: Format.R32G32B32SFloat, //float3
-                        offset: offset); //In bytes from the beginning of the struct
+                        offset: offset)); //In bytes from the beginning of the struct
                     offset += Float3.SIZE;
                     break;
                 case 1: //Color
-                    attributes[i] = new VertexInputAttributeDescription(
-                        location: i,
-                        binding: 0,
+                    attributes.Add(new VertexInputAttributeDescription(
+                        location: attributes.Count,
+                        binding: binding,
                         format: Format.R32G32B32A32SFloat, //float4
-                        offset: offset); //In bytes from the beginning of the struct
+                        offset: offset)); //In bytes from the beginning of the struct
                     offset += Float4.SIZE;
                     break;
                 case 2: //Normal
-                    attributes[i] = new VertexInputAttributeDescription(
-                        location: i,
-                        binding: 0,
+                    attributes.Add(new VertexInputAttributeDescription(
+                        location: attributes.Count,
+                        binding: binding,
                         format: Format.R32G32B32SFloat, //float3
-                        offset: offset); //In bytes from the beginning of the struct
+                        offset: offset)); //In bytes from the beginning of the struct
                     offset += Float3.SIZE;
                     break;
                 case 3: //Uv1
-                    attributes[i] = new VertexInputAttributeDescription(
-                        location: i,
-                        binding: 0,
+                    attributes.Add(new VertexInputAttributeDescription(
+                        location: attributes.Count,
+                        binding: binding,
                         format: Format.R32G32SFloat, //float2
-                        offset: offset); //In bytes from the beginning of the struct
+                        offset: offset)); //In bytes from the beginning of the struct
                     offset += Float2.SIZE;
                     break;
                 case 4: //Uv2
-                    attributes[i] = new VertexInputAttributeDescription(
-                        location: i,
-                        binding: 0,
+                    attributes.Add(new VertexInputAttributeDescription(
+                        location: attributes.Count,
+                        binding: binding,
                         format: Format.R32G32SFloat, //float2
-                        offset: offset); //In bytes from the beginning of the struct
+                        offset: offset)); //In bytes from the beginning of the struct
                     offset += Float2.SIZE;
                     break;
                 }
             }
-            return attributes;
         }
     }
 }

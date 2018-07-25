@@ -2,6 +2,7 @@ using System;
 using System.Runtime.CompilerServices;
 using HT.Engine.Math;
 using HT.Engine.Resources;
+using HT.Engine.Utils;
 using VulkanCore;
 
 namespace HT.Engine.Rendering
@@ -14,7 +15,8 @@ namespace HT.Engine.Rendering
         private readonly DeviceMesh deviceMesh;
         private readonly DeviceTexture deviceTexture;
         private readonly DeviceSampler deviceSampler;
-        private readonly Memory.DeviceBuffer objectDataBuffer;
+        private readonly Memory.HostBuffer instanceDataBuffer;
+        private readonly Memory.HostBuffer indirectArgumentsBuffer;
         private readonly DescriptorManager.Block descriptorBlock;
         private readonly PipelineLayout pipelineLayout;
         private readonly Pipeline pipeline;
@@ -25,7 +27,8 @@ namespace HT.Engine.Rendering
             Mesh mesh,
             ByteTexture texture,
             ShaderProgram vertProg,
-            ShaderProgram fragProg)
+            ShaderProgram fragProg,
+            int maxInstances = 100_000)
         {
             if (scene == null)
                 throw new ArgumentNullException(nameof(scene));
@@ -58,18 +61,27 @@ namespace HT.Engine.Rendering
                 executor: scene.Executor);
             deviceSampler = new DeviceSampler(scene.LogicalDevice);
 
-            //Allocate a buffer for our object data
-            objectDataBuffer = new Memory.DeviceBuffer(
+            //Allocate a buffers for the instance data and indirect args
+            instanceDataBuffer = new Memory.HostBuffer(
+                logicalDevice: scene.LogicalDevice, 
+                memoryPool: scene.MemoryPool,
+                usages: BufferUsages.VertexBuffer,
+                size: InstanceData.SIZE * maxInstances);
+            indirectArgumentsBuffer = new Memory.HostBuffer(
                 logicalDevice: scene.LogicalDevice,
                 memoryPool: scene.MemoryPool,
-                size: Float4x4.SIZE,
-                usages: BufferUsages.UniformBuffer);
+                usages: BufferUsages.IndirectBuffer,
+                size: DrawIndexedIndirectCommand.SIZE);
+            //Write defaults to the indirect args buffer
+            indirectArgumentsBuffer.Write(new DrawIndexedIndirectCommand(
+                indexCount: (uint)deviceMesh.IndexCount,
+                instanceCount: 0, firstIndex: 0, vertexOffset: 0, firstInstance: 0));
 
             //Create the descriptor binding
-            var binding = new DescriptorBinding(uniformBufferCount: 2, imageSamplerCount: 1);
+            var binding = new DescriptorBinding(uniformBufferCount: 1, imageSamplerCount: 1);
             descriptorBlock = scene.DescriptorManager.Allocate(binding);
             descriptorBlock.Update(
-                new Memory.IBuffer[] { scene.SceneDataBuffer, objectDataBuffer },
+                new Memory.IBuffer[] { scene.SceneDataBuffer },
                 new [] { deviceSampler },
                 new [] { deviceTexture });
 
@@ -80,16 +92,17 @@ namespace HT.Engine.Rendering
                 pushConstantRanges:  null ));
 
             pipeline = CreatePipeline(scene.LogicalDevice, scene.RenderPass);
+        }
 
-            //Create a transformation entry
-            int stagingSize = scene.StagingBuffer.Write(Float4x4.Identity);
-            scene.Executor.ExecuteBlocking(commandBuffer =>
-            {
-                commandBuffer.CmdCopyBuffer(
-                    srcBuffer: scene.StagingBuffer.VulkanBuffer,
-                    dstBuffer: objectDataBuffer.VulkanBuffer,
-                    new BufferCopy(size: stagingSize, srcOffset: 0, dstOffset: 0));
-            });
+        public void UpdateInstances(Span<InstanceData> instances)
+        {
+            instanceDataBuffer.Write(instances);
+            indirectArgumentsBuffer.Write(new DrawIndexedIndirectCommand(
+                indexCount: (uint)deviceMesh.IndexCount,
+                instanceCount: (uint)instances.Length,
+                firstIndex: 0,
+                vertexOffset: 0,
+                firstInstance: 0));
         }
 
         public void Dispose()
@@ -99,7 +112,8 @@ namespace HT.Engine.Rendering
             deviceMesh.Dispose();
             deviceSampler.Dispose();
             deviceTexture.Dispose();
-            objectDataBuffer.Dispose();
+            instanceDataBuffer.Dispose();
+            indirectArgumentsBuffer.Dispose();
             descriptorBlock.Free();
             pipelineLayout.Dispose();
             pipeline.Dispose();
@@ -110,8 +124,14 @@ namespace HT.Engine.Rendering
 
         internal void Record(CommandBuffer commandbuffer)
         {
-            //Bind data
-            deviceMesh.RecordBind(commandbuffer);
+            //Bind mesh data
+            deviceMesh.RecordBind(commandbuffer, binding: 0);
+            //Binding instance data
+            commandbuffer.CmdBindVertexBuffer(
+                instanceDataBuffer.VulkanBuffer,
+                firstBinding: 1,
+                offset: 0);
+
             commandbuffer.CmdBindDescriptorSet(
                 PipelineBindPoint.Graphics,
                 pipelineLayout,
@@ -121,7 +141,11 @@ namespace HT.Engine.Rendering
             commandbuffer.CmdBindPipeline(PipelineBindPoint.Graphics, pipeline);
 
             //Draw
-            deviceMesh.RecordDraw(commandbuffer);
+            commandbuffer.CmdDrawIndexedIndirect(
+                buffer: indirectArgumentsBuffer.VulkanBuffer,
+                offset: 0,
+                drawCount: 1,
+                stride: DrawIndexedIndirectCommand.SIZE);
         }
 
         private Pipeline CreatePipeline(Device logicalDevice, RenderPass renderpass)
@@ -168,6 +192,11 @@ namespace HT.Engine.Rendering
                 DynamicState.Viewport,
                 DynamicState.Scissor
             );
+
+            //Gather the attribute descriptions
+            var vertexAttributeDescriptions = new ResizeArray<VertexInputAttributeDescription>();
+            Vertex.AddAttributeDescriptions(binding: 0, vertexAttributeDescriptions);
+            InstanceData.AddAttributeDescriptions(binding: 1, vertexAttributeDescriptions);
             
             return logicalDevice.CreateGraphicsPipeline(new GraphicsPipelineCreateInfo(
                 layout: pipelineLayout,
@@ -175,7 +204,19 @@ namespace HT.Engine.Rendering
                 subpass: 0,
                 stages: shaderStages,
                 inputAssemblyState: deviceMesh.GetInputAssemblyStateInfo(),
-                vertexInputState: deviceMesh.GetVertexInputStateInfo(),
+                vertexInputState: new PipelineVertexInputStateCreateInfo(
+                    vertexBindingDescriptions: new [] 
+                    { 
+                        new VertexInputBindingDescription(
+                            binding: 0,
+                            stride: Vertex.SIZE,
+                            inputRate: VertexInputRate.Vertex),
+                        new VertexInputBindingDescription(
+                            binding: 1,
+                            stride: InstanceData.SIZE,
+                            inputRate: VertexInputRate.Instance)
+                    },
+                    vertexAttributeDescriptions: vertexAttributeDescriptions.ToArray()),
                 rasterizationState: rasterizer,
                 tessellationState: null,
                 //Pass empty viewport and scissor-rect as we set them dynamically
