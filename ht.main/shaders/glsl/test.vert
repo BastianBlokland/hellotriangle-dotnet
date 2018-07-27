@@ -21,7 +21,8 @@ layout(location = 3) in vec2 vertUv1;
 layout(location = 4) in vec2 vertUv2;
 
 //Instance input
-layout(location = 5) in mat4 instanceModelMatrix;
+layout(location = 5) in mat4 instanceModelMatrix; //Uses location 5, 6, 7, 8 becuase 4 x vec 4
+layout(location = 9) in float instanceAge;
 
 //Output
 out gl_PerVertex

@@ -10,12 +10,17 @@ namespace HT.Engine.Resources
     [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
     public readonly struct InstanceData : IEquatable<InstanceData>
     {
-        public const int SIZE = Float4x4.SIZE;
+        public const int SIZE = Float4x4.SIZE + sizeof(float);
         
         //Data
         public readonly Float4x4 ModelMatrix;
+        public readonly float Age;
         
-        public InstanceData(Float4x4 modelMatrix) => ModelMatrix = modelMatrix;
+        public InstanceData(Float4x4 modelMatrix, float age)
+        {
+            ModelMatrix = modelMatrix;
+            Age = age;
+        }
 
         //Equality
         public static bool operator ==(InstanceData a, InstanceData b) => a.Equals(b);
@@ -25,14 +30,19 @@ namespace HT.Engine.Resources
         public override bool Equals(object obj) 
             => obj is InstanceData && Equals((InstanceData)obj);
 
-        public bool Equals(InstanceData other) => other.ModelMatrix == ModelMatrix;
+        public bool Equals(InstanceData other) => 
+            other.ModelMatrix == ModelMatrix &&
+            other.Age == Age;
 
-        public override int GetHashCode() => ModelMatrix.GetHashCode();
+        public override int GetHashCode() => 
+            ModelMatrix.GetHashCode() ^
+            Age.GetHashCode();
 
         public override string ToString() => 
 $@"(
     ModelMatrix:
-    {ModelMatrix}
+    {ModelMatrix},
+    Age: {Age}
 )";
 
         internal static void AddAttributeDescriptions(
@@ -60,6 +70,12 @@ $@"(
                 binding: binding,
                 format: Format.R32G32B32A32SFloat, //float4
                 offset: Float4.SIZE * 3)); //In bytes from the beginning of the struct
+            //Age
+            attributes.Add(new VertexInputAttributeDescription(
+                location: attributes.Count,
+                binding: binding,
+                format: Format.R32SFloat, //float
+                offset: sizeof(float)));
         }
     }
 }

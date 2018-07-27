@@ -34,7 +34,8 @@ namespace HT.Main
                 for (int x = 0; x < 64; x++)
                 for (int y = 0; y < 64; y++)
                     spaceshipInstances[y * 64 + x] = new InstanceData(
-                        Float4x4.CreateTranslation((x - 32f, 0f, y - 32f)));
+                        modelMatrix: Float4x4.CreateTranslation((x - 32f, 0f, y - 32f)),
+                        age: 1f);
                 spaceship.UpdateInstances(spaceshipInstances);
 
                 var frameTracker = new FrameTracker();
