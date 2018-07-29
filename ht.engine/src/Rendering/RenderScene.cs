@@ -27,7 +27,7 @@ namespace HT.Engine.Rendering
         //Data
         private readonly Camera camera;
         private readonly Window window;
-        private readonly Byte4 clearColor;
+        private readonly Byte4? clearColor;
         private readonly Logger logger;
         private readonly TransientExecutor executor;
         private readonly Memory.Pool memoryPool;
@@ -42,7 +42,7 @@ namespace HT.Engine.Rendering
         private bool dirty;
         private bool disposed;
         
-        public RenderScene(Window window, Byte4 clearColor, Logger logger = null)
+        public RenderScene(Window window, Byte4? clearColor, Logger logger = null)
         {
             if (window == null)
                 throw new ArgumentNullException(nameof(window));
@@ -116,19 +116,16 @@ namespace HT.Engine.Rendering
         {
             ThrowIfDisposed();
 
-            Float4 normalizedClearColor = clearColor.Normalized;
+            Float4 normClearColor = clearColor == null ? (0f, 0f, 0f, 1f) : clearColor.Value.Normalized;
             commandbuffer.CmdBeginRenderPass(new RenderPassBeginInfo(
                 renderPass: renderpass,
                 framebuffer: framebuffer,
                 renderArea: new Rect2D(x: 0, y: 0, width: swapchainSize.X, height: swapchainSize.Y),
-                clearValues: new [] 
+                clearValues: new []
                 {
                     //Framebuffer color
                     new ClearValue(new ClearColorValue(new ColorF4(
-                        normalizedClearColor.R,
-                        normalizedClearColor.G,
-                        normalizedClearColor.B,
-                        normalizedClearColor.A))),
+                        normClearColor.R, normClearColor.G, normClearColor.B, normClearColor.A))),
                     //Depthbuffer value
                     new ClearValue(new ClearDepthStencilValue(depth: 1f, stencil: 0))
                 }));
@@ -176,7 +173,7 @@ namespace HT.Engine.Rendering
                 flags: AttachmentDescriptions.MayAlias,
                 format: surfaceFormat,
                 samples: SampleCounts.Count1,
-                loadOp: AttachmentLoadOp.Clear,
+                loadOp: clearColor == null ? AttachmentLoadOp.DontCare : AttachmentLoadOp.Clear,
                 storeOp: AttachmentStoreOp.Store,
                 stencilLoadOp: AttachmentLoadOp.DontCare,
                 stencilStoreOp: AttachmentStoreOp.DontCare,
