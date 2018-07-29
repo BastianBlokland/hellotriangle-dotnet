@@ -47,3 +47,5 @@ run it manually there is a task 'build-shaders' which calls tools/compile-shader
 
 # credits
 C# vulkan bindings [VulkanCore](https://github.com/discosultan/VulkanCore) made by [discosultan](https://github.com/discosultan)
+Skybox textures (Heiko Irrgang, https://93i.de/p/free-skybox-texture-set/)
+
