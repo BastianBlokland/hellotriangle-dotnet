@@ -13,8 +13,8 @@ namespace HT.Engine.Rendering
         private readonly ShaderModule vertModule;
         private readonly ShaderModule fragModule;
         private readonly DeviceMesh deviceMesh;
-        private readonly DeviceTexture deviceTexture;
-        private readonly DeviceSampler deviceSampler;
+        private readonly DeviceTexture[] deviceTextures;
+        private readonly DeviceSampler[] deviceSamplers;
         private readonly Memory.HostBuffer instanceDataBuffer;
         private readonly Memory.HostBuffer indirectArgumentsBuffer;
         private readonly DescriptorManager.Block descriptorBlock;
@@ -25,7 +25,7 @@ namespace HT.Engine.Rendering
         public RenderObject(
             RenderScene scene,
             Mesh mesh,
-            ByteTexture texture,
+            ByteTexture[] textures,
             ShaderProgram vertProg,
             ShaderProgram fragProg,
             int maxInstances = 100_000)
@@ -34,8 +34,8 @@ namespace HT.Engine.Rendering
                 throw new ArgumentNullException(nameof(scene));
             if (mesh == null)
                 throw new ArgumentNullException(nameof(mesh));
-            if (texture == null)
-                throw new ArgumentNullException(nameof(texture));
+            if (textures == null)
+                throw new ArgumentNullException(nameof(textures));
             if (vertProg == null)
                 throw new ArgumentNullException(nameof(vertProg));
             if (fragProg == null)
@@ -53,13 +53,18 @@ namespace HT.Engine.Rendering
                 scene.MemoryPool,
                 scene.StagingBuffer,
                 scene.Executor);
-            deviceTexture = DeviceTexture.UploadTexture(
-                texture: texture, 
-                logicalDevice: scene.LogicalDevice,
-                memoryPool: scene.MemoryPool,
-                stagingBuffer: scene.StagingBuffer,
-                executor: scene.Executor);
-            deviceSampler = new DeviceSampler(scene.LogicalDevice);
+            //Upload the textures to the gpu
+            deviceTextures = new DeviceTexture[textures.Length];
+            for (int i = 0; i < deviceTextures.Length; i++)
+                deviceTextures[i] = DeviceTexture.UploadTexture(
+                    texture: textures[i],
+                    logicalDevice: scene.LogicalDevice,
+                    memoryPool: scene.MemoryPool,
+                    stagingBuffer: scene.StagingBuffer,
+                    executor: scene.Executor);
+            deviceSamplers = new DeviceSampler[textures.Length];
+            for (int i = 0; i < deviceSamplers.Length; i++)
+                deviceSamplers[i] = new DeviceSampler(scene.LogicalDevice);
 
             //Allocate a buffers for the instance data and indirect args
             instanceDataBuffer = new Memory.HostBuffer(
@@ -78,17 +83,14 @@ namespace HT.Engine.Rendering
                 instanceCount: 0, firstIndex: 0, vertexOffset: 0, firstInstance: 0));
 
             //Create the descriptor binding
-            var binding = new DescriptorBinding(uniformBufferCount: 1, imageSamplerCount: 1);
+            var binding = new DescriptorBinding(uniformBufferCount: 1, imageSamplerCount: textures.Length);
             descriptorBlock = scene.DescriptorManager.Allocate(binding);
             descriptorBlock.Update(
-                new Memory.IBuffer[] { scene.SceneDataBuffer },
-                new [] { deviceSampler },
-                new [] { deviceTexture });
+                new Memory.IBuffer[] { scene.SceneDataBuffer }, deviceSamplers, deviceTextures);
 
             //Create the pipeline
             pipelineLayout = scene.LogicalDevice.CreatePipelineLayout(new PipelineLayoutCreateInfo(
-                setLayouts: new [] { 
-                    descriptorBlock.Layout },
+                setLayouts: new [] { descriptorBlock.Layout },
                 pushConstantRanges:  null ));
 
             pipeline = CreatePipeline(scene.LogicalDevice, scene.RenderPass);
@@ -110,8 +112,8 @@ namespace HT.Engine.Rendering
             ThrowIfDisposed();
 
             deviceMesh.Dispose();
-            deviceSampler.Dispose();
-            deviceTexture.Dispose();
+            deviceSamplers.DisposeAll();
+            deviceTextures.DisposeAll();
             instanceDataBuffer.Dispose();
             indirectArgumentsBuffer.Dispose();
             descriptorBlock.Free();

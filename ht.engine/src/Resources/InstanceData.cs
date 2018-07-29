@@ -75,7 +75,7 @@ $@"(
                 location: attributes.Count,
                 binding: binding,
                 format: Format.R32SFloat, //float
-                offset: sizeof(float)));
+                offset: Float4x4.SIZE));
         }
     }
 }

@@ -1,59 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
   <asset><contributor><author></author><authoring_tool>FBX COLLADA exporter</authoring_tool><comments></comments></contributor><created>2018-06-30T23:21:06Z</created><keywords></keywords><modified>2018-06-30T23:21:06Z</modified><revision></revision><subject></subject><title></title><unit meter="0.025400" name="centimeter"></unit><up_axis>Y_UP</up_axis></asset>
-  <library_images>
-    <image id="MapFBXASC032FBXASC0352-image" name="MapFBXASC032FBXASC0352"><init_from>file://C:\Users\basti\Desktop\ExplosionResources\SpaceShipExhaustTex.png</init_from></image>
-  </library_images>
-  <library_materials>
-    <material id="FBXASC0482FBXASC032-FBXASC032Default" name="FBXASC0482FBXASC032-FBXASC032Default">
-      <instance_effect url="#FBXASC0482FBXASC032-FBXASC032Default-fx"/>
-    </material>
-  </library_materials>
-  <library_effects>
-    <effect id="FBXASC0482FBXASC032-FBXASC032Default-fx" name="FBXASC0482FBXASC032-FBXASC032Default">
-      <profile_COMMON>
-        <technique sid="standard">
-          <phong>
-            <emission>
-              <color sid="emission">0.000000  0.000000 0.000000 1.000000</color>
-            </emission>
-            <ambient>
-              <color sid="ambient">0.588235  0.588235 0.588235 1.000000</color>
-            </ambient>
-            <diffuse>
-              <texture texture="MapFBXASC032FBXASC0352-image" texcoord="CHANNEL0">
-                <extra>
-                  <technique profile="MAYA">
-                    <wrapU sid="wrapU0">TRUE</wrapU>
-                    <wrapV sid="wrapV0">TRUE</wrapV>
-                    <blend_mode>ADD</blend_mode>
-                  </technique>
-                </extra>
-              </texture>
-            </diffuse>
-            <specular>
-              <color sid="specular">0.000000  0.000000 0.000000 1.000000</color>
-            </specular>
-            <shininess>
-              <float sid="shininess">2.000000</float>
-            </shininess>
-            <reflective>
-              <color sid="reflective">0.000000  0.000000 0.000000 1.000000</color>
-            </reflective>
-            <reflectivity>
-              <float sid="reflectivity">1.000000</float>
-            </reflectivity>
-            <transparent opaque="RGB_ZERO">
-              <color sid="transparent">1.000000  1.000000 1.000000 1.000000</color>
-            </transparent>
-            <transparency>
-              <float sid="transparency">0.000000</float>
-            </transparency>
-          </phong>
-        </technique>
-      </profile_COMMON>
-    </effect>
-  </library_effects>
   <library_geometries>
     <geometry id="Mesh-lib" name="MeshMesh">
       <mesh>

@@ -25,22 +25,25 @@ namespace HT.Main
                 RenderScene scene = new RenderScene(window, clearColor: ColorUtils.Yellow, logger);
                 window.AttachScene(scene);
 
-                var spaceship = AddObject(nativeApp, taskRunner, scene,
-                    modelPath: "models/spaceship.dae",
-                    texturePath: "textures/spaceship_color.tga",
-                    vertShaderPath: "shaders/bin/test.vert.spv",
-                    fragShaderPath: "shaders/bin/test.frag.spv");
-                InstanceData[] spaceshipInstances = new InstanceData[64 * 64];
-                for (int x = 0; x < 64; x++)
-                for (int y = 0; y < 64; y++)
-                    spaceshipInstances[y * 64 + x] = new InstanceData(
-                        modelMatrix: Float4x4.CreateTranslation((x - 32f, 0f, y - 32f)),
-                        age: 1f);
-                spaceship.UpdateInstances(spaceshipInstances);
+                //Add the fighter to the scene
+                var fighter = AddObject(nativeApp, taskRunner, scene,
+                    modelPath: "models/fighter.dae",
+                    texturePaths: new [] { "textures/fighter_color.tga", "textures/fighter_exhaust.tga" },
+                    vertShaderPath: "shaders/bin/fighter.vert.spv",
+                    fragShaderPath: "shaders/bin/fighter.frag.spv");
+                InstanceData[] fighterInstances = new InstanceData[64 * 64];
 
                 var frameTracker = new FrameTracker();
                 while (!window.IsCloseRequested)
                 {
+                    //Update the fighter instances
+                    for (int x = 0; x < 64; x++)
+                    for (int y = 0; y < 64; y++)
+                        fighterInstances[y * 64 + x] = new InstanceData(
+                            modelMatrix: Float4x4.CreateTranslation(((x - 32f) * 3f, 0f, (y - 32f) * 3f)),
+                            age: (float)frameTracker.ElapsedTime);
+                    fighter.UpdateInstances(fighterInstances);
+
                     //Rotate the camera
                     scene.Camera.Transformation = Float4x4.CreateOrbit(
                         center: Float3.Zero,
@@ -70,15 +73,24 @@ namespace HT.Main
             TaskRunner taskRunner,
             RenderScene scene,
             string modelPath,
-            string texturePath,
+            string[] texturePaths,
             string vertShaderPath,
             string fragShaderPath)
         {
-            var loader = new Loader(app, modelPath, texturePath, vertShaderPath, fragShaderPath);
+            var paths = ArrayUtils.Build<string>(modelPath, texturePaths, vertShaderPath, fragShaderPath);
+
+            //Star loading all the resources
+            var loader = new Loader(app, paths);
             loader.StartLoading(taskRunner);
 
+            //Wait for the resources to be loaded
             while (!loader.IsFinished)
                 taskRunner.Help();
+
+            //Gather the loaded textures
+            var textures = new ByteTexture[texturePaths.Length];
+            for (int i = 0; i < textures.Length; i++)
+                textures[i] = loader.GetResult<ByteTexture>(texturePaths[i]);
 
             //NOTE: At the moment 'RenderObject' creation is a fully single threaded thing because it
             //uses resources that are shared, like the staging buffer and also allot of the api is
@@ -89,7 +101,7 @@ namespace HT.Main
             RenderObject renderObject = new RenderObject(
                 scene, 
                 loader.GetResult<Mesh>(modelPath),
-                loader.GetResult<ByteTexture>(texturePath),
+                textures,
                 loader.GetResult<ShaderProgram>(vertShaderPath),
                 loader.GetResult<ShaderProgram>(fragShaderPath));
             scene.AddObject(renderObject);
