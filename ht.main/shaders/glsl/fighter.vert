@@ -44,7 +44,7 @@ void main()
     vec4 exhaustColor = vec4(1, 1, 5, 1);
     
     //Logic
-    vec4 exhaustSample = texture(exhaustTexSampler, vec2(instanceAge, vertUv2.y));
+    vec4 exhaustSample = texture(exhaustTexSampler, vec2(sceneData.time + gl_InstanceIndex * 0.1, vertUv2.y));
     float heightMap = exhaustSample.r;
     float colorMultiplier = exhaustSample.g;
 
