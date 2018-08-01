@@ -25,7 +25,7 @@ namespace HT.Engine.Rendering
         public RenderObject(
             RenderScene scene,
             Mesh mesh,
-            ByteTexture[] textures,
+            ITexture[] textures,
             ShaderProgram vertProg,
             ShaderProgram fragProg,
             int maxInstances = 100_000)
@@ -57,7 +57,7 @@ namespace HT.Engine.Rendering
             deviceTextures = new DeviceTexture[textures.Length];
             for (int i = 0; i < deviceTextures.Length; i++)
                 deviceTextures[i] = DeviceTexture.UploadTexture(
-                    texture: textures[i],
+                    texture: textures[i] as IInternalTexture,
                     logicalDevice: scene.LogicalDevice,
                     memoryPool: scene.MemoryPool,
                     stagingBuffer: scene.StagingBuffer,

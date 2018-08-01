@@ -51,13 +51,13 @@ namespace HT.Engine.Rendering.Memory
             disposed = true;
         }
 
-        public int Write<T>(T data)
+        public int Write<T>(T data, long offset = 0)
             where T : struct
         {
             ThrowIfDisposed();
 
             int dataSize = Unsafe.SizeOf<T>();
-            if (dataSize > memory.Size)
+            if (dataSize + offset > memory.Size)
                 throw new ArgumentException(
                     $"[{nameof(HostBuffer)}] Data does not fit in memory region", nameof(data));
 
@@ -65,7 +65,7 @@ namespace HT.Engine.Rendering.Memory
             unsafe
             {
                 //Map the memory to a cpu pointer
-                void* stagingPointer = memory.Map().ToPointer();
+                void* stagingPointer = memory.Map(offset).ToPointer();
                 
                 //Copy the data over
                 void* dataPointer = Unsafe.AsPointer(ref data);
@@ -77,9 +77,10 @@ namespace HT.Engine.Rendering.Memory
             return dataSize;
         }
 
-        public int Write<T>(T[] data) where T : struct => Write((Span<T>)data);
+        public int Write<T>(T[] data, long offset = 0) where T : struct => 
+            Write((Span<T>)data, offset);
         
-        public int Write<T>(Span<T> data)
+        public int Write<T>(Span<T> data, long offset = 0)
             where T : struct
         {
             ThrowIfDisposed();
@@ -91,7 +92,7 @@ namespace HT.Engine.Rendering.Memory
                     $"[{nameof(Pool)}] Given data-array is empty", nameof(data));
 
             int dataSize = data.GetSize();
-            if (dataSize > memory.Size)
+            if (offset + dataSize > memory.Size)
                 throw new ArgumentException(
                     $"[{nameof(HostBuffer)}] Data does not fit in memory region", nameof(data));
 
@@ -99,7 +100,7 @@ namespace HT.Engine.Rendering.Memory
             unsafe
             {
                 //Map the memory to a cpu pointer
-                void* stagingPointer = memory.Map().ToPointer();
+                void* stagingPointer = memory.Map(offset).ToPointer();
                 
                 //Copy the data over
                 void* dataPointer = Unsafe.AsPointer(ref data[0]);

@@ -69,7 +69,7 @@ namespace HT.Engine.Rendering.Memory
                 memoryTypeIndex: memoryTypeIndex));
         }
 
-        internal IntPtr Map(Block block)
+        internal IntPtr Map(Block block, long offset)
         {
             if (block.Container != this)
                 throw new ArgumentException(
@@ -78,8 +78,10 @@ namespace HT.Engine.Rendering.Memory
                 throw new Exception($"[{nameof(Chunk)}] Only host memory can be mapped");
             if (currentlyMapped)
                 throw new Exception($"[{nameof(Chunk)}] Memory is allready mapped");
+            if (offset >= block.Size)
+                throw new Exception($"[{nameof(Chunk)}] Given offset leaves no space to be mapped");
             currentlyMapped = true;
-            return memory.Map(block.Offset, block.Size);
+            return memory.Map(block.Offset + offset, block.Size);
         }
 
         internal void Unmap()

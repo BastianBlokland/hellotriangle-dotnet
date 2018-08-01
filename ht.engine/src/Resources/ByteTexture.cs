@@ -7,32 +7,36 @@ using VulkanCore;
 
 namespace HT.Engine.Resources
 {
-    public sealed class ByteTexture
+    public sealed class ByteTexture : IInternalTexture
     {
         //Properties
-        public Int2 Size => new Int2(width, height);
-        public int Width => width;
-        public int Height => height;
-        public int PixelCount => width * height;
+        public Int2 Size => size;
+        public Format Format => Format.R8G8B8A8UNorm;
+        public bool IsCubeMap => false;
 
         //Data
-        private Byte4[] pixels; //stored row by row
-        private readonly int width;
-        private readonly int height;
+        private readonly Byte4[] pixels; //stored row by row
+        private readonly Int2 size;
 
-        public ByteTexture(Byte4[] pixels, int width, int height)
+        public ByteTexture(Byte4[] pixels, Int2 size)
         {
             if (pixels == null)
                 throw new ArgumentNullException(nameof(pixels));
-            if (pixels.Length != width * height)
+            if (pixels.Length != size.X * size.Y)
                 throw new ArgumentException(
-                    $"[{nameof(ByteTexture)}] Invalid count, expected: {width * height}, got: {pixels.Length}", nameof(pixels));
+                    $"[{nameof(ByteTexture)}] Invalid count, expected: {size.X * size.Y}, got: {pixels.Length}", nameof(pixels));
             this.pixels = pixels;
-            this.width = width;
-            this.height = height;
+            this.size = size;
         }
 
-        internal void Upload(
+        int IInternalTexture.Write(HostBuffer buffer, long offset)
+        {
+            if (buffer == null)
+                throw new ArgumentNullException(nameof(buffer));
+            return buffer.Write(pixels, offset);
+        }
+
+        void IInternalTexture.Upload(
             HostBuffer stagingBuffer,
             TransientExecutor executor,
             Image image,
@@ -43,10 +47,10 @@ namespace HT.Engine.Resources
             if (executor == null)
                 throw new ArgumentNullException(nameof(executor));
 
-            //Write to our staging buffer
-            stagingBuffer.Write(pixels);
+            //Write to the staging buffer
+            stagingBuffer.Write(pixels, offset: 0);
 
-            //Copy our staging buffer to the image
+            //Copy the staging buffer to the image
             executor.ExecuteBlocking(commandBuffer =>
             {
                 commandBuffer.CmdCopyBufferToImage(
@@ -61,8 +65,8 @@ namespace HT.Engine.Resources
                             aspectMask: aspects, mipLevel: 0, baseArrayLayer: 0, layerCount: 1),
                         ImageOffset = new Offset3D(x: 0, y: 0, z: 0),
                         ImageExtent = new Extent3D(
-                            width: width,
-                            height: height,
+                            width: size.X,
+                            height: size.Y,
                             depth: 1)});
             });
         }

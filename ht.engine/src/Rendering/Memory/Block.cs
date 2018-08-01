@@ -19,7 +19,7 @@ namespace HT.Engine.Rendering.Memory
             Size = size;
         }
         
-        internal IntPtr Map() => Container.Map(this);
+        internal IntPtr Map(long offset = 0) => Container.Map(this, offset);
 
         internal void Unmap() => Container.Unmap();
 

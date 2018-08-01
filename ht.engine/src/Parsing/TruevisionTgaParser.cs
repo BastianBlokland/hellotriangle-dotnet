@@ -103,7 +103,7 @@ namespace HT.Engine.Parsing
                 else
                     pixels[i] = ConsumePixel();
             }
-            return new ByteTexture(pixels, header.ImageWidth, header.ImageHeight);
+            return new ByteTexture(pixels, size: (header.ImageWidth, header.ImageHeight));
         }
 
         public void Dispose() => par.Dispose();
