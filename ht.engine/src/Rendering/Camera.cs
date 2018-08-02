@@ -9,7 +9,7 @@ namespace HT.Engine.Rendering
 
         //Data
         public Float4x4 Transformation { get; set; } = Float4x4.Identity;
-        public float VerticalFov { get; set; } = 45f * FloatUtils.DEG_TO_RAD;
+        public float VerticalFov { get; set; } = 60f * FloatUtils.DEG_TO_RAD;
 
         internal Frustum GetFrustum(float aspect)
             => Frustum.CreateFromVerticalAngleAndAspect(
