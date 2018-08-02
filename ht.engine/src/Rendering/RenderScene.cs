@@ -34,7 +34,7 @@ namespace HT.Engine.Rendering
         private readonly Memory.HostBuffer stagingBuffer;
         private readonly Memory.HostBuffer sceneDataBuffer;
         private readonly DescriptorManager descriptorManager;
-        private readonly List<RenderObject> renderObjects = new List<RenderObject>();
+        private readonly List<IInternalRenderObject> renderObjects = new List<IInternalRenderObject>();
 
         private RenderPass renderpass;
         private Int2 swapchainSize;
@@ -70,9 +70,12 @@ namespace HT.Engine.Rendering
             CreateRenderpass(window.LogicalDevice, window.SurfaceFormat);
         }
 
-        public void AddObject(RenderObject renderObject)
+        public void AddObject(IRenderObject renderObject)
         {
-            renderObjects.Add(renderObject);
+            if (!(renderObject is IInternalRenderObject))
+                throw new Exception(
+                    $"[{nameof(RenderScene)}] Render objects have to be implemented at engine level");
+            renderObjects.Add(renderObject as IInternalRenderObject);
             dirty = true;
         }
 
@@ -153,13 +156,9 @@ namespace HT.Engine.Rendering
         {
             //Update the scene data
             float aspect = (float)swapchainSize.X / swapchainSize.Y;
-            Float4x4 cameraMatrix = camera.Transformation;
-            Float4x4 viewMatrix = camera.Transformation.Invert();
-            Float4x4 projectionMatrix = camera.GetProjection(aspect);
             SceneData sceneData = new SceneData(
-                cameraMatrix,
-                viewMatrix,
-                projectionMatrix,
+                camera.Transformation,
+                camera.GetProjection(aspect),
                 tracker.FrameNumber,
                 (float)tracker.ElapsedTime,
                 tracker.DeltaTime);

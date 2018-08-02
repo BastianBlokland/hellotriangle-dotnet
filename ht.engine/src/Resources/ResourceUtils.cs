@@ -11,25 +11,35 @@ namespace HT.Engine.Resources
         public static IParser CreateParser(INativeApp app, string path)
         {
             string extension = Path.GetExtension(path);
-            FileStream stream = app.ReadFile(path);
-
             switch (extension)
             {
+            case ".cube": case ".CUBE":
+            {
+                string leftPath = Path.ChangeExtension(path, ".left.tga");
+                string rightPath = Path.ChangeExtension(path, ".right.tga");
+                string upPath = Path.ChangeExtension(path, ".up.tga");
+                string downPath = Path.ChangeExtension(path, ".down.tga");
+                string frontPath = Path.ChangeExtension(path, ".front.tga");
+                string backPath = Path.ChangeExtension(path, ".back.tga");
+                return new CubeTextureParser(
+                    CreateParser(app, leftPath) as ITextureParser, CreateParser(app, rightPath) as ITextureParser,
+                    CreateParser(app, upPath) as ITextureParser, CreateParser(app, downPath) as ITextureParser,
+                    CreateParser(app, frontPath) as ITextureParser, CreateParser(app, backPath) as ITextureParser);
+            }
             case ".dae": case ".DAE":
-                return new ColladaParser(stream, leaveStreamOpen: false);
+                return new ColladaParser(app.ReadFile(path), leaveStreamOpen: false);
             
             case ".obj": case ".OBJ":
-                return new WavefrontObjParser(stream, leaveStreamOpen: false);
+                return new WavefrontObjParser(app.ReadFile(path), leaveStreamOpen: false);
 
             case ".tga": case ".TGA":
-                return new TruevisionTgaParser(stream, leaveStreamOpen: false);
+                return new TruevisionTgaParser(app.ReadFile(path), leaveStreamOpen: false);
 
             case ".spv": case ".SPV":
-                return new SpirVParser(stream, leaveStreamOpen: false);
+                return new SpirVParser(app.ReadFile(path), leaveStreamOpen: false);
             }
 
             //No supported parser found
-            stream.Dispose();
             throw new Exception(
                 $"[{nameof(ResourceUtils)}] No parser known for extension: '{extension}'");
         }

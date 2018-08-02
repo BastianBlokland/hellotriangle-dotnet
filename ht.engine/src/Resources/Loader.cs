@@ -67,7 +67,7 @@ namespace HT.Engine.Resources
             if (result == null)
                 throw new Exception($"[{nameof(Loader)}] Item at path: '{path}' failed to load");
             
-            if (result.GetType() != typeof(T))
+            if (!typeof(T).IsAssignableFrom(result.GetType()))
                 throw new Exception(
                     $"[{nameof(Loader)}] Requested type: '{typeof(T).Name}' does not match loaded type: '{result.GetType().Name}'");
             

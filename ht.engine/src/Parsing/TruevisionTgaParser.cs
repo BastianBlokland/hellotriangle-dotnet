@@ -11,7 +11,7 @@ namespace HT.Engine.Parsing
     //Followed the spec from wikipedia: https://en.wikipedia.org/wiki/Truevision_TGA
     //About tga colors: http://www.ryanjuckett.com/programming/parsing-colors-in-a-tga-file/
     //About rle compression: https://en.wikipedia.org/wiki/Run-length_encoding
-    public sealed class TruevisionTgaParser : IParser<ByteTexture>, IParser
+    public sealed class TruevisionTgaParser : ITextureParser, IParser<ByteTexture>, IParser
     {
         private enum ColorMapType : byte
         {
@@ -141,6 +141,7 @@ namespace HT.Engine.Parsing
             }
         }
 
+        ITexture ITextureParser.Parse() => Parse();
         object IParser.Parse() => Parse();
     }
 }

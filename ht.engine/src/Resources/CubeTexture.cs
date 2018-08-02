@@ -24,15 +24,13 @@ namespace HT.Engine.Resources
             ITexture up,
             ITexture down,
             ITexture front,
-            ITexture back,
-            Int2 size) : this(
+            ITexture back) : this(
                 left as IInternalTexture, 
                 right as IInternalTexture, 
                 up as IInternalTexture,
                 down as IInternalTexture,
                 front as IInternalTexture,
-                back as IInternalTexture,
-                size) {}
+                back as IInternalTexture) {}
 
         internal CubeTexture(
             IInternalTexture left,
@@ -40,8 +38,7 @@ namespace HT.Engine.Resources
             IInternalTexture up,
             IInternalTexture down,
             IInternalTexture front,
-            IInternalTexture back,
-            Int2 size)
+            IInternalTexture back)
         {
             if (left == null)
                 throw new ArgumentNullException(nameof(left));
@@ -55,12 +52,11 @@ namespace HT.Engine.Resources
                 throw new ArgumentNullException(nameof(front));
             if (back == null)
                 throw new ArgumentNullException(nameof(back));
-            if (left.Size != size || right.Size != size ||
-                up.Size != size || down.Size != size ||
-                front.Size != size || back.Size != size)
+            size = left.Size;
+            if (right.Size != size || up.Size != size || down.Size != size || front.Size != size || back.Size != size)
             {
                 throw new ArgumentException(
-                    $"[{nameof(CubeTexture)}] All faces of the cube-map need to match the given size",
+                    $"[{nameof(CubeTexture)}] All faces of the cube-map need to have the same size",
                     nameof(size));
             }
             Format format = left.Format;
@@ -79,7 +75,6 @@ namespace HT.Engine.Resources
             faces[3] = down;
             faces[4] = front;
             faces[5] = back;
-            this.size = size;
         }
 
         int IInternalTexture.Write(HostBuffer buffer, long offset)

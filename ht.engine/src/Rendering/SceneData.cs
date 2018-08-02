@@ -24,12 +24,12 @@ namespace HT.Engine.Rendering
         
         internal SceneData(
             Float4x4 cameraMatrix,
-            Float4x4 viewMatrix,
             Float4x4 projectionMatrix,
             int frame,
             float time,
             float deltaTime)
         {
+            Float4x4 viewMatrix = cameraMatrix.Invert();
             CameraMatrix = cameraMatrix;
             ViewMatrix = viewMatrix;
             ProjectionMatrix = projectionMatrix;

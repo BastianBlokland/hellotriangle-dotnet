@@ -7,33 +7,28 @@ using VulkanCore;
 
 namespace HT.Engine.Rendering
 {
-    public sealed class RenderObject : IDisposable
+    public sealed class AttributelessObject : IInternalRenderObject
     {
         private readonly RenderScene scene;
+        private readonly int vertexCount;
         private readonly ShaderModule vertModule;
         private readonly ShaderModule fragModule;
-        private readonly DeviceMesh deviceMesh;
         private readonly DeviceTexture[] deviceTextures;
         private readonly DeviceSampler[] deviceSamplers;
-        private readonly Memory.HostBuffer instanceDataBuffer;
-        private readonly Memory.HostBuffer indirectArgumentsBuffer;
         private readonly DescriptorManager.Block descriptorBlock;
         private readonly PipelineLayout pipelineLayout;
         private readonly Pipeline pipeline;
         private bool disposed;
 
-        public RenderObject(
+        public AttributelessObject(
             RenderScene scene,
-            Mesh mesh,
+            int vertexCount,
             ITexture[] textures,
             ShaderProgram vertProg,
-            ShaderProgram fragProg,
-            int maxInstances = 100_000)
+            ShaderProgram fragProg)
         {
             if (scene == null)
                 throw new ArgumentNullException(nameof(scene));
-            if (mesh == null)
-                throw new ArgumentNullException(nameof(mesh));
             if (textures == null)
                 throw new ArgumentNullException(nameof(textures));
             if (vertProg == null)
@@ -41,18 +36,12 @@ namespace HT.Engine.Rendering
             if (fragProg == null)
                 throw new ArgumentNullException(nameof(fragProg));
             this.scene = scene;
+            this.vertexCount = vertexCount;
 
             //Create the shader modules
             vertModule = vertProg.CreateModule(scene.LogicalDevice);
             fragModule = fragProg.CreateModule(scene.LogicalDevice);
 
-            //Upload our mesh to the gpu
-            deviceMesh = new DeviceMesh(
-                mesh, 
-                scene.LogicalDevice,
-                scene.MemoryPool,
-                scene.StagingBuffer,
-                scene.Executor);
             //Upload the textures to the gpu
             deviceTextures = new DeviceTexture[textures.Length];
             for (int i = 0; i < deviceTextures.Length; i++)
@@ -65,22 +54,6 @@ namespace HT.Engine.Rendering
             deviceSamplers = new DeviceSampler[textures.Length];
             for (int i = 0; i < deviceSamplers.Length; i++)
                 deviceSamplers[i] = new DeviceSampler(scene.LogicalDevice);
-
-            //Allocate a buffers for the instance data and indirect args
-            instanceDataBuffer = new Memory.HostBuffer(
-                logicalDevice: scene.LogicalDevice, 
-                memoryPool: scene.MemoryPool,
-                usages: BufferUsages.VertexBuffer,
-                size: InstanceData.SIZE * maxInstances);
-            indirectArgumentsBuffer = new Memory.HostBuffer(
-                logicalDevice: scene.LogicalDevice,
-                memoryPool: scene.MemoryPool,
-                usages: BufferUsages.IndirectBuffer,
-                size: DrawIndexedIndirectCommand.SIZE);
-            //Write defaults to the indirect args buffer
-            indirectArgumentsBuffer.Write(new DrawIndexedIndirectCommand(
-                indexCount: (uint)deviceMesh.IndexCount,
-                instanceCount: 0, firstIndex: 0, vertexOffset: 0, firstInstance: 0));
 
             //Create the descriptor binding
             var binding = new DescriptorBinding(uniformBufferCount: 1, imageSamplerCount: textures.Length);
@@ -96,26 +69,12 @@ namespace HT.Engine.Rendering
             pipeline = CreatePipeline(scene.LogicalDevice, scene.RenderPass);
         }
 
-        public void UpdateInstances(Span<InstanceData> instances)
-        {
-            instanceDataBuffer.Write(instances);
-            indirectArgumentsBuffer.Write(new DrawIndexedIndirectCommand(
-                indexCount: (uint)deviceMesh.IndexCount,
-                instanceCount: (uint)instances.Length,
-                firstIndex: 0,
-                vertexOffset: 0,
-                firstInstance: 0));
-        }
-
         public void Dispose()
         {
             ThrowIfDisposed();
 
-            deviceMesh.Dispose();
             deviceSamplers.DisposeAll();
             deviceTextures.DisposeAll();
-            instanceDataBuffer.Dispose();
-            indirectArgumentsBuffer.Dispose();
             descriptorBlock.Free();
             pipelineLayout.Dispose();
             pipeline.Dispose();
@@ -124,16 +83,8 @@ namespace HT.Engine.Rendering
             disposed = true;
         }
 
-        internal void Record(CommandBuffer commandbuffer)
+        void IInternalRenderObject.Record(CommandBuffer commandbuffer)
         {
-            //Bind mesh data
-            deviceMesh.RecordBind(commandbuffer, binding: 0);
-            //Binding instance data
-            commandbuffer.CmdBindVertexBuffer(
-                instanceDataBuffer.VulkanBuffer,
-                firstBinding: 1,
-                offset: 0);
-
             commandbuffer.CmdBindDescriptorSet(
                 PipelineBindPoint.Graphics,
                 pipelineLayout,
@@ -143,11 +94,7 @@ namespace HT.Engine.Rendering
             commandbuffer.CmdBindPipeline(PipelineBindPoint.Graphics, pipeline);
 
             //Draw
-            commandbuffer.CmdDrawIndexedIndirect(
-                buffer: indirectArgumentsBuffer.VulkanBuffer,
-                offset: 0,
-                drawCount: 1,
-                stride: DrawIndexedIndirectCommand.SIZE);
+            commandbuffer.CmdDraw(vertexCount, instanceCount: 1, firstVertex: 0, firstInstance: 0);
         }
 
         private Pipeline CreatePipeline(Device logicalDevice, RenderPass renderpass)
@@ -162,7 +109,7 @@ namespace HT.Engine.Rendering
             var depthTest = new PipelineDepthStencilStateCreateInfo {
                 DepthTestEnable = true,
                 DepthWriteEnable = true,
-                DepthCompareOp = CompareOp.Less,
+                DepthCompareOp = CompareOp.LessOrEqual,
                 DepthBoundsTestEnable = false,
                 StencilTestEnable = false
             };
@@ -170,7 +117,7 @@ namespace HT.Engine.Rendering
                 depthClampEnable: false,
                 polygonMode: PolygonMode.Fill,
                 cullMode: CullModes.Back,
-                frontFace: deviceMesh.GetFrontFace(),
+                frontFace: FrontFace.Clockwise,
                 lineWidth: 1f
             );
             var blending = new PipelineColorBlendStateCreateInfo(
@@ -194,31 +141,16 @@ namespace HT.Engine.Rendering
                 DynamicState.Viewport,
                 DynamicState.Scissor
             );
-
-            //Gather the attribute descriptions
-            var vertexAttributeDescriptions = new ResizeArray<VertexInputAttributeDescription>();
-            Vertex.AddAttributeDescriptions(binding: 0, vertexAttributeDescriptions);
-            InstanceData.AddAttributeDescriptions(binding: 1, vertexAttributeDescriptions);
             
             return logicalDevice.CreateGraphicsPipeline(new GraphicsPipelineCreateInfo(
                 layout: pipelineLayout,
                 renderPass: renderpass,
                 subpass: 0,
                 stages: shaderStages,
-                inputAssemblyState: deviceMesh.GetInputAssemblyStateInfo(),
-                vertexInputState: new PipelineVertexInputStateCreateInfo(
-                    vertexBindingDescriptions: new [] 
-                    { 
-                        new VertexInputBindingDescription(
-                            binding: 0,
-                            stride: Vertex.SIZE,
-                            inputRate: VertexInputRate.Vertex),
-                        new VertexInputBindingDescription(
-                            binding: 1,
-                            stride: InstanceData.SIZE,
-                            inputRate: VertexInputRate.Instance)
-                    },
-                    vertexAttributeDescriptions: vertexAttributeDescriptions.ToArray()),
+                inputAssemblyState: new PipelineInputAssemblyStateCreateInfo(
+                    topology: PrimitiveTopology.TriangleList,
+                    primitiveRestartEnable: false),
+                vertexInputState: new PipelineVertexInputStateCreateInfo(), //No vertex inputs
                 rasterizationState: rasterizer,
                 tessellationState: null,
                 //Pass empty viewport and scissor-rect as we set them dynamically
@@ -234,7 +166,7 @@ namespace HT.Engine.Rendering
         private void ThrowIfDisposed()
         {
             if (disposed)
-                throw new Exception($"[{nameof(RenderObject)}] Allready disposed");
+                throw new Exception($"[{nameof(InstancedObject)}] Allready disposed");
         }
     }
 }
