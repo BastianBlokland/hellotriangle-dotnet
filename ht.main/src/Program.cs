@@ -27,7 +27,7 @@ namespace HT.Main
 
                 //Add skybox to the scene
                 AddAttributelessObject(nativeApp, taskRunner, scene,
-                    vertexCount: 6, //Because 2 triangles
+                    vertexCount: 3, //Uses fullscreen triangle 'trick'
                     texturePaths: new [] { "textures/skybox.cube" },
                     vertShaderPath: "shaders/bin/skybox.vert.spv",
                     fragShaderPath: "shaders/bin/skybox.frag.spv");

@@ -23,27 +23,11 @@ out gl_PerVertex
 };
 layout(location = 0) out vec3 viewDirection;
 
-//Two triangles allready in clip-space to form a fullscreen quad
-//Position at z = 1 meaning the far clip-plane
-//TODO: Can be optimised by using triangleStrip rendering or doing some smart bit-shifting to extract
-//these from the gl_VertexIndex
-const vec4 positions[6] = vec4[]
-(
-    //Triangle one
-    vec4(-1, -1, 1, 1),
-    vec4(1, -1, 1, 1),
-    vec4(1, 1, 1, 1),
-
-    //Triangle two
-    vec4(-1, -1, 1, 1),
-    vec4(1, 1, 1, 1),
-    vec4(-1, 1, 1, 1)
-);
-
 void main()
 {
-    gl_Position = positions[gl_VertexIndex];
-    
+    //Fullscreen triangle, more info: https://www.saschawillems.de/?page_id=2122
+    gl_Position = vec4((gl_VertexIndex << 1 & 2) * 2.0 - 1, (gl_VertexIndex & 2) * 2.0 - 1, 1, 1);
+
     //Create world space viewDirection by transforming the clip-space vertices back into view-space
     //by using a inverse of the projection-matrix and then transforming them from view-space into
     //world space by using the cameraMatrix
