@@ -94,7 +94,7 @@ namespace HT.Engine.Rendering.Memory
             int dataSize = data.GetSize();
             if (offset + dataSize > memory.Size)
                 throw new ArgumentException(
-                    $"[{nameof(HostBuffer)}] Data does not fit in memory region", nameof(data));
+                    $"[{nameof(HostBuffer)}] Data ({offset + dataSize}) does not fit in memory region", nameof(data));
 
             //Copy the data into the buffer
             unsafe
