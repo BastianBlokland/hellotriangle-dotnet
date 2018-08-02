@@ -9,6 +9,10 @@ namespace HT.Engine.Rendering
 {
     public sealed class InstancedObject : IInternalRenderObject
     {
+        //Properties
+        public int RenderOrder => renderOrder;
+
+        //Data
         private readonly RenderScene scene;
         private readonly ShaderModule vertModule;
         private readonly ShaderModule fragModule;
@@ -20,10 +24,12 @@ namespace HT.Engine.Rendering
         private readonly DescriptorManager.Block descriptorBlock;
         private readonly PipelineLayout pipelineLayout;
         private readonly Pipeline pipeline;
+        private int renderOrder;
         private bool disposed;
 
         public InstancedObject(
             RenderScene scene,
+            int renderOrder,
             Mesh mesh,
             ITexture[] textures,
             ShaderProgram vertProg,
@@ -41,6 +47,7 @@ namespace HT.Engine.Rendering
             if (fragProg == null)
                 throw new ArgumentNullException(nameof(fragProg));
             this.scene = scene;
+            this.renderOrder = renderOrder;
 
             //Create the shader modules
             vertModule = vertProg.CreateModule(scene.LogicalDevice);

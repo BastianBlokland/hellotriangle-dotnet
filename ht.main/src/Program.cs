@@ -27,6 +27,7 @@ namespace HT.Main
 
                 //Add skybox to the scene
                 AddAttributelessObject(nativeApp, taskRunner, scene,
+                    renderOrder: Int32.MaxValue,
                     vertexCount: 3, //Uses fullscreen triangle 'trick'
                     texturePaths: new [] { "textures/skybox.cube" },
                     vertShaderPath: "shaders/bin/skybox.vert.spv",
@@ -34,6 +35,7 @@ namespace HT.Main
 
                 //Add the fighter to the scene
                 var fighter = AddInstancedObject(nativeApp, taskRunner, scene,
+                    renderOrder: 0,
                     modelPath: "models/fighter.dae",
                     texturePaths: new [] { "textures/fighter_color.tga", "textures/fighter_exhaust.tga" },
                     vertShaderPath: "shaders/bin/fighter.vert.spv",
@@ -79,6 +81,7 @@ namespace HT.Main
             INativeApp app,
             TaskRunner taskRunner,
             RenderScene scene,
+            int renderOrder,
             string modelPath,
             string[] texturePaths,
             string vertShaderPath,
@@ -100,7 +103,7 @@ namespace HT.Main
                 textures[i] = loader.GetResult<ITexture>(texturePaths[i]);
 
             InstancedObject renderObject = new InstancedObject(
-                scene, 
+                scene, renderOrder,
                 loader.GetResult<Mesh>(modelPath),
                 textures,
                 loader.GetResult<ShaderProgram>(vertShaderPath),
@@ -113,6 +116,7 @@ namespace HT.Main
             INativeApp app,
             TaskRunner taskRunner,
             RenderScene scene,
+            int renderOrder,
             int vertexCount,
             string[] texturePaths,
             string vertShaderPath,
@@ -134,7 +138,7 @@ namespace HT.Main
                 textures[i] = loader.GetResult<ITexture>(texturePaths[i]);
 
             AttributelessObject renderObject = new AttributelessObject(
-                scene, vertexCount, textures,
+                scene, renderOrder, vertexCount, textures,
                 loader.GetResult<ShaderProgram>(vertShaderPath),
                 loader.GetResult<ShaderProgram>(fragShaderPath));
             scene.AddObject(renderObject);

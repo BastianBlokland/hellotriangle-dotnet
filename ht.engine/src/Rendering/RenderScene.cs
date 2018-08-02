@@ -143,6 +143,7 @@ namespace HT.Engine.Rendering
                 new Rect2D(x: 0, y: 0, width: swapchainSize.X, height: swapchainSize.Y));
 
             //Record all individual objects
+            renderObjects.Sort(CompareRenderOrder);
             for (int i = 0; i < renderObjects.Count; i++)
                 renderObjects[i].Record(commandbuffer);
             
@@ -222,6 +223,9 @@ namespace HT.Engine.Rendering
                 dependencies: new [] { framebufferAvailableDependency }
             ));
         }
+
+        private static int CompareRenderOrder(IInternalRenderObject a, IInternalRenderObject b)
+            => a.RenderOrder.CompareTo(b.RenderOrder);
 
         private void ThrowIfDisposed()
         {

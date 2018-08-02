@@ -9,6 +9,10 @@ namespace HT.Engine.Rendering
 {
     public sealed class AttributelessObject : IInternalRenderObject
     {
+        //Properties
+        public int RenderOrder => renderOrder;
+        
+        //Data
         private readonly RenderScene scene;
         private readonly int vertexCount;
         private readonly ShaderModule vertModule;
@@ -18,10 +22,12 @@ namespace HT.Engine.Rendering
         private readonly DescriptorManager.Block descriptorBlock;
         private readonly PipelineLayout pipelineLayout;
         private readonly Pipeline pipeline;
+        private int renderOrder;
         private bool disposed;
 
         public AttributelessObject(
             RenderScene scene,
+            int renderOrder,
             int vertexCount,
             ITexture[] textures,
             ShaderProgram vertProg,
@@ -36,6 +42,7 @@ namespace HT.Engine.Rendering
             if (fragProg == null)
                 throw new ArgumentNullException(nameof(fragProg));
             this.scene = scene;
+            this.renderOrder = renderOrder;
             this.vertexCount = vertexCount;
 
             //Create the shader modules
