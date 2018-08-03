@@ -40,9 +40,10 @@
         "Unnormalized",
         "Vulkan",
         "Vulkancore",
+        "Blit",
         "bgra",
         "rgba",
-        "structs",
-        "texel"
+        "Structs",
+        "Texel"
     ]
 }

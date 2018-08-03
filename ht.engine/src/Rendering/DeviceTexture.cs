@@ -5,6 +5,8 @@ using HT.Engine.Rendering.Memory;
 using HT.Engine.Resources;
 using VulkanCore;
 
+using static System.Math;
+
 namespace HT.Engine.Rendering
 {
     //GPU size representation of a texture
@@ -15,9 +17,11 @@ namespace HT.Engine.Rendering
 
         //Properties
         internal ImageView View => view;
+        internal int MipLevels => mipLevels;
 
         //Data
         private readonly Format format;
+        private readonly int mipLevels;
         private readonly ImageAspects aspects;
         private readonly Image image;
         private readonly Memory.Block memory;
@@ -42,42 +46,80 @@ namespace HT.Engine.Rendering
             if (executor == null)
                 throw new ArgumentNullException(nameof(executor));
             
+            int mipLevels = CalculateMipLevels(texture.Size);
+            int layers = texture.IsCubeMap ? 6 : 1;
             var aspects = ImageAspects.Color;
             var image = CreateImage(
                 logicalDevice,
                 texture.Format,
                 texture.Size,
-                ImageUsages.TransferDst | ImageUsages.Sampled,
+                mipLevels,
+                //Also include 'TransferSrc' because we read from the image to generate the mip-maps
+                ImageUsages.TransferSrc | ImageUsages.TransferDst | ImageUsages.Sampled,
                 cubeMap: texture.IsCubeMap);
             var memory = memoryPool.AllocateAndBind(image, Chunk.Location.Device);
             
-            //Transition the image to a layout where it can receive data
-            TransitionImageLayout(
-                image: image, 
-                subresource: new ImageSubresourceLayers(
-                    aspectMask: aspects,
-                    mipLevel: 0,
-                    baseArrayLayer: 0,
-                    layerCount: texture.IsCubeMap ? 6 : 1),
+            //Transition the entire image (all mip-levels and layers) to 'TransferDstOptimal'
+            TransitionImageLayout(image, aspects,
+                baseMipLevel: 0, mipLevels, baseLayer: 0, layers,
                 oldLayout: ImageLayout.Undefined,
                 newLayout: ImageLayout.TransferDstOptimal,
                 executor: executor);
-            //Upload the data
+
+            //Upload the data to mipmap 0
             texture.Upload(stagingBuffer, executor, image, aspects);
-            //Transition the image to a layout so it can be read from
-            TransitionImageLayout(
-                image: image, 
-                subresource: new ImageSubresourceLayers(
-                    aspectMask: aspects,
-                    mipLevel: 0,
-                    baseArrayLayer: 0,
-                    layerCount: texture.IsCubeMap ? 6 : 1),
+            
+            //Create the other mipmap levels
+            Int2 prevMipSize = texture.Size;
+            for (int i = 1; i < mipLevels; i++)
+            {
+                Int2 curMipSize = new Int2(
+                    prevMipSize.X > 1 ? prevMipSize.X / 2 : 1,
+                    prevMipSize.Y > 1 ? prevMipSize.Y / 2 : 1);
+
+                //Move the previous mip-level to a transfer source layout
+                TransitionImageLayout(image, aspects,
+                    baseMipLevel: i - 1, mipLevels: 1,
+                    baseLayer: 0, layers,
+                    oldLayout: ImageLayout.TransferDstOptimal,
+                    newLayout: ImageLayout.TransferSrcOptimal,
+                    executor: executor);
+
+                //Blit the previous mip-level to the current at half the size
+                BlitImage(aspects,
+                    fromImage: image,
+                    fromRegion: new IntRect(min: Int2.Zero, max: prevMipSize),
+                    fromMipLevel: i - 1,
+                    fromLayerCount: layers,
+                    toImage: image,
+                    toRegion: new IntRect(min: Int2.Zero, max: curMipSize),
+                    toMipLevel: i,
+                    toLayerCount: layers,
+                    executor);
+
+                //Transition the previous mip-level to the shader-read layout
+                TransitionImageLayout(image, aspects,
+                    baseMipLevel: i - 1, mipLevels: 1,
+                    baseLayer: 0, layers,
+                    oldLayout: ImageLayout.TransferSrcOptimal,
+                    newLayout: ImageLayout.ShaderReadOnlyOptimal,
+                    executor: executor);
+
+                //Update the prev mip-size
+                prevMipSize = curMipSize;
+            }
+
+            //Transition the last mip-level to the shader-read layout
+            TransitionImageLayout(image, aspects,
+                baseMipLevel: mipLevels - 1, mipLevels: 1,
+                baseLayer: 0, layers,
                 oldLayout: ImageLayout.TransferDstOptimal,
                 newLayout: ImageLayout.ShaderReadOnlyOptimal,
                 executor: executor);
 
-            var view = CreateView(image, texture.Format, aspects, cubeMap: texture.IsCubeMap);
-            return new DeviceTexture(texture.Format, aspects, image, memory, view);
+            var view = CreateView(
+                image, texture.Format, mipLevels, aspects, cubeMap: texture.IsCubeMap);
+            return new DeviceTexture(texture.Format, mipLevels, aspects, image, memory, view);
         }
 
         internal static DeviceTexture CreateDepthTexture(
@@ -95,23 +137,26 @@ namespace HT.Engine.Rendering
 
             var aspects = ImageAspects.Depth;
             var image = CreateImage(
-                logicalDevice, DepthFormat, size, ImageUsages.DepthStencilAttachment, cubeMap: false);
+                logicalDevice, 
+                DepthFormat,
+                size,
+                mipLevels: 1,
+                ImageUsages.DepthStencilAttachment,
+                cubeMap: false);
             var memory = memoryPool.AllocateAndBind(image, Chunk.Location.Device);
             
             //Transition the image to the depth attachment layout
-            TransitionImageLayout(
-                image: image, 
-                subresource: new ImageSubresourceLayers(
-                    aspectMask: aspects,
-                    mipLevel: 0,
-                    baseArrayLayer: 0,
-                    layerCount: 1),
+            TransitionImageLayout(image, aspects,
+                baseMipLevel: 0,
+                mipLevels: 1,
+                baseLayer: 0,
+                layers: 1,
                 oldLayout: ImageLayout.Undefined,
                 newLayout: ImageLayout.DepthStencilAttachmentOptimal,
                 executor: executor);
 
-            var view = CreateView(image, DepthFormat, aspects, cubeMap: false);
-            return new DeviceTexture(DepthFormat, aspects, image, memory, view);
+            var view = CreateView(image, DepthFormat, mipLevels: 1, aspects, cubeMap: false);
+            return new DeviceTexture(DepthFormat, mipLevels: 1, aspects, image, memory, view);
         }
 
         public void Dispose()
@@ -127,12 +172,14 @@ namespace HT.Engine.Rendering
 
         private DeviceTexture(
             Format format,
+            int mipLevels,
             ImageAspects aspects,
             Image image,
             Block memory,
             ImageView view)
         {
             this.format = format;
+            this.mipLevels = mipLevels;
             this.aspects = aspects;
             this.image = image;
             this.memory = memory;
@@ -143,6 +190,7 @@ namespace HT.Engine.Rendering
             Device logicalDevice,
             Format format,
             Int2 size,
+            int mipLevels,
             ImageUsages usage,
             bool cubeMap)
             => logicalDevice.CreateImage(new ImageCreateInfo {
@@ -150,7 +198,7 @@ namespace HT.Engine.Rendering
                 ImageType = ImageType.Image2D,
                 Format = format,
                 Extent = new Extent3D(size.X, size.Y, 1),
-                MipLevels = 1,
+                MipLevels = mipLevels,
                 ArrayLayers = cubeMap ? 6 : 1,
                 Samples = SampleCounts.Count1,
                 Tiling = ImageTiling.Optimal,
@@ -161,6 +209,7 @@ namespace HT.Engine.Rendering
         private static ImageView CreateView(
             Image image,
             Format format,
+            int mipLevels,
             ImageAspects aspects,
             bool cubeMap)
             => image.CreateView(new ImageViewCreateInfo(
@@ -168,7 +217,7 @@ namespace HT.Engine.Rendering
                 subresourceRange: new ImageSubresourceRange(
                     aspectMask: aspects, 
                     baseMipLevel: 0,
-                    levelCount: 1,
+                    levelCount: mipLevels,
                     baseArrayLayer: 0,
                     layerCount: cubeMap ? 6 : 1),
                 viewType: cubeMap ? ImageViewType.ImageCube : ImageViewType.Image2D,
@@ -178,9 +227,56 @@ namespace HT.Engine.Rendering
                     b: ComponentSwizzle.B,
                     a: ComponentSwizzle.A)));
         
+        private static void BlitImage(
+            ImageAspects aspectMask,
+            Image fromImage,
+            IntRect fromRegion,
+            int fromMipLevel,
+            int fromLayerCount,
+            Image toImage,
+            IntRect toRegion,
+            int toMipLevel,
+            int toLayerCount,
+            TransientExecutor executor)
+        {
+            ImageBlit blit = new ImageBlit
+            {
+                SrcSubresource = new ImageSubresourceLayers(
+                    aspectMask,
+                    fromMipLevel,
+                    baseArrayLayer: 0,
+                    fromLayerCount),
+                SrcOffset1 = new Offset3D(fromRegion.Min.X, fromRegion.Min.Y, 0),
+                SrcOffset2 = new Offset3D(fromRegion.Max.X, fromRegion.Max.Y, 1),
+                DstSubresource = new ImageSubresourceLayers(
+                    aspectMask,
+                    toMipLevel,
+                    baseArrayLayer: 0,
+                    toLayerCount),
+                DstOffset1 = new Offset3D(toRegion.Min.X, toRegion.Min.Y, 0),
+                DstOffset2 = new Offset3D(toRegion.Max.X, toRegion.Max.Y, 1)
+            };
+
+            //Execute the blit
+            executor.ExecuteBlocking(commandBuffer =>
+            {
+                commandBuffer.CmdBlitImage(
+                    srcImage: fromImage,
+                    srcImageLayout: ImageLayout.TransferSrcOptimal,
+                    dstImage: toImage,
+                    dstImageLayout: ImageLayout.TransferDstOptimal,
+                    regions:  new [] { blit },
+                    filter: Filter.Linear);
+            });
+        }
+
         private static void TransitionImageLayout(
-            Image image, 
-            ImageSubresourceLayers subresource,
+            Image image,
+            ImageAspects aspectMask,
+            int baseMipLevel,
+            int mipLevels,
+            int baseLayer,
+            int layers,
             ImageLayout oldLayout,
             ImageLayout newLayout,
             TransientExecutor executor)
@@ -204,9 +300,25 @@ namespace HT.Engine.Rendering
                 destinationPipelineStages = PipelineStages.EarlyFragmentTests;
             }
             else
+            if (oldLayout == ImageLayout.TransferDstOptimal && newLayout == ImageLayout.TransferSrcOptimal)
+            {
+                sourceAccess = Accesses.TransferWrite;
+                destinationAccess = Accesses.TransferRead;
+                sourcePipelineStages = PipelineStages.Transfer;
+                destinationPipelineStages = PipelineStages.Transfer;
+            }
+            else
             if (oldLayout == ImageLayout.TransferDstOptimal && newLayout == ImageLayout.ShaderReadOnlyOptimal)
             {
                 sourceAccess = Accesses.TransferWrite;
+                destinationAccess = Accesses.ShaderRead;
+                sourcePipelineStages = PipelineStages.Transfer;
+                destinationPipelineStages = PipelineStages.FragmentShader;
+            }
+            else
+            if (oldLayout == ImageLayout.TransferSrcOptimal && newLayout == ImageLayout.ShaderReadOnlyOptimal)
+            {
+                sourceAccess = Accesses.TransferRead;
                 destinationAccess = Accesses.ShaderRead;
                 sourcePipelineStages = PipelineStages.Transfer;
                 destinationPipelineStages = PipelineStages.FragmentShader;
@@ -219,11 +331,11 @@ namespace HT.Engine.Rendering
             var imageMemoryBarrier = new ImageMemoryBarrier(
                 image: image,
                 subresourceRange: new ImageSubresourceRange(
-                    aspectMask: subresource.AspectMask,
-                    baseMipLevel: subresource.MipLevel,
-                    levelCount: 1,
-                    baseArrayLayer: subresource.BaseArrayLayer,
-                    layerCount: subresource.LayerCount),
+                    aspectMask: aspectMask,
+                    baseMipLevel: baseMipLevel,
+                    levelCount: mipLevels,
+                    baseArrayLayer: baseLayer,
+                    layerCount: layers),
                 srcAccessMask: sourceAccess,
                 dstAccessMask: destinationAccess,
                 oldLayout: oldLayout,
@@ -247,5 +359,10 @@ namespace HT.Engine.Rendering
             if (disposed)
                 throw new Exception($"[{nameof(DeviceTexture)}] Allready disposed");
         }
+
+        private static int CalculateMipLevels(Int2 size)
+        //Calculate how many times the size can be divided by 2
+        //(and then + 1 because the original size also takes one)
+            => (int)Floor(Log(Max(size.X, size.Y), 2)) + 1;
     }
 }

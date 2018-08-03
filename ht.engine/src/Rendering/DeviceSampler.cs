@@ -15,7 +15,7 @@ namespace HT.Engine.Rendering
         private readonly Sampler sampler;
         private bool disposed;
 
-        internal DeviceSampler(Device logicalDevice)
+        internal DeviceSampler(Device logicalDevice, int mipLevels)
         {
             if (logicalDevice == null)
                 throw new ArgumentNullException(nameof(logicalDevice));
@@ -32,7 +32,7 @@ namespace HT.Engine.Rendering
                 MipmapMode = SamplerMipmapMode.Linear,
                 MipLodBias = 0f,
                 MinLod = 0f,
-                MaxLod = 0f,
+                MaxLod = mipLevels,
                 BorderColor = BorderColor.IntOpaqueBlack,
                 UnnormalizedCoordinates = false});
         }

@@ -59,8 +59,8 @@ namespace HT.Engine.Rendering
                     stagingBuffer: scene.StagingBuffer,
                     executor: scene.Executor);
             deviceSamplers = new DeviceSampler[textures.Length];
-            for (int i = 0; i < deviceSamplers.Length; i++)
-                deviceSamplers[i] = new DeviceSampler(scene.LogicalDevice);
+            for (int i = 0; i < deviceTextures.Length; i++)
+                deviceSamplers[i] = new DeviceSampler(scene.LogicalDevice, deviceTextures[i].MipLevels);
 
             //Create the descriptor binding
             var binding = new DescriptorBinding(uniformBufferCount: 1, imageSamplerCount: textures.Length);

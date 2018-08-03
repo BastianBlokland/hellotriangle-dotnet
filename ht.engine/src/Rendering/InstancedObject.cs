@@ -70,8 +70,8 @@ namespace HT.Engine.Rendering
                     stagingBuffer: scene.StagingBuffer,
                     executor: scene.Executor);
             deviceSamplers = new DeviceSampler[textures.Length];
-            for (int i = 0; i < deviceSamplers.Length; i++)
-                deviceSamplers[i] = new DeviceSampler(scene.LogicalDevice);
+            for (int i = 0; i < deviceTextures.Length; i++)
+                deviceSamplers[i] = new DeviceSampler(scene.LogicalDevice, deviceTextures[i].MipLevels);
 
             //Allocate a buffers for the instance data and indirect args
             instanceDataBuffer = new Memory.HostBuffer(
