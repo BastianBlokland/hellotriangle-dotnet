@@ -13,19 +13,19 @@ namespace HT.Engine.Rendering
         public Camera Camera => camera;
 
         //Internal properties
+        internal SampleCounts MultiSampleCount => multiSampleCount;
         internal Device LogicalDevice => window.LogicalDevice;
-        internal HostDevice HostDevice => window.HostDevice;
         internal DescriptorManager DescriptorManager => descriptorManager;
         internal RenderPass RenderPass => renderpass;
         internal Memory.Pool MemoryPool => memoryPool;
         internal TransientExecutor Executor => executor;
         internal Memory.HostBuffer StagingBuffer => stagingBuffer;
         internal Memory.HostBuffer SceneDataBuffer => sceneDataBuffer;
-        internal Int2 SwapchainSize => swapchainSize;
         internal bool Dirty => dirty;
 
         //Data
         private readonly Camera camera;
+        private readonly SampleCounts multiSampleCount;
         private readonly Window window;
         private readonly Byte4? clearColor;
         private readonly Logger logger;
@@ -38,7 +38,8 @@ namespace HT.Engine.Rendering
 
         private RenderPass renderpass;
         private Int2 swapchainSize;
-        private DeviceTexture depthTexture;
+        private DeviceTexture colorTarget;
+        private DeviceTexture depthTarget;
         private bool dirty;
         private bool disposed;
         
@@ -47,6 +48,7 @@ namespace HT.Engine.Rendering
             if (window == null)
                 throw new ArgumentNullException(nameof(window));
             this.window = window;
+            this.multiSampleCount = SampleCounts.Count4;
             this.clearColor = clearColor;
             this.logger = logger;
             camera = new Camera();
@@ -84,7 +86,8 @@ namespace HT.Engine.Rendering
             ThrowIfDisposed();
 
             renderObjects.DisposeAll();
-            depthTexture?.Dispose();
+            colorTarget?.Dispose();
+            depthTarget?.Dispose();
             renderpass.Dispose();
             descriptorManager.Dispose();
             stagingBuffer.Dispose();
@@ -94,21 +97,32 @@ namespace HT.Engine.Rendering
             disposed = true;
         }
 
-        internal Framebuffer CreateFramebuffer(ImageView swapchainImageView, Int2 swapchainSize)
+        internal Framebuffer CreateFramebuffer(
+            ImageView swapchainImageView,
+            Int2 swapchainSize,
+            Format surfaceFormat)
         {
             ThrowIfDisposed();
 
             if (this.swapchainSize != swapchainSize)
             {
-                //Dispose of the old depth texture
-                depthTexture?.Dispose();
-                depthTexture = DeviceTexture.CreateDepthTexture(
-                    swapchainSize, window.LogicalDevice, memoryPool, executor);
+                //Dispose of the old color and depth targets
+                colorTarget?.Dispose();
+                depthTarget?.Dispose();
+
+                //Create new rendertargets
+                colorTarget = DeviceTexture.CreateColorTarget(
+                    swapchainSize, surfaceFormat, multiSampleCount,
+                    window.LogicalDevice, memoryPool, executor);
+                depthTarget = DeviceTexture.CreateDepthTarget(
+                    swapchainSize, multiSampleCount,
+                    window.LogicalDevice, memoryPool, executor);
+
                 this.swapchainSize = swapchainSize;
             }
 
             return renderpass.CreateFramebuffer(new FramebufferCreateInfo(
-                attachments: new [] { swapchainImageView, depthTexture.View },
+                attachments: new [] { colorTarget.View, depthTarget.View, swapchainImageView },
                 width: swapchainSize.X,
                 height: swapchainSize.Y));
         }
@@ -168,29 +182,41 @@ namespace HT.Engine.Rendering
 
         private void CreateRenderpass(Device logicalDevice, Format surfaceFormat)
         {
-            //Description of our frame-buffer attachment
+            //Description of our color target
             var colorAttachment = new AttachmentDescription(
                 flags: AttachmentDescriptions.MayAlias,
                 format: surfaceFormat,
-                samples: SampleCounts.Count1,
+                samples: multiSampleCount,
                 loadOp: clearColor == null ? AttachmentLoadOp.DontCare : AttachmentLoadOp.Clear,
                 storeOp: AttachmentStoreOp.Store,
                 stencilLoadOp: AttachmentLoadOp.DontCare,
                 stencilStoreOp: AttachmentStoreOp.DontCare,
                 initialLayout: ImageLayout.Undefined,
-                finalLayout: ImageLayout.PresentSrcKhr
+                finalLayout: ImageLayout.ColorAttachmentOptimal
             );
-            //Description of our depth-buffer attachment
+            //Description of our depth target
             var depthAttachment = new AttachmentDescription(
                 flags: AttachmentDescriptions.MayAlias,
                 format: DeviceTexture.DepthFormat,
-                samples: SampleCounts.Count1,
+                samples: multiSampleCount,
                 loadOp: AttachmentLoadOp.Clear,
                 storeOp: AttachmentStoreOp.DontCare,
                 stencilLoadOp: AttachmentLoadOp.DontCare,
                 stencilStoreOp: AttachmentStoreOp.DontCare,
                 initialLayout: ImageLayout.Undefined,
                 finalLayout: ImageLayout.DepthStencilAttachmentOptimal
+            );
+            //Description of our frame-buffer attachment
+            var colorResolveAttachment = new AttachmentDescription(
+                flags: AttachmentDescriptions.MayAlias,
+                format: surfaceFormat,
+                samples: SampleCounts.Count1,
+                loadOp: AttachmentLoadOp.DontCare,
+                storeOp: AttachmentStoreOp.Store,
+                stencilLoadOp: AttachmentLoadOp.DontCare,
+                stencilStoreOp: AttachmentStoreOp.DontCare,
+                initialLayout: ImageLayout.Undefined,
+                finalLayout: ImageLayout.PresentSrcKhr
             );
             //Dependency to wait on the framebuffer being loaded before we write to it
             var framebufferAvailableDependency = new SubpassDependency(
@@ -214,12 +240,18 @@ namespace HT.Engine.Rendering
                                 attachment: 0,
                                 layout: ImageLayout.ColorAttachmentOptimal)
                         },
+                        resolveAttachments: new []
+                        {
+                            new AttachmentReference(
+                                attachment: 2,
+                                layout: ImageLayout.ColorAttachmentOptimal)
+                        },
                         depthStencilAttachment: new AttachmentReference(
                             attachment: 1,
                             layout: ImageLayout.DepthStencilAttachmentOptimal)
                     )
                 },
-                attachments: new [] { colorAttachment, depthAttachment },
+                attachments: new [] { colorAttachment, depthAttachment, colorResolveAttachment },
                 dependencies: new [] { framebufferAvailableDependency }
             ));
         }

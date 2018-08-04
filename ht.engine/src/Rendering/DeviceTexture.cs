@@ -53,6 +53,7 @@ namespace HT.Engine.Rendering
             var image = CreateImage(
                 logicalDevice,
                 texture.Format,
+                SampleCounts.Count1,
                 texture.Size,
                 mipLevels,
                 //Also include 'TransferSrc' because we read from the image to generate the mip-maps
@@ -123,8 +124,9 @@ namespace HT.Engine.Rendering
             return new DeviceTexture(texture.Format, mipLevels, aspects, image, memory, view);
         }
 
-        internal static DeviceTexture CreateDepthTexture(
+        internal static DeviceTexture CreateDepthTarget(
             Int2 size,
+            SampleCounts samples,
             Device logicalDevice,
             Memory.Pool memoryPool,
             TransientExecutor executor)
@@ -140,6 +142,7 @@ namespace HT.Engine.Rendering
             var image = CreateImage(
                 logicalDevice, 
                 DepthFormat,
+                samples,
                 size,
                 mipLevels: 1,
                 ImageUsages.DepthStencilAttachment,
@@ -158,6 +161,46 @@ namespace HT.Engine.Rendering
 
             var view = CreateView(image, DepthFormat, mipLevels: 1, aspects, cubeMap: false);
             return new DeviceTexture(DepthFormat, mipLevels: 1, aspects, image, memory, view);
+        }
+
+        internal static DeviceTexture CreateColorTarget(
+            Int2 size,
+            Format format,
+            SampleCounts samples,
+            Device logicalDevice,
+            Memory.Pool memoryPool,
+            TransientExecutor executor)
+        {
+            if (logicalDevice == null)
+                throw new ArgumentNullException(nameof(logicalDevice));
+            if (memoryPool == null)
+                throw new ArgumentNullException(nameof(memoryPool));
+            if (executor == null)
+                throw new ArgumentNullException(nameof(executor));
+
+            var aspects = ImageAspects.Color;
+            var image = CreateImage(
+                logicalDevice, 
+                format,
+                samples,
+                size,
+                mipLevels: 1,
+                ImageUsages.ColorAttachment | ImageUsages.TransientAttachment,
+                cubeMap: false);
+            var memory = memoryPool.AllocateAndBind(image, Chunk.Location.Device);
+            
+            //Transition the image to the depth attachment layout
+            TransitionImageLayout(image, aspects,
+                baseMipLevel: 0,
+                mipLevels: 1,
+                baseLayer: 0,
+                layers: 1,
+                oldLayout: ImageLayout.Undefined,
+                newLayout: ImageLayout.ColorAttachmentOptimal,
+                executor: executor);
+
+            var view = CreateView(image, format, mipLevels: 1, aspects, cubeMap: false);
+            return new DeviceTexture(format, mipLevels: 1, aspects, image, memory, view);
         }
 
         public void Dispose()
@@ -190,6 +233,7 @@ namespace HT.Engine.Rendering
         private static Image CreateImage(
             Device logicalDevice,
             Format format,
+            SampleCounts samples,
             Int2 size,
             int mipLevels,
             ImageUsages usage,
@@ -201,7 +245,7 @@ namespace HT.Engine.Rendering
                 Extent = new Extent3D(size.X, size.Y, 1),
                 MipLevels = mipLevels,
                 ArrayLayers = cubeMap ? 6 : 1,
-                Samples = SampleCounts.Count1,
+                Samples = samples,
                 Tiling = ImageTiling.Optimal,
                 Usage = usage,
                 SharingMode = SharingMode.Exclusive,
@@ -299,6 +343,14 @@ namespace HT.Engine.Rendering
                 destinationAccess = Accesses.DepthStencilAttachmentRead | Accesses.DepthStencilAttachmentWrite;
                 sourcePipelineStages = PipelineStages.TopOfPipe;
                 destinationPipelineStages = PipelineStages.EarlyFragmentTests;
+            }
+            else
+            if (oldLayout == ImageLayout.Undefined && newLayout == ImageLayout.ColorAttachmentOptimal)
+            {
+                sourceAccess = Accesses.None;
+                destinationAccess = Accesses.ColorAttachmentRead | Accesses.ColorAttachmentWrite;
+                sourcePipelineStages = PipelineStages.TopOfPipe;
+                destinationPipelineStages = PipelineStages.ColorAttachmentOutput;
             }
             else
             if (oldLayout == ImageLayout.TransferDstOptimal && newLayout == ImageLayout.TransferSrcOptimal)

@@ -182,7 +182,10 @@ namespace HT.Engine.Rendering
             {
                 framebuffers = new Framebuffer[swapchainImages.Length];
                 for (int i = 0; i < framebuffers.Length; i++)
-                    framebuffers[i] = scene.CreateFramebuffer(swapchainImageViews[i], swapchainSize);
+                    framebuffers[i] = scene.CreateFramebuffer(
+                        swapchainImageViews[i],
+                        swapchainSize,
+                        surfaceFormat);
             }
 
             //Reset the pool (to release any previously created buffers)

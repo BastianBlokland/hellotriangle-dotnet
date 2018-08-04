@@ -133,7 +133,7 @@ namespace HT.Engine.Rendering
                 logicOpEnable: false
             );
             var multisampleState = new PipelineMultisampleStateCreateInfo(
-                rasterizationSamples: SampleCounts.Count1,
+                rasterizationSamples: scene.MultiSampleCount,
                 sampleShadingEnable: false
             );
             //Pass the viewport and scissor-rect as dynamic so we are not tied to swapchain size
