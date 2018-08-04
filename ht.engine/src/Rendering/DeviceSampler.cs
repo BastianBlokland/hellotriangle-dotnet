@@ -10,16 +10,38 @@ namespace HT.Engine.Rendering
     {
         //Properties
         internal Sampler Sampler => sampler;
+        internal ImageView View => deviceTexture.View;
 
         //Data
+        private readonly DeviceTexture deviceTexture;
         private readonly Sampler sampler;
         private bool disposed;
 
-        internal DeviceSampler(Device logicalDevice, int mipLevels)
+        internal DeviceSampler(
+            TextureInfo textureInfo,
+            Device logicalDevice,
+            Memory.Pool memoryPool,
+            Memory.HostBuffer stagingBuffer,
+            TransientExecutor executor)
         {
+            if (textureInfo.Texture == null)
+                throw new ArgumentNullException(nameof(textureInfo));
             if (logicalDevice == null)
                 throw new ArgumentNullException(nameof(logicalDevice));
+            if (memoryPool == null)
+                throw new ArgumentNullException(nameof(memoryPool));
+            if (stagingBuffer == null)
+                throw new ArgumentNullException(nameof(stagingBuffer));
+            if (executor == null)
+                throw new ArgumentNullException(nameof(executor));
             
+            //Upload the texture
+            deviceTexture = DeviceTexture.UploadTexture(
+                    textureInfo.Texture as IInternalTexture,
+                    generateMipMaps: textureInfo.UseMipMaps,
+                    logicalDevice, memoryPool, stagingBuffer, executor);
+
+            //Create a sampler
             sampler = logicalDevice.CreateSampler(new SamplerCreateInfo {
                 MagFilter = Filter.Linear,
                 MinFilter = Filter.Linear,
@@ -32,7 +54,7 @@ namespace HT.Engine.Rendering
                 MipmapMode = SamplerMipmapMode.Linear,
                 MipLodBias = 0f,
                 MinLod = 0f,
-                MaxLod = mipLevels,
+                MaxLod = deviceTexture.MipLevels,
                 BorderColor = BorderColor.IntOpaqueBlack,
                 UnnormalizedCoordinates = false});
         }
@@ -41,6 +63,7 @@ namespace HT.Engine.Rendering
         {
             ThrowIfDisposed();
 
+            deviceTexture.Dispose();
             sampler.Dispose();
             disposed = true;
         }

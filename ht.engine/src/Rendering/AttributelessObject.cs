@@ -17,7 +17,6 @@ namespace HT.Engine.Rendering
         private readonly int vertexCount;
         private readonly ShaderModule vertModule;
         private readonly ShaderModule fragModule;
-        private readonly DeviceTexture[] deviceTextures;
         private readonly DeviceSampler[] deviceSamplers;
         private readonly DescriptorManager.Block descriptorBlock;
         private readonly PipelineLayout pipelineLayout;
@@ -29,7 +28,7 @@ namespace HT.Engine.Rendering
             RenderScene scene,
             int renderOrder,
             int vertexCount,
-            ITexture[] textures,
+            TextureInfo[] textures,
             ShaderProgram vertProg,
             ShaderProgram fragProg)
         {
@@ -50,23 +49,20 @@ namespace HT.Engine.Rendering
             fragModule = fragProg.CreateModule(scene.LogicalDevice);
 
             //Upload the textures to the gpu
-            deviceTextures = new DeviceTexture[textures.Length];
-            for (int i = 0; i < deviceTextures.Length; i++)
-                deviceTextures[i] = DeviceTexture.UploadTexture(
-                    texture: textures[i] as IInternalTexture,
-                    logicalDevice: scene.LogicalDevice,
-                    memoryPool: scene.MemoryPool,
-                    stagingBuffer: scene.StagingBuffer,
-                    executor: scene.Executor);
             deviceSamplers = new DeviceSampler[textures.Length];
-            for (int i = 0; i < deviceTextures.Length; i++)
-                deviceSamplers[i] = new DeviceSampler(scene.LogicalDevice, deviceTextures[i].MipLevels);
+            for (int i = 0; i < textures.Length; i++)
+                deviceSamplers[i] = new DeviceSampler(
+                    textures[i],
+                    scene.LogicalDevice,
+                    scene.MemoryPool,
+                    scene.StagingBuffer,
+                    scene.Executor);
 
             //Create the descriptor binding
             var binding = new DescriptorBinding(uniformBufferCount: 1, imageSamplerCount: textures.Length);
             descriptorBlock = scene.DescriptorManager.Allocate(binding);
             descriptorBlock.Update(
-                new Memory.IBuffer[] { scene.SceneDataBuffer }, deviceSamplers, deviceTextures);
+                new Memory.IBuffer[] { scene.SceneDataBuffer }, deviceSamplers );
 
             //Create the pipeline
             pipelineLayout = scene.LogicalDevice.CreatePipelineLayout(new PipelineLayoutCreateInfo(
@@ -81,7 +77,6 @@ namespace HT.Engine.Rendering
             ThrowIfDisposed();
 
             deviceSamplers.DisposeAll();
-            deviceTextures.DisposeAll();
             descriptorBlock.Free();
             pipelineLayout.Dispose();
             pipeline.Dispose();

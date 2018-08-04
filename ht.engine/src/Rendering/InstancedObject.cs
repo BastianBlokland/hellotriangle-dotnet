@@ -17,7 +17,6 @@ namespace HT.Engine.Rendering
         private readonly ShaderModule vertModule;
         private readonly ShaderModule fragModule;
         private readonly DeviceMesh deviceMesh;
-        private readonly DeviceTexture[] deviceTextures;
         private readonly DeviceSampler[] deviceSamplers;
         private readonly Memory.HostBuffer instanceDataBuffer;
         private readonly Memory.HostBuffer indirectArgumentsBuffer;
@@ -31,7 +30,7 @@ namespace HT.Engine.Rendering
             RenderScene scene,
             int renderOrder,
             Mesh mesh,
-            ITexture[] textures,
+            TextureInfo[] textures,
             ShaderProgram vertProg,
             ShaderProgram fragProg,
             int maxInstances = 100_000)
@@ -60,18 +59,16 @@ namespace HT.Engine.Rendering
                 scene.MemoryPool,
                 scene.StagingBuffer,
                 scene.Executor);
+
             //Upload the textures to the gpu
-            deviceTextures = new DeviceTexture[textures.Length];
-            for (int i = 0; i < deviceTextures.Length; i++)
-                deviceTextures[i] = DeviceTexture.UploadTexture(
-                    texture: textures[i] as IInternalTexture,
-                    logicalDevice: scene.LogicalDevice,
-                    memoryPool: scene.MemoryPool,
-                    stagingBuffer: scene.StagingBuffer,
-                    executor: scene.Executor);
             deviceSamplers = new DeviceSampler[textures.Length];
-            for (int i = 0; i < deviceTextures.Length; i++)
-                deviceSamplers[i] = new DeviceSampler(scene.LogicalDevice, deviceTextures[i].MipLevels);
+            for (int i = 0; i < textures.Length; i++)
+                deviceSamplers[i] = new DeviceSampler(
+                    textures[i],
+                    scene.LogicalDevice,
+                    scene.MemoryPool,
+                    scene.StagingBuffer,
+                    scene.Executor);
 
             //Allocate a buffers for the instance data and indirect args
             instanceDataBuffer = new Memory.HostBuffer(
@@ -93,7 +90,7 @@ namespace HT.Engine.Rendering
             var binding = new DescriptorBinding(uniformBufferCount: 1, imageSamplerCount: textures.Length);
             descriptorBlock = scene.DescriptorManager.Allocate(binding);
             descriptorBlock.Update(
-                new Memory.IBuffer[] { scene.SceneDataBuffer }, deviceSamplers, deviceTextures);
+                new Memory.IBuffer[] { scene.SceneDataBuffer }, deviceSamplers);
 
             //Create the pipeline
             pipelineLayout = scene.LogicalDevice.CreatePipelineLayout(new PipelineLayoutCreateInfo(
@@ -120,7 +117,6 @@ namespace HT.Engine.Rendering
 
             deviceMesh.Dispose();
             deviceSamplers.DisposeAll();
-            deviceTextures.DisposeAll();
             instanceDataBuffer.Dispose();
             indirectArgumentsBuffer.Dispose();
             descriptorBlock.Free();

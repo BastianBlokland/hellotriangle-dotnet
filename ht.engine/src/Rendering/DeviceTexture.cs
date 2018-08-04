@@ -30,6 +30,7 @@ namespace HT.Engine.Rendering
 
         internal static DeviceTexture UploadTexture(
             IInternalTexture texture,
+            bool generateMipMaps,
             Device logicalDevice,
             Memory.Pool memoryPool,
             Memory.HostBuffer stagingBuffer,
@@ -46,7 +47,7 @@ namespace HT.Engine.Rendering
             if (executor == null)
                 throw new ArgumentNullException(nameof(executor));
             
-            int mipLevels = CalculateMipLevels(texture.Size);
+            int mipLevels = generateMipMaps ? CalculateMipLevels(texture.Size) : 1;
             int layers = texture.IsCubeMap ? 6 : 1;
             var aspects = ImageAspects.Color;
             var image = CreateImage(

@@ -26,8 +26,7 @@ namespace HT.Engine.Rendering
 
             public void Update(
                 Memory.IBuffer[] buffers,
-                DeviceSampler[] samplers,
-                DeviceTexture[] textures) => Container.UpdateSet(this, buffers, samplers, textures);
+                DeviceSampler[] samplers) => Container.UpdateSet(this, buffers, samplers);
             public void Free() => Container.Free(this);
         }
 
@@ -116,8 +115,7 @@ namespace HT.Engine.Rendering
             internal void UpdateSet(
                 Block block,
                 Memory.IBuffer[] buffers,
-                DeviceSampler[] samplers,
-                DeviceTexture[] textures)
+                DeviceSampler[] samplers)
             {
                 if (block.Container != this)
                     throw new ArgumentException(
@@ -128,9 +126,6 @@ namespace HT.Engine.Rendering
                 if (samplers.Length != binding.ImageSamplerCount)
                     throw new ArgumentException(
                         $"[{nameof(Chunk)}] Incorrect number of samplers provided", nameof(samplers));
-                if (textures.Length != binding.ImageSamplerCount)
-                    throw new ArgumentException(
-                        $"[{nameof(Chunk)}] Incorrect number of images provided", nameof(textures));
 
                 var set = sets[block.Id];
                 var writes = new WriteDescriptorSet[binding.TotalBindings];
@@ -148,7 +143,7 @@ namespace HT.Engine.Rendering
                         imageInfo: isBuffer ? null : new [] {
                             new DescriptorImageInfo(
                                 sampler: samplers[i - binding.UniformBufferCount].Sampler,
-                                imageView: textures[i - binding.UniformBufferCount].View,
+                                imageView: samplers[i - binding.UniformBufferCount].View,
                                 imageLayout: ImageLayout.ShaderReadOnlyOptimal) },
                         bufferInfo: !isBuffer ? null : new [] {
                             new DescriptorBufferInfo(

@@ -29,7 +29,7 @@ namespace HT.Main
                 AddAttributelessObject(nativeApp, taskRunner, scene,
                     renderOrder: Int32.MaxValue,
                     vertexCount: 3, //Uses fullscreen triangle 'trick'
-                    texturePaths: new [] { "textures/skybox.cube" },
+                    textureSources: new [] { ("textures/skybox.cube", useMipMaps: false) },
                     vertShaderPath: "shaders/bin/skybox.vert.spv",
                     fragShaderPath: "shaders/bin/skybox.frag.spv");
 
@@ -37,7 +37,11 @@ namespace HT.Main
                 var fighter = AddInstancedObject(nativeApp, taskRunner, scene,
                     renderOrder: 0,
                     modelPath: "models/fighter.dae",
-                    texturePaths: new [] { "textures/fighter_color.tga", "textures/fighter_exhaust.tga" },
+                    textureSources: new [] 
+                    { 
+                        ("textures/fighter_color.tga", useMipMaps: true),
+                        ("textures/fighter_exhaust.tga", useMipMaps: false)
+                    },
                     vertShaderPath: "shaders/bin/fighter.vert.spv",
                     fragShaderPath: "shaders/bin/fighter.frag.spv");
                 InstanceData[] fighterInstances = new InstanceData[64 * 64];
@@ -83,11 +87,15 @@ namespace HT.Main
             RenderScene scene,
             int renderOrder,
             string modelPath,
-            string[] texturePaths,
+            (string path, bool useMipMaps)[] textureSources,
             string vertShaderPath,
             string fragShaderPath)
         {
-            var paths = ArrayUtils.Build<string>(modelPath, texturePaths, vertShaderPath, fragShaderPath);
+            var paths = ArrayUtils.Build<string>(
+                modelPath,
+                textureSources.Morph(a => a.path),
+                vertShaderPath,
+                fragShaderPath);
 
             //Star loading all the resources
             var loader = new Loader(app, paths);
@@ -98,9 +106,11 @@ namespace HT.Main
                 taskRunner.Help();
 
             //Gather the loaded textures
-            var textures = new ITexture[texturePaths.Length];
+            var textures = new TextureInfo[textureSources.Length];
             for (int i = 0; i < textures.Length; i++)
-                textures[i] = loader.GetResult<ITexture>(texturePaths[i]);
+                textures[i] = new TextureInfo(
+                    texture: loader.GetResult<ITexture>(textureSources[i].path),
+                    useMipMaps: textureSources[i].useMipMaps);
 
             InstancedObject renderObject = new InstancedObject(
                 scene, renderOrder,
@@ -118,11 +128,14 @@ namespace HT.Main
             RenderScene scene,
             int renderOrder,
             int vertexCount,
-            string[] texturePaths,
+            (string path, bool useMipMaps)[] textureSources,
             string vertShaderPath,
             string fragShaderPath)
         {
-            var paths = ArrayUtils.Build<string>(texturePaths, vertShaderPath, fragShaderPath);
+            var paths = ArrayUtils.Build<string>(
+                textureSources.Morph(a => a.path),
+                vertShaderPath,
+                fragShaderPath);
 
             //Star loading all the resources
             var loader = new Loader(app, paths);
@@ -133,9 +146,11 @@ namespace HT.Main
                 taskRunner.Help();
 
             //Gather the loaded textures
-            var textures = new ITexture[texturePaths.Length];
+            var textures = new TextureInfo[textureSources.Length];
             for (int i = 0; i < textures.Length; i++)
-                textures[i] = loader.GetResult<ITexture>(texturePaths[i]);
+                textures[i] = new TextureInfo(
+                    texture: loader.GetResult<ITexture>(textureSources[i].path),
+                    useMipMaps: textureSources[i].useMipMaps);
 
             AttributelessObject renderObject = new AttributelessObject(
                 scene, renderOrder, vertexCount, textures,
