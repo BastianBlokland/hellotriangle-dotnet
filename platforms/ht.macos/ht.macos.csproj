@@ -26,7 +26,7 @@
 
         <ProjectReference Include="../../ht.engine/ht.engine.csproj" />
         <ProjectReference Include="../../ht.main/ht.main.csproj" />
-        <None Include="lib/**" CopyToOutputDirectory="PreserveNewest" Link="%(Filename)%(Extension)" />
+        <None Include="lib/**" CopyToOutputDirectory="Always" Link="%(Filename)%(Extension)" />
         
     </ItemGroup>
 

@@ -20,21 +20,21 @@
 
         <!--Shaders (binary spr-v format-->
         <None Include="shaders/bin/*.spv">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <!--Obj Models (text obj format-->
         <None Include="models/*.obj">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
 
         <!--Dae Models (text collada format-->
         <None Include="models/*.dae">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
 
         <!--Textures (binary tga format-->
         <None Include="textures/*.tga">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         
     </ItemGroup>
