@@ -45,9 +45,9 @@ namespace HT.Engine.Rendering
             sampler = logicalDevice.CreateSampler(new SamplerCreateInfo {
                 MagFilter = Filter.Linear,
                 MinFilter = Filter.Linear,
-                AddressModeU = SamplerAddressMode.Repeat,
-                AddressModeV = SamplerAddressMode.Repeat,
-                AddressModeW = SamplerAddressMode.Repeat,
+                AddressModeU = textureInfo.Repeat ? SamplerAddressMode.Repeat : SamplerAddressMode.ClampToEdge,
+                AddressModeV = textureInfo.Repeat ? SamplerAddressMode.Repeat : SamplerAddressMode.ClampToEdge,
+                AddressModeW = textureInfo.Repeat ? SamplerAddressMode.Repeat : SamplerAddressMode.ClampToEdge,
                 AnisotropyEnable = true,
                 MaxAnisotropy = 8f,
                 CompareEnable = false,

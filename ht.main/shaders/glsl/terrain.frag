@@ -13,11 +13,26 @@ layout(binding = 0) uniform SceneData
     float deltaTime;
 } sceneData;
 
+//Texture input
+layout(binding = 1) uniform sampler2D terrainTexSampler;
+layout(binding = 2) uniform sampler2D detail1TexSampler;
+layout(binding = 3) uniform sampler2D detail2TexSampler;
+
 //Output
 layout(location = 0) out vec4 outColor;
 
+//Vert to frag input
+layout(location = 0) in vec4 baseColor;
+layout(location = 1) in vec2 worldUv;
+
 void main() 
 {
+    float detail1TexScale = 5;
+    float detail2TexScale = 100;
+
     //Output
-    outColor = vec4(1, 1, 1, 1);
+    outColor = 
+        baseColor * 
+        texture(detail1TexSampler, worldUv * detail1TexScale) *
+        texture(detail2TexSampler, worldUv * detail2TexScale);
 }

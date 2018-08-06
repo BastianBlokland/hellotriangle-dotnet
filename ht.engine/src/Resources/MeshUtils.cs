@@ -12,7 +12,7 @@ namespace HT.Engine.Resources
         {
             //Create the vertices
             Vertex[] vertices = new Vertex[segments * segments];
-            Float3 offset = (x: (segments - 1f) / 2f, y: 0f, z: (segments - 1f) / 2f);
+            Float3 offset = (x: size * .5f, y: 0f, z: size * .5f);
             for (int x = 0; x < segments; x++)
             for (int z = 0; z < segments; z++)
             {
