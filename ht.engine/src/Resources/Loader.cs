@@ -74,6 +74,19 @@ namespace HT.Engine.Resources
             return (T)result;
         }
 
+        public T[] GetResult<T>(string[] paths)
+        {
+            if (isRunning)
+                throw new Exception($"[{nameof(Loader)}] Still loading");
+            if (!isFinished)
+                throw new Exception($"[{nameof(Loader)}] Not loaded yet");
+
+            T[] results = new T[paths.Length];
+            for (int i = 0; i < results.Length; i++)
+                results[i] = GetResult<T>(paths[i]);
+            return results;
+        }
+
         void ITaskExecutor.ExecuteTask(int taskId)
         {
             string path = paths[taskId];

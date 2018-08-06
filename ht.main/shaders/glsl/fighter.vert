@@ -40,7 +40,7 @@ void main()
 {
     //Settings
     float exhaustMult = clamp(instanceAge, 0, 1);
-    float exhaustScale = 2;
+    float exhaustScale = 4;
     vec4 exhaustColor = vec4(1, 1, 5, 1);
     
     //Logic

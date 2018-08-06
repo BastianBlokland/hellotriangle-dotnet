@@ -15,6 +15,8 @@ namespace HT.Engine.Rendering
         internal int IndexCount => indexCount;
 
         //Data
+        private readonly PrimitiveTopology topology;
+        private readonly bool allowRestart;
         private readonly int vertexCount;
         private readonly int indexCount;
         private readonly Memory.DeviceBuffer vertexBuffer;
@@ -39,6 +41,8 @@ namespace HT.Engine.Rendering
             if (executor == null)
                 throw new ArgumentNullException(nameof(stagingBuffer));
 
+            topology = mesh.Topology;
+            allowRestart = mesh.AllowRestart;
             vertexCount = mesh.VertexCount;
             indexCount = mesh.IndexCount;
             vertexBuffer = mesh.UploadVertices(logicalDevice, memoryPool, stagingBuffer, executor);
@@ -65,8 +69,8 @@ namespace HT.Engine.Rendering
 
         internal PipelineInputAssemblyStateCreateInfo GetInputAssemblyStateInfo()
             => new PipelineInputAssemblyStateCreateInfo(
-                topology: PrimitiveTopology.TriangleList,
-                primitiveRestartEnable: false);
+                topology: topology,
+                primitiveRestartEnable: allowRestart);
 
         internal FrontFace GetFrontFace() => FrontFace.Clockwise;
 

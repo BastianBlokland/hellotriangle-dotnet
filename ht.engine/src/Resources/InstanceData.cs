@@ -16,7 +16,7 @@ namespace HT.Engine.Resources
         public readonly Float4x4 ModelMatrix;
         public readonly float Age;
         
-        public InstanceData(Float4x4 modelMatrix, float age)
+        public InstanceData(Float4x4 modelMatrix, float age = 0f)
         {
             ModelMatrix = modelMatrix;
             Age = age;
