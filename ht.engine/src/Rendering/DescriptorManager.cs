@@ -47,16 +47,18 @@ namespace HT.Engine.Rendering
             {
                 this.binding = binding;
                 
+                bool hasBuffer = binding.UniformBufferCount > 0;
+                bool hasImage = binding.ImageSamplerCount > 0;
+                var sizes = new ResizeArray<DescriptorPoolSize>((hasBuffer && hasImage) ? 2 : 1);
+                if (hasBuffer) sizes.Add(new DescriptorPoolSize(
+                    DescriptorType.UniformBuffer, binding.UniformBufferCount * size));
+                if (hasImage) sizes.Add(new DescriptorPoolSize(
+                    DescriptorType.CombinedImageSampler, binding.ImageSamplerCount * size));
+
                 //Create a pool that contains enough resources for 'size' times what a giving binding requires
                 pool = logicalDevice.CreateDescriptorPool(new DescriptorPoolCreateInfo(
                     maxSets: size,
-                    poolSizes: new []
-                    {
-                        new DescriptorPoolSize(
-                            DescriptorType.UniformBuffer, binding.UniformBufferCount * size),
-                        new DescriptorPoolSize(
-                            DescriptorType.CombinedImageSampler, binding.ImageSamplerCount * size),
-                    },
+                    poolSizes: sizes.Data,
                     flags: DescriptorPoolCreateFlags.None));
                 
                 //Create a layout that matches the giving binding
