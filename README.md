@@ -46,9 +46,9 @@ Note: When building it automatically compiles the shaders from glsl to spr-v and
 run it manually there is a task 'build-shaders' which calls tools/compile-shaders.ps1 on windows and compile-shaders.sh on macos
 
 # credits
-C# vulkan bindings [VulkanCore](https://github.com/discosultan/VulkanCore) made by [discosultan](https://github.com/discosultan)
+- C# vulkan bindings [VulkanCore](https://github.com/discosultan/VulkanCore) made by [discosultan](https://github.com/discosultan)
 
 Sample assets:
-Skybox textures (Heiko Irrgang, https://93i.de/p/free-skybox-texture-set/)
-OpenGameArt (https://opengameart.org/)
-TurboSquid https://www.turbosquid.com/
+- Skybox textures (Heiko Irrgang, https://93i.de/p/free-skybox-texture-set/)
+- OpenGameArt (https://opengameart.org/)
+- TurboSquid https://www.turbosquid.com/
