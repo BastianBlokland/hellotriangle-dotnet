@@ -50,4 +50,4 @@ C# vulkan bindings [VulkanCore](https://github.com/discosultan/VulkanCore) made 
 
 Skybox textures (Heiko Irrgang, https://93i.de/p/free-skybox-texture-set/)
 
-OpenGameArt (https://opengameart.org/node/8022)
+OpenGameArt (https://opengameart.org/)
