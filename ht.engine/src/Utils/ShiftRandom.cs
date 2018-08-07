@@ -44,6 +44,8 @@ namespace HT.Engine.Utils
             return result;
         }
 
+        public float GetNextAngle() => GetNext() * FloatUtils.DOUBLE_PI;
+
         public float GetBetween(float minValue, float maxValue)
             => minValue + (maxValue - minValue) * GetNext();
 

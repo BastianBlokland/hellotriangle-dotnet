@@ -36,6 +36,17 @@ namespace HT.Main
                     vertShaderPath: "shaders/bin/terrain.vert.spv",
                     fragShaderPath: "shaders/bin/terrain.frag.spv");
 
+                //Add vegetation
+                AddVegetation(nativeApp, taskRunner, scene, renderOrder: 950,
+                    modelSource: ("models/bush.obj", scale: .005f),
+                    textureSources: new []
+                    { 
+                        ("textures/bush_color.tga", useMipMaps: true, repeat: false),
+                        ("textures/terrain.tga", useMipMaps: false, repeat: false)
+                    },
+                    vertShaderPath: "shaders/bin/vegetation.vert.spv",
+                    fragShaderPath: "shaders/bin/vegetation.frag.spv");
+
                 //Add skybox to the scene
                 AddAttributelessObject(nativeApp, taskRunner, scene, renderOrder: 1000,
                     vertexCount: 3, //Uses fullscreen triangle 'trick'
@@ -68,7 +79,7 @@ namespace HT.Main
 
                     //Rotate the camera
                     scene.Camera.Transformation = Float4x4.CreateOrbit(
-                        center: (0f, 5f, 0f),
+                        center: (0f, 2f, 0f),
                         offset: (0f, 1f, -5f),
                         axis: Float3.Up,
                         angle: (float)frameTracker.ElapsedTime * .25f);
@@ -124,6 +135,37 @@ namespace HT.Main
                 fragShaderPath);
             terrain.UpdateInstances(instances);
             return terrain;
+        }
+
+        private static void AddVegetation(
+            INativeApp app,
+            TaskRunner taskRunner,
+            RenderScene scene,
+            int renderOrder,
+            (string path, float scale) modelSource,
+            (string path, bool useMipMaps, bool repeat)[] textureSources,
+            string vertShaderPath,
+            string fragShaderPath)
+        {
+            const int BUSH_COUNT = 5000;
+            
+            var random = new ShiftRandom(seed: 1337);
+            var bush = AddInstancedObject(
+                app, taskRunner, scene, renderOrder,
+                modelSource, textureSources, vertShaderPath, fragShaderPath);
+
+            InstanceData[] bushInstances = new InstanceData[BUSH_COUNT];
+            for (int i = 0; i < BUSH_COUNT; i++)
+            {
+                Float3 pos = (random.GetBetween(-128f, 128f), 0f, random.GetBetween(-128f, 128f));
+                float yRot = random.GetNextAngle();
+                float scale = random.GetBetween(.3f, 2.5f);
+                bushInstances[i] = new InstanceData(
+                    Float4x4.CreateTranslation(pos) *
+                    Float4x4.CreateRotationFromYAngle(yRot) *
+                    Float4x4.CreateScale(scale));
+            }
+            bush.UpdateInstances(bushInstances);
         }
 
         private static InstancedObject AddInstancedObject(

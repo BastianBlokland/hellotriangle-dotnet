@@ -7,6 +7,7 @@ namespace HT.Engine.Math
     public static class FloatUtils
     {
         public const float PI = 3.14159265359f;
+        public const float DOUBLE_PI = PI * 2f;
         public const float DEG_TO_RAD = PI / 180f;
         public const float RAD_TO_DEG = 180f / PI;
 
