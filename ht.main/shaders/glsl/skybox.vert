@@ -35,7 +35,7 @@ mat3 yRotMatrix(float angle)
 void main()
 {
     //Can be used to tweak the rotatin of the skybox
-    float offsetAngle = 2.1;
+    const float offsetAngle = 2.1;
 
     //Fullscreen triangle, more info: https://www.saschawillems.de/?page_id=2122
     gl_Position = vec4((gl_VertexIndex << 1 & 2) * 2.0 - 1, (gl_VertexIndex & 2) * 2.0 - 1, 1, 1);

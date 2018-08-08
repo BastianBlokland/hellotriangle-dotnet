@@ -39,18 +39,18 @@ layout(location = 1) out vec4 additiveColor;
 void main()
 {
     //Settings
-    float exhaustMult = clamp(instanceAge, 0, 1);
-    float exhaustScale = 4;
-    vec4 exhaustColor = vec4(1, 1, 5, 1);
+    const float exhaustMult = clamp(instanceAge, 0, 1);
+    const float exhaustScale = 4;
+    const vec4 exhaustColor = vec4(1, 1, 5, 1);
     
     //Logic
-    vec4 exhaustSample = texture(exhaustTexSampler, vec2(sceneData.time + gl_InstanceIndex * 0.1, vertUv2.y));
-    float heightMap = exhaustSample.r;
-    float colorMultiplier = exhaustSample.g;
+    const vec4 exhaustSample = texture(exhaustTexSampler, vec2(sceneData.time + gl_InstanceIndex * 0.1, vertUv2.y));
+    const float heightMap = exhaustSample.r;
+    const float colorMultiplier = exhaustSample.g;
 
     //Calculate position (heightmap pushes vertices in the negative z axis for getting a exhaust effect)
-    vec3 modelPos = vertPosition - vec3(0, 0, heightMap * exhaustScale * exhaustMult);
-    vec4 worldPos = instanceModelMatrix * vec4(modelPos, 1);
+    const vec3 modelPos = vertPosition - vec3(0, 0, heightMap * exhaustScale * exhaustMult);
+    const vec4 worldPos = instanceModelMatrix * vec4(modelPos, 1);
 
     //Output
     colorUv = vertUv1;

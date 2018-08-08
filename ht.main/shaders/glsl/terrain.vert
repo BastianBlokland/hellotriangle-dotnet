@@ -32,18 +32,25 @@ out gl_PerVertex
 layout(location = 0) out vec4 baseColor;
 layout(location = 1) out vec2 worldUv;
 
+vec2 getWorldUv(vec3 worldPosition)
+{
+    const vec2 worldSize = vec2(256, 256);
+    return (worldPosition.xz + worldSize * 0.5) / worldSize;
+}
+
 void main()
 {
-    vec2 worldSize = vec2(256, 256);
-    float heightmapScale = 40;
-
-    vec4 worldPosition = instanceModelMatrix * vec4(vertPosition, 1.0);
-    worldUv = (worldPosition.xz + worldSize * 0.5) / worldSize;
-    vec4 terrainTexSample = texture(terrainTexSampler, worldUv);
+    vec4 vertWorldPosition = instanceModelMatrix * vec4(vertPosition, 1.0);
     
-    //Offset the y by the heightmap in the alpha channel
-    worldPosition.y += terrainTexSample.a * heightmapScale;
+    //Calculate the world uv based on the world pos
+    worldUv = getWorldUv(vertWorldPosition.xyz);
+    const vec4 terrainSample = texture(terrainTexSampler, worldUv);
 
-    gl_Position = sceneData.viewProjectionMatrix * worldPosition;
-    baseColor = vec4(terrainTexSample.rgb, 1.0);
+    //Offset by the terrain height
+    const float heightmapScale = 40;
+    vertWorldPosition.y += terrainSample.a * heightmapScale;
+
+    //Output
+    gl_Position = sceneData.viewProjectionMatrix * vertWorldPosition;
+    baseColor = vec4(terrainSample.rgb, 1.0);
 }

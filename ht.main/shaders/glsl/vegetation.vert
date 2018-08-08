@@ -34,26 +34,75 @@ out gl_PerVertex
     vec4 gl_Position;
 };
 layout(location = 0) out vec2 colorUv;
+layout(location = 1) out vec4 colorTint;
 
-vec3 GetPosition(const mat4 matrix)
+vec3 getPosition(const mat4 matrix) { return matrix[3].xyz; }
+
+vec4 smoothCurve(const vec4 x) { return x * x * (3.0 - 2.0 * x); }
+
+vec4 triangleWave(const vec4 x) { return abs(fract(x + 0.5) * 2 - 1); }
+
+vec4 smoothTriangleWave(const vec4 x) { return smoothCurve(triangleWave(x)); }
+
+vec3 windBend(vec3 worldVertexPos, const vec3 instWorldPositon)
 {
-    return matrix[3].xyz;
+    const float distOffset = 0.1;
+    const vec4 frequencies = vec4(0.8, 0.15, 0.3, 0.15);
+    const vec4 forces = vec4(0.15, 0.15, 0.25, 0.25);
+
+    vec3 localPos = worldVertexPos - instWorldPositon;
+    
+    const vec4 time = sceneData.time + (vec4(instWorldPositon.xz, instWorldPositon.xz) * distOffset);
+    const vec4 windVec = smoothTriangleWave(time * frequencies) * forces;
+    const float dist = length(localPos);
+ 
+    localPos.xz += (windVec.xz + windVec.yw) * (localPos.y * localPos.y * localPos.y);
+    return instWorldPositon + normalize(localPos) * dist;
+}
+
+vec2 getWorldUv(vec3 worldPosition)
+{
+    const vec2 worldSize = vec2(256, 256);
+    return (worldPosition.xz + worldSize * 0.5) / worldSize;
+}
+
+float getTerrainHeight(vec2 worldUv)
+{
+    const float heightmapScale = 40;
+    return texture(terrainTexSampler, worldUv).a * heightmapScale;
+}
+
+vec4 getTint()
+{
+    const vec4 tints[] = vec4[]
+    (
+        vec4(1.0, 1.0, 1.0, 0.98),
+        vec4(1.0, 0.9, 0.9, 0.92),
+        vec4(1.0, 0.8, 1.0, 0.97),
+        vec4(1.0, 1.0, 0.8, 0.91),
+        vec4(0.9, 0.9, 0.9, 0.96),
+        vec4(0.9, 1.0, 0.9, 0.94),
+        vec4(1.0, 1.0, 0.8, 0.92)
+    );
+    return tints[gl_InstanceIndex % tints.length()];
 }
 
 void main()
 {
-    vec2 worldSize = vec2(256, 256);
-    float heightmapScale = 40;
+    //Get the instances position from the instance matrix
+    const vec3 instanceWorldPositon = getPosition(instanceModelMatrix);
 
-    //Get the 'worldUv' for this instance
-    vec3 instanceWorldPositon = GetPosition(instanceModelMatrix);
-    vec2 worldUv = (instanceWorldPositon.xz + worldSize * 0.5) / worldSize;
-    
-    //Offset the y coordinate by the terrain heightmap 
-    vec4 worldPosition = instanceModelMatrix * vec4(vertPosition, 1.0);
-    worldPosition.y += texture(terrainTexSampler, worldUv).a * heightmapScale;
+    //Calculate world space position
+    vec4 vertWorldPosition = instanceModelMatrix * vec4(vertPosition, 1.0);
+
+    //Apply bending to simulate wind
+    vertWorldPosition.xyz = windBend(vertWorldPosition.xyz, instanceWorldPositon);
+
+    //Offset by the terrain height
+    vertWorldPosition.y += getTerrainHeight(getWorldUv(instanceWorldPositon));
 
     //Output
     colorUv = vertUv1;
-    gl_Position =  sceneData.viewProjectionMatrix * worldPosition;
+    colorTint = getTint();
+    gl_Position = sceneData.viewProjectionMatrix * vertWorldPosition;
 }

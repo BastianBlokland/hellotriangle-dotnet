@@ -79,7 +79,7 @@ namespace HT.Main
 
                     //Rotate the camera
                     scene.Camera.Transformation = Float4x4.CreateOrbit(
-                        center: (0f, 2f, 0f),
+                        center: (0f, 3f, 0f),
                         offset: (0f, 1f, -5f),
                         axis: Float3.Up,
                         angle: (float)frameTracker.ElapsedTime * .25f);
@@ -147,7 +147,7 @@ namespace HT.Main
             string vertShaderPath,
             string fragShaderPath)
         {
-            const int BUSH_COUNT = 5000;
+            const int BUSH_COUNT = 5_000;
             
             var random = new ShiftRandom(seed: 1337);
             var bush = AddInstancedObject(
@@ -159,7 +159,7 @@ namespace HT.Main
             {
                 Float3 pos = (random.GetBetween(-128f, 128f), 0f, random.GetBetween(-128f, 128f));
                 float yRot = random.GetNextAngle();
-                float scale = random.GetBetween(.3f, 2.5f);
+                float scale = random.GetBetween(1f, 2.5f);
                 bushInstances[i] = new InstanceData(
                     Float4x4.CreateTranslation(pos) *
                     Float4x4.CreateRotationFromYAngle(yRot) *

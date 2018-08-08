@@ -27,8 +27,8 @@ layout(location = 1) in vec2 worldUv;
 
 void main() 
 {
-    float detail1TexScale = 5;
-    float detail2TexScale = 100;
+    const float detail1TexScale = 5;
+    const float detail2TexScale = 100;
 
     //Output
     outColor = 
