@@ -64,19 +64,16 @@ namespace HT.Main
                     },
                     vertShaderPath: "shaders/bin/fighter.vert.spv",
                     fragShaderPath: "shaders/bin/fighter.frag.spv");
-                InstanceData[] fighterInstances = new InstanceData[64 * 64];
+                InstanceData[] fighterInstances = new InstanceData[16 * 16];
+                for (int x = 0; x < 16; x++)
+                for (int y = 0; y < 16; y++)
+                    fighterInstances[y * 16 + x] = new InstanceData(
+                        Float4x4.CreateTranslation(((x - 8) * 5f, 7.5f, (y - 8) * 5f)), age: 1f);
+                fighter.UpdateInstances(fighterInstances);
 
                 var frameTracker = new FrameTracker();
                 while (!window.IsCloseRequested)
                 {
-                    //Update the fighter instances
-                    for (int x = 0; x < 64; x++)
-                    for (int y = 0; y < 64; y++)
-                        fighterInstances[y * 64 + x] = new InstanceData(
-                            modelMatrix: Float4x4.CreateTranslation(((x - 32) * 5f, 5f, (y - 32) * 5f)),
-                            age: (float)frameTracker.ElapsedTime);
-                    fighter.UpdateInstances(fighterInstances);
-
                     //Rotate the camera
                     scene.Camera.Transformation = Float4x4.CreateOrbit(
                         center: (0f, 3f, 0f),
