@@ -17,7 +17,7 @@ Note: MacOS runs through the MoltenVK wrapper to run vulkan on metal devices.
 - Install dotnet-core 2.1 sdk (https://www.microsoft.com/net/download)
 - Install the vulkan sdk (https://vulkan.lunarg.com/sdk/home)
     Mac-note: you need to set some environment variables: (the getting started guide in the sdk contains more info)
-        -Add 'vulkansdk/macOS/bin' to the PATH environment variable (used for things like the 'glslangValidator')
+        -Add 'vulkansdk/macOS/bin' to the PATH environment variable (used for things like the 'glslc' compiler)
         -Set 'vulkansdk/macOS/lib' to the variable: 'DYLD_LIBRARY_PATH' (used by the vulkan-loader)
         -Set 'vulkansdk/macOS/etc/vulkan/explicit_layer.d' to the variable: 'VK_LAYER_PATH' (used by the vulkan-loader)
         -Set 'vulkansdk/macOS/etc/vulkan/icd.d/MoltenVK_icd.json' to the variable: 'VK_ICD_FILENAMES' (used by the vulkan-loader)

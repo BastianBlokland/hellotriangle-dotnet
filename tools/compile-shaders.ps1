@@ -5,14 +5,14 @@ param
     [Parameter(Mandatory=$true)][string]$SHADER_OUTPUT_DIR
 )
 
-#Compiles all shaders in a given input dir to spir-v using the glslangValidator 
+#Compiles all shaders in a given input dir to spir-v using the glslc compiler 
 #and puts the results in the given output dir.
 
-#Check if 'glslangValidator' is installed
-where.exe /Q glslangValidator
+#Check if 'glslc' is installed
+where.exe /Q glslc
 if ($LASTEXITCODE -gt 0)
 {
-    Write-Output "Error: 'glslangValidator' is not installed"
+    Write-Output "Error: 'glslc' is not installed"
     exit 1
 }
 
@@ -32,7 +32,7 @@ for ($i=0; $i -lt $files.Count; $i++)
 {
     $file=$files[$i]
     Write-Output "Compiling $($file.Name)"
-    & glslangValidator -V "$($file.FullName)" -o "$SHADER_OUTPUT_DIR/$($file.Name).spv"
+    & glslc -o "$SHADER_OUTPUT_DIR/$($file.Name).spv" "$($file.FullName)"
 }
 
 Write-Output "Finished compiling shaders"
