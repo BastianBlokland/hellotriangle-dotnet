@@ -36,10 +36,34 @@ out gl_PerVertex
 layout(location = 0) out vec2 colorUv;
 layout(location = 1) out vec4 additiveColor;
 
+mat3 xRotMatrix(float angle)
+{
+    float c = cos(angle);
+    float s = sin(angle);
+    return mat3(1.0,    0.0,    0.0,
+                0.0,    c,      -s,
+                0.0,    s,      c);
+}
+
+mat3 zRotMatrix(float angle)
+{
+    float c = cos(angle);
+    float s = sin(angle);
+    return mat3(c,      -s,     0.0,
+                s,      c,      0.0,
+                0.0,    0.0,    1.0);
+}
+
 void main()
 {
     vec4 vertPos = vec4(vertPosition, 1.0);
-    
+
+    //Wobble effect
+    const vec2 wobbleFrequencies = vec2(1.2, 1.5);
+    const vec2 wobbleAngles = 
+        sin((sceneData.time + gl_InstanceIndex) * wobbleFrequencies) * vec2(0.06, 0.08);
+    vertPos.xyz = xRotMatrix(wobbleAngles.x) * zRotMatrix(wobbleAngles.y) * vertPos.xyz;
+
     //Exhaust effect
     //red channel contains mask for exhaust vertices
     //green channel of vert color contains exhaust intensity
