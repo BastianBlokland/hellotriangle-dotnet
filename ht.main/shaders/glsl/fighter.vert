@@ -16,7 +16,6 @@ layout(binding = 0) uniform SceneData
 
 //Texture input
 layout(binding = 1) uniform sampler2D colorTexSampler;
-layout(binding = 2) uniform sampler2D exhaustTexSampler;
 
 //Vertex input
 layout(location = 0) in vec3 vertPosition;
@@ -39,22 +38,25 @@ layout(location = 1) out vec4 additiveColor;
 
 void main()
 {
-    //Settings
-    const float exhaustMult = clamp(instanceAge, 0, 1);
-    const float exhaustScale = 4;
-    const vec4 exhaustColor = vec4(1, 1, 5, 1);
+    vec4 vertPos = vec4(vertPosition, 1.0);
     
-    //Logic
-    const vec4 exhaustSample = texture(exhaustTexSampler, vec2(sceneData.time + gl_InstanceIndex * 0.1, vertUv2.y));
-    const float heightMap = exhaustSample.r;
-    const float colorMultiplier = exhaustSample.g;
+    //Exhaust effect
+    //red channel contains mask for exhaust vertices
+    //green channel of vert color contains exhaust intensity
+    const float minExhaustScale = 1.5;
+    const float maxExhaustScale = 3.5;
+    const float frequency = 20.0;
+    const float exhaustIntensity = 
+        abs(sin((vertPos.x + vertPos.y + sceneData.time + (gl_InstanceIndex * 0.5312)) * frequency));
+    
+    const vec4 hotExhaustColor = vec4(0.9, 0.9, 2.0, 1.0);
+    const vec4 coldExhaustColor = vec4(0.2, 0.2, 2.0, 1.0);
+    vertPos.z -= vertColor.g * mix(minExhaustScale, maxExhaustScale, exhaustIntensity);
+    additiveColor = mix(
+        hotExhaustColor,
+        coldExhaustColor,
+        vertColor.g * exhaustIntensity) * vertColor.r;
 
-    //Calculate position (heightmap pushes vertices in the negative z axis for getting a exhaust effect)
-    const vec3 modelPos = vertPosition - vec3(0, 0, heightMap * exhaustScale * exhaustMult);
-    const vec4 worldPos = instanceModelMatrix * vec4(modelPos, 1);
-
-    //Output
     colorUv = vertUv1;
-    additiveColor = exhaustColor * colorMultiplier * exhaustMult;
-    gl_Position = sceneData.viewProjectionMatrix * worldPos;
+    gl_Position = sceneData.viewProjectionMatrix * instanceModelMatrix * vertPos;
 }

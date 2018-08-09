@@ -95,7 +95,6 @@ void main()
     //Offset by the terrain height
     vertWorldPosition.y += getTerrainHeight(getWorldUv(instanceWorldPositon));
 
-    //Output
     colorUv = vertUv1;
     colorTint = getTint();
     gl_Position = sceneData.viewProjectionMatrix * vertWorldPosition;

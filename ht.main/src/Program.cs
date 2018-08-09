@@ -57,11 +57,7 @@ namespace HT.Main
                 //Add the fighter to the scene
                 var fighter = AddInstancedObject(nativeApp, taskRunner, scene, renderOrder: 0,
                     modelSource: ("models/fighter.dae", scale: 2f),
-                    textureSources: new [] 
-                    { 
-                        ("textures/fighter_color.tga", useMipMaps: true, repeat: false),
-                        ("textures/fighter_exhaust.tga", useMipMaps: false, repeat: true)
-                    },
+                    textureSources: new [] { ("textures/fighter_color.tga", useMipMaps: true, repeat: false) },
                     vertShaderPath: "shaders/bin/fighter.vert.spv",
                     fragShaderPath: "shaders/bin/fighter.frag.spv");
                 InstanceData[] fighterInstances = new InstanceData[16 * 16];

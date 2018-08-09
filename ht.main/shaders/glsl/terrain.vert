@@ -55,7 +55,6 @@ void main()
     const float heightmapScale = 40;
     vertWorldPosition.y += terrainSample.a * heightmapScale;
 
-    //Output
     gl_Position = sceneData.viewProjectionMatrix * vertWorldPosition;
     baseColor = vec4(terrainSample.rgb, 1.0);
 }

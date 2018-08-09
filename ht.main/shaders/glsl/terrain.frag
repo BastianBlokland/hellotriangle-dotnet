@@ -30,7 +30,6 @@ void main()
     const float detail1TexScale = 5;
     const float detail2TexScale = 100;
 
-    //Output
     outColor = 
         baseColor * 
         texture(detail1TexSampler, worldUv * detail1TexScale) *

@@ -15,7 +15,6 @@ layout(binding = 0) uniform SceneData
 
 //Texture input
 layout(binding = 1) uniform sampler2D colorTexSampler;
-layout(binding = 2) uniform sampler2D exhaustTexSampler;
 
 //Vert to frag input
 layout(location = 0) in vec2 colorUv;
@@ -26,6 +25,5 @@ layout(location = 0) out vec4 outColor;
 
 void main() 
 {
-    //Output
     outColor = texture(colorTexSampler, colorUv) + additiveColor;
 }
