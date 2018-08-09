@@ -248,6 +248,14 @@ namespace HT.Engine.Parsing
                 for (int i = 0; i < inputs.Count; i++)
                     if (inputs.Data[i].Semantic == semantic && inputs.Data[i].Set == set)
                         return inputs.Data[i].Offset;
+                //If we don't care about a particular set (set < 0) we take any set that matches
+                //the given semantic
+                if (set < 0)
+                {
+                    for (int i = 0; i < inputs.Count; i++)
+                        if (inputs.Data[i].Semantic == semantic)
+                            return inputs.Data[i].Offset;
+                }
                 return -1;
             }
 
