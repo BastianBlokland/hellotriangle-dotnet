@@ -1,17 +1,8 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
-
-//Scene input
-layout(binding = 0) uniform SceneData 
-{
-    mat4 cameraMatrix;
-	mat4 viewMatrix;
-    mat4 projectionMatrix;
-    mat4 viewProjectionMatrix;
-    int frame;
-    float time;
-    float deltaTime;
-} sceneData;
+#extension GL_GOOGLE_include_directive : enable
+#include "include_sceneinput.glsl"
+#include "include_math.glsl"
 
 //Texture input
 layout(binding = 1) uniform samplerCube skyboxTexture;
@@ -22,15 +13,6 @@ out gl_PerVertex
     vec4 gl_Position;
 };
 layout(location = 0) out vec3 viewDirection;
-
-mat3 yRotMatrix(float angle)
-{
-    float c = sin(angle);
-    float s = cos(angle);
-    return mat3(c,      0.0,    s,
-                0.0,    1.0,    0.0,
-                -s,     0.0,    c);
-}
 
 void main()
 {

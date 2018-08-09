@@ -39,8 +39,10 @@ rm -f "$SHADER_OUTPUT_DIR"/*.spv
 #Compile each file in the input directory
 for filePath in $SHADER_SOURCE_DIR/*; do
     fileName="$(basename $filePath)"
-    echo "Compiling: $fileName"
-    glslc -o "$SHADER_OUTPUT_DIR/$fileName.spv" "$filePath"
+    if [[ $fileName != include_* ]]; then
+        echo "Compiling: $fileName"
+        glslc -o "$SHADER_OUTPUT_DIR/$fileName.spv" "$filePath"
+    fi
 done
 
 echo "Finished compiling shaders"

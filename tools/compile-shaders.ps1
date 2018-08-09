@@ -31,8 +31,11 @@ $files = Get-ChildItem "$SHADER_SOURCE_DIR"
 for ($i=0; $i -lt $files.Count; $i++)
 {
     $file=$files[$i]
-    Write-Output "Compiling $($file.Name)"
-    & glslc -o "$SHADER_OUTPUT_DIR/$($file.Name).spv" "$($file.FullName)"
+    if (!$file.Name.StartsWith("include_"))
+    {
+        Write-Output "Compiling $($file.Name)"
+        & glslc -o "$SHADER_OUTPUT_DIR/$($file.Name).spv" "$($file.FullName)"
+    }
 }
 
 Write-Output "Finished compiling shaders"

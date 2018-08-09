@@ -1,17 +1,7 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
-
-//Scene input
-layout(binding = 0) uniform SceneData 
-{
-    mat4 cameraMatrix;
-	mat4 viewMatrix;
-    mat4 projectionMatrix;
-    mat4 viewProjectionMatrix;
-    int frame;
-    float time;
-    float deltaTime;
-} sceneData;
+#extension GL_GOOGLE_include_directive : enable
+#include "include_sceneinput.glsl"
 
 //Texture input
 layout(binding = 1) uniform sampler2D colorTexSampler;
