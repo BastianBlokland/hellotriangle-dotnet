@@ -38,22 +38,16 @@ layout(location = 1) out vec4 colorTint;
 
 vec3 getPosition(const mat4 matrix) { return matrix[3].xyz; }
 
-vec4 smoothCurve(const vec4 x) { return x * x * (3.0 - 2.0 * x); }
-
-vec4 triangleWave(const vec4 x) { return abs(fract(x + 0.5) * 2 - 1); }
-
-vec4 smoothTriangleWave(const vec4 x) { return smoothCurve(triangleWave(x)); }
-
 vec3 windBend(vec3 worldVertexPos, const vec3 instWorldPositon)
 {
     const float distOffset = 0.1;
-    const vec4 frequencies = vec4(0.8, 0.15, 0.3, 0.15);
-    const vec4 forces = vec4(0.15, 0.15, 0.25, 0.25);
+    const vec4 frequencies = vec4(3.8, 1, 1.7, 0.9);
+    const vec4 forces = vec4(0.04, 0.04, 0.1, 0.1);
 
     vec3 localPos = worldVertexPos - instWorldPositon;
     
     const vec4 time = sceneData.time + (vec4(instWorldPositon.xz, instWorldPositon.xz) * distOffset);
-    const vec4 windVec = smoothTriangleWave(time * frequencies) * forces;
+    const vec4 windVec = sin(time * frequencies) * forces;
     const float dist = length(localPos);
  
     localPos.xz += (windVec.xz + windVec.yw) * (localPos.y * localPos.y * localPos.y);
