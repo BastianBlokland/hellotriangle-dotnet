@@ -140,7 +140,8 @@ namespace HT.Engine.Parsing
                     position: pos,
                     color: Float4.One, //Obj has no concept of vertex color
                     normal: normal,
-                    uv1: uv, 
+                    //Convert uv to be origin = bottom left
+                    uv1: (uv.X, 1f - uv.Y), 
                     uv2: Float2.Zero); //Obj has no concept of uv2
             }
         }

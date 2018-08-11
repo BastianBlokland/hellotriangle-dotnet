@@ -64,7 +64,8 @@ namespace HT.Engine.Parsing
                 throw par.CreateError($"Only 24 (rgb) and 32 (rgba) bits per pixel are supported");
             //Check if this image is using the run-length-encoding compression
             bool rleCompressed = CheckCompression(header.ImageType);
-            
+            bool yFlipped = CheckYFlipped(header.ImageDescriptor);
+
             //Create array for the pixels
             pixels = new Byte4[header.ImageWidth * header.ImageHeight];
 
@@ -89,21 +90,33 @@ namespace HT.Engine.Parsing
                     {
                         Byte4 pixel = ConsumePixel();
                         for (int j = 0; j < count + 1; j++)
-                            pixels[i + j] = pixel;
+                            SetPixel(i + j, pixel);
                     }
                     //If its not a runlength packet then its a 'raw' packet meaning just normal
                     //pixels for as many pixels as set by count
                     else
                     {
                         for (int j = 0; j < count + 1; j++)
-                            pixels[i + j] = ConsumePixel();
+                            SetPixel(i + j, ConsumePixel());
                     }
                     i += count;
                 }
                 else
-                    pixels[i] = ConsumePixel();
+                    SetPixel(i, ConsumePixel());
             }
             return new ByteTexture(pixels, size: (header.ImageWidth, header.ImageHeight));
+
+            void SetPixel(int index, Byte4 pixel)
+            {
+                if (yFlipped)
+                {
+                    int y =  (header.ImageHeight - 1) - index / header.ImageWidth;
+                    int x = index % header.ImageWidth;
+                    pixels[y * header.ImageWidth + x] = pixel;
+                }
+                else
+                    pixels[index] = pixel;
+            }
         }
 
         public void Dispose() => par.Dispose();
@@ -140,6 +153,8 @@ namespace HT.Engine.Parsing
                     throw par.CreateError($"Unsupported image-type: {header.ImageType}");
             }
         }
+
+        private bool CheckYFlipped(byte imageDescriptor) => !imageDescriptor.HasBitSet(5);
 
         ITexture ITextureParser.Parse() => Parse();
         object IParser.Parse() => Parse();
