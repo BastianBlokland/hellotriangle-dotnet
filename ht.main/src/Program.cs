@@ -44,6 +44,7 @@ namespace HT.Main
                     textureSources: new []
                     { 
                         ("textures/bush_color.tga", useMipMaps: true, repeat: false),
+                        ("textures/bush_normal.tga", useMipMaps: true, repeat: false),
                         ("textures/terrain.tga", useMipMaps: false, repeat: false)
                     },
                     vertShaderPath: "shaders/bin/vegetation.vert.spv",

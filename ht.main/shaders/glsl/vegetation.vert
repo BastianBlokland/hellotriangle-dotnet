@@ -9,7 +9,8 @@
 
 //Texture input
 layout(binding = 1) uniform sampler2D colorTexSampler;
-layout(binding = 2) uniform sampler2D terrainTexSampler;
+layout(binding = 2) uniform sampler2D normalTexSampler;
+layout(binding = 3) uniform sampler2D terrainTexSampler;
 
 //Output
 out gl_PerVertex
@@ -18,7 +19,8 @@ out gl_PerVertex
 };
 layout(location = 0) out vec2 colorUv;
 layout(location = 1) out vec4 colorTint;
-layout(location = 2) out vec3 worldNormal;
+layout(location = 2) out vec3 worldPosition;
+layout(location = 3) out vec3 worldNormal;
 
 vec4 getTint()
 {
@@ -53,5 +55,6 @@ void main()
     colorUv = vertUv1;
     colorTint = getTint();
     worldNormal = mat3(instanceModelMatrix) * (vertNormal + bendOffset);
+    worldPosition = bendWorldPosition.xyz;
     gl_Position = sceneData.viewProjectionMatrix * bendWorldPosition;
 }
