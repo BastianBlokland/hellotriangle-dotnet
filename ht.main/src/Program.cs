@@ -22,7 +22,9 @@ namespace HT.Main
             using (var host = new Host(nativeApp, appName: "Test", appVersion: 1, logger: logger))
             using (var window = host.CreateWindow(windowSize: (800, 600), deviceRequirements))
             {
-                RenderScene scene = new RenderScene(window, clearColor: null, logger);
+                RenderScene scene = new RenderScene(window, clearColor: null,
+                    compositionVertProg: LoadProg("shaders/bin/post_fullscreen.vert.spv"),
+                    compositionFragProg: LoadProg("shaders/bin/post_baselighting.frag.spv"), logger);
                 window.AttachScene(scene);
 
                 //Add terrain to the scene
@@ -91,6 +93,10 @@ namespace HT.Main
                     //Track frame-number, deltatime, etc..
                     frameTracker.TrackFrame();
                 }
+
+                //Utilities
+                ShaderProgram LoadProg(string path)
+                    => Load(nativeApp, taskRunner, path).GetResult<ShaderProgram>(path);
             }
         }
 

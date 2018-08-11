@@ -17,7 +17,8 @@ namespace HT.Engine.Rendering
         private readonly ShaderModule vertModule;
         private readonly ShaderModule fragModule;
         private readonly DeviceMesh deviceMesh;
-        private readonly DeviceSampler[] deviceSamplers;
+        private readonly DeviceSampler[] samplers;
+        private readonly DeviceTexture[] textures;
         private readonly Memory.HostBuffer instanceDataBuffer;
         private readonly Memory.HostBuffer indirectArgumentsBuffer;
         private readonly DescriptorManager.Block descriptorBlock;
@@ -30,7 +31,7 @@ namespace HT.Engine.Rendering
             RenderScene scene,
             int renderOrder,
             Mesh mesh,
-            TextureInfo[] textures,
+            TextureInfo[] textureInfos,
             ShaderProgram vertProg,
             ShaderProgram fragProg,
             int maxInstances = 100_000)
@@ -39,8 +40,8 @@ namespace HT.Engine.Rendering
                 throw new ArgumentNullException(nameof(scene));
             if (mesh == null)
                 throw new ArgumentNullException(nameof(mesh));
-            if (textures == null)
-                throw new ArgumentNullException(nameof(textures));
+            if (textureInfos == null)
+                throw new ArgumentNullException(nameof(textureInfos));
             if (vertProg == null)
                 throw new ArgumentNullException(nameof(vertProg));
             if (fragProg == null)
@@ -60,15 +61,19 @@ namespace HT.Engine.Rendering
                 scene.StagingBuffer,
                 scene.Executor);
 
-            //Upload the textures to the gpu
-            deviceSamplers = new DeviceSampler[textures.Length];
-            for (int i = 0; i < textures.Length; i++)
-                deviceSamplers[i] = new DeviceSampler(
-                    textures[i],
-                    scene.LogicalDevice,
-                    scene.MemoryPool,
-                    scene.StagingBuffer,
-                    scene.Executor);
+            textures = new DeviceTexture[textureInfos.Length];
+            samplers = new DeviceSampler[textureInfos.Length];
+            for (int i = 0; i < textureInfos.Length; i++)
+            {
+                textures[i] = DeviceTexture.UploadTexture(
+                    texture: textureInfos[i].Texture as IInternalTexture,
+                    generateMipMaps: textureInfos[i].UseMipMaps,
+                    scene.LogicalDevice, scene.MemoryPool, scene.StagingBuffer, scene.Executor);
+                samplers[i] = new DeviceSampler(scene.LogicalDevice,
+                    mipLevels: textures[i].MipLevels,
+                    repeat: textureInfos[i].Repeat,
+                    maxAnisotropy: 8f);
+            }
 
             //Allocate a buffers for the instance data and indirect args
             instanceDataBuffer = new Memory.HostBuffer(
@@ -89,15 +94,14 @@ namespace HT.Engine.Rendering
             //Create the descriptor binding
             var binding = new DescriptorBinding(uniformBufferCount: 1, imageSamplerCount: textures.Length);
             descriptorBlock = scene.DescriptorManager.Allocate(binding);
-            descriptorBlock.Update(
-                new Memory.IBuffer[] { scene.SceneDataBuffer }, deviceSamplers);
+            descriptorBlock.Update(new Memory.IBuffer[] { scene.SceneDataBuffer }, samplers, textures);
 
             //Create the pipeline
             pipelineLayout = scene.LogicalDevice.CreatePipelineLayout(new PipelineLayoutCreateInfo(
                 setLayouts: new [] { descriptorBlock.Layout },
                 pushConstantRanges:  null ));
 
-            pipeline = CreatePipeline(scene.LogicalDevice, scene.RenderPass);
+            pipeline = CreatePipeline(scene.LogicalDevice, scene.GeometryRenderpass);
         }
 
         public void UpdateInstances(Span<InstanceData> instances)
@@ -116,7 +120,8 @@ namespace HT.Engine.Rendering
             ThrowIfDisposed();
 
             deviceMesh.Dispose();
-            deviceSamplers.DisposeAll();
+            textures.DisposeAll();
+            samplers.DisposeAll();
             instanceDataBuffer.Dispose();
             indirectArgumentsBuffer.Dispose();
             descriptorBlock.Free();
@@ -187,7 +192,7 @@ namespace HT.Engine.Rendering
                 logicOpEnable: false
             );
             var multisampleState = new PipelineMultisampleStateCreateInfo(
-                rasterizationSamples: scene.MultiSampleCount,
+                rasterizationSamples: SampleCounts.Count1,
                 sampleShadingEnable: false
             );
             //Pass the viewport and scissor-rect as dynamic so we are not tied to swapchain size

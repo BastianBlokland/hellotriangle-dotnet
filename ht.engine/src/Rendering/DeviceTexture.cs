@@ -129,7 +129,8 @@ namespace HT.Engine.Rendering
             SampleCounts samples,
             Device logicalDevice,
             Memory.Pool memoryPool,
-            TransientExecutor executor)
+            TransientExecutor executor,
+            bool allowSampling = false)
         {
             if (logicalDevice == null)
                 throw new ArgumentNullException(nameof(logicalDevice));
@@ -138,6 +139,9 @@ namespace HT.Engine.Rendering
             if (executor == null)
                 throw new ArgumentNullException(nameof(executor));
 
+            var usage = allowSampling
+                ? ImageUsages.DepthStencilAttachment | ImageUsages.Sampled
+                : ImageUsages.DepthStencilAttachment | ImageUsages.TransientAttachment;
             var aspects = ImageAspects.Depth;
             var image = CreateImage(
                 logicalDevice, 
@@ -145,7 +149,7 @@ namespace HT.Engine.Rendering
                 samples,
                 size,
                 mipLevels: 1,
-                ImageUsages.DepthStencilAttachment,
+                usage,
                 cubeMap: false);
             var memory = memoryPool.AllocateAndBind(image, Chunk.Location.Device);
             
@@ -169,7 +173,8 @@ namespace HT.Engine.Rendering
             SampleCounts samples,
             Device logicalDevice,
             Memory.Pool memoryPool,
-            TransientExecutor executor)
+            TransientExecutor executor,
+            bool allowSampling = false)
         {
             if (logicalDevice == null)
                 throw new ArgumentNullException(nameof(logicalDevice));
@@ -178,6 +183,9 @@ namespace HT.Engine.Rendering
             if (executor == null)
                 throw new ArgumentNullException(nameof(executor));
 
+            var usage = allowSampling
+                ? ImageUsages.ColorAttachment | ImageUsages.Sampled
+                : ImageUsages.ColorAttachment | ImageUsages.TransientAttachment;
             var aspects = ImageAspects.Color;
             var image = CreateImage(
                 logicalDevice, 
@@ -185,7 +193,7 @@ namespace HT.Engine.Rendering
                 samples,
                 size,
                 mipLevels: 1,
-                ImageUsages.ColorAttachment | ImageUsages.TransientAttachment,
+                usage,
                 cubeMap: false);
             var memory = memoryPool.AllocateAndBind(image, Chunk.Location.Device);
             

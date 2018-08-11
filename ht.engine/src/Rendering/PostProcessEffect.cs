@@ -7,102 +7,81 @@ using VulkanCore;
 
 namespace HT.Engine.Rendering
 {
-    public sealed class AttributelessObject : IInternalRenderObject
+    internal sealed class PostProcessEffect : IDisposable
     {
-        //Properties
-        public int RenderOrder => renderOrder;
-        
-        //Data
         private readonly RenderScene scene;
-        private readonly int vertexCount;
         private readonly ShaderModule vertModule;
         private readonly ShaderModule fragModule;
         private readonly DeviceSampler[] samplers;
-        private readonly DeviceTexture[] textures;
         private readonly DescriptorManager.Block descriptorBlock;
         private readonly PipelineLayout pipelineLayout;
         private readonly Pipeline pipeline;
-        private int renderOrder;
         private bool disposed;
 
-        public AttributelessObject(
+        public PostProcessEffect(
             RenderScene scene,
-            int renderOrder,
-            int vertexCount,
-            TextureInfo[] textureInfos,
             ShaderProgram vertProg,
             ShaderProgram fragProg)
         {
             if (scene == null)
                 throw new ArgumentNullException(nameof(scene));
-            if (textureInfos == null)
-                throw new ArgumentNullException(nameof(textureInfos));
             if (vertProg == null)
                 throw new ArgumentNullException(nameof(vertProg));
             if (fragProg == null)
                 throw new ArgumentNullException(nameof(fragProg));
             this.scene = scene;
-            this.renderOrder = renderOrder;
-            this.vertexCount = vertexCount;
 
             //Create the shader modules
             vertModule = vertProg.CreateModule(scene.LogicalDevice);
             fragModule = fragProg.CreateModule(scene.LogicalDevice);
 
-            //Setup textures and samplers
-            textures = new DeviceTexture[textureInfos.Length];
-            samplers = new DeviceSampler[textureInfos.Length];
-            for (int i = 0; i < textureInfos.Length; i++)
-            {
-                textures[i] = DeviceTexture.UploadTexture(
-                    texture: textureInfos[i].Texture as IInternalTexture,
-                    generateMipMaps: textureInfos[i].UseMipMaps,
-                    scene.LogicalDevice, scene.MemoryPool, scene.StagingBuffer, scene.Executor);
-                samplers[i] = new DeviceSampler(scene.LogicalDevice,
-                    mipLevels: textures[i].MipLevels,
-                    repeat: textureInfos[i].Repeat,
-                    maxAnisotropy: 8f);
-            }
+            //Create the samplers (1 for each scene target)
+            samplers = new DeviceSampler[2];
+            for (int i = 0; i < samplers.Length; i++)
+                samplers[i] = new DeviceSampler(scene.LogicalDevice);    
 
             //Create the descriptor binding
-            var binding = new DescriptorBinding(uniformBufferCount: 1, imageSamplerCount: textures.Length);
+            var binding = new DescriptorBinding(uniformBufferCount: 1, imageSamplerCount: 2);
             descriptorBlock = scene.DescriptorManager.Allocate(binding);
-            descriptorBlock.Update(new Memory.IBuffer[] { scene.SceneDataBuffer }, samplers, textures);
 
             //Create the pipeline
             pipelineLayout = scene.LogicalDevice.CreatePipelineLayout(new PipelineLayoutCreateInfo(
                 setLayouts: new [] { descriptorBlock.Layout },
-                pushConstantRanges:  null ));
+                pushConstantRanges:  null));
 
-            pipeline = CreatePipeline(scene.LogicalDevice, scene.GeometryRenderpass);
+            pipeline = CreatePipeline(scene.LogicalDevice, scene.CompositionRenderpass);
         }
 
         public void Dispose()
         {
             ThrowIfDisposed();
 
-            textures.DisposeAll();
-            samplers.DisposeAll();
             descriptorBlock.Free();
             pipelineLayout.Dispose();
             pipeline.Dispose();
             vertModule.Dispose();
             fragModule.Dispose();
+            samplers.DisposeAll();
             disposed = true;
         }
 
-        void IInternalRenderObject.Record(CommandBuffer commandbuffer)
+        internal void BindSceneTargets(DeviceTexture sceneColor, DeviceTexture sceneDepth)
+        {
+            descriptorBlock.Update(
+                buffers: new Memory.IBuffer[] { scene.SceneDataBuffer },
+                samplers: samplers,
+                textures: new [] { sceneColor, sceneDepth });
+        }
+
+        internal void Record(CommandBuffer commandbuffer)
         {
             commandbuffer.CmdBindDescriptorSet(
                 PipelineBindPoint.Graphics,
                 pipelineLayout,
                 descriptorBlock.Set);
 
-            //Bind pipeline
             commandbuffer.CmdBindPipeline(PipelineBindPoint.Graphics, pipeline);
-
-            //Draw
-            commandbuffer.CmdDraw(vertexCount, instanceCount: 1, firstVertex: 0, firstInstance: 0);
+            commandbuffer.CmdDraw(vertexCount: 3, instanceCount: 1, firstVertex: 0, firstInstance: 0);
         }
 
         private Pipeline CreatePipeline(Device logicalDevice, RenderPass renderpass)
@@ -115,8 +94,8 @@ namespace HT.Engine.Rendering
                     stage: ShaderStages.Fragment, module: fragModule, name: "main")
             };
             var depthTest = new PipelineDepthStencilStateCreateInfo {
-                DepthTestEnable = true,
-                DepthWriteEnable = true,
+                DepthTestEnable = false, //No depth testing
+                DepthWriteEnable = false, //No depth writing
                 DepthCompareOp = CompareOp.LessOrEqual,
                 DepthBoundsTestEnable = false,
                 StencilTestEnable = false
@@ -124,7 +103,7 @@ namespace HT.Engine.Rendering
             var rasterizer = new PipelineRasterizationStateCreateInfo(
                 depthClampEnable: false,
                 polygonMode: PolygonMode.Fill,
-                cullMode: CullModes.Back,
+                cullMode: CullModes.None, //No culling
                 frontFace: FrontFace.Clockwise,
                 lineWidth: 1f
             );
@@ -132,9 +111,8 @@ namespace HT.Engine.Rendering
                 attachments: new [] 
                 { 
                     new PipelineColorBlendAttachmentState(
-                        colorWriteMask: ColorComponents.All,
-                        blendEnable: false
-                    )
+                        blendEnable: false,
+                        colorWriteMask: ColorComponents.All)
                 },
                 logicOpEnable: false
             );
@@ -174,7 +152,7 @@ namespace HT.Engine.Rendering
         private void ThrowIfDisposed()
         {
             if (disposed)
-                throw new Exception($"[{nameof(AttributelessObject)}] Allready disposed");
+                throw new Exception($"[{nameof(PostProcessEffect)}] Allready disposed");
         }
     }
 }

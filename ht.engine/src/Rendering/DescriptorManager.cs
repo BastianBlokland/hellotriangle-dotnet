@@ -25,8 +25,9 @@ namespace HT.Engine.Rendering
             }
 
             public void Update(
-                Memory.IBuffer[] buffers,
-                DeviceSampler[] samplers) => Container.UpdateSet(this, buffers, samplers);
+                Memory.IBuffer[] buffers, DeviceSampler[] samplers, DeviceTexture[] textures)
+                => Container.UpdateSet(this, buffers, samplers, textures);
+
             public void Free() => Container.Free(this);
         }
 
@@ -117,7 +118,8 @@ namespace HT.Engine.Rendering
             internal void UpdateSet(
                 Block block,
                 Memory.IBuffer[] buffers,
-                DeviceSampler[] samplers)
+                DeviceSampler[] samplers,
+                DeviceTexture[] textures)
             {
                 if (block.Container != this)
                     throw new ArgumentException(
@@ -125,9 +127,9 @@ namespace HT.Engine.Rendering
                 if (buffers.Length != binding.UniformBufferCount)
                     throw new ArgumentException(
                         $"[{nameof(Chunk)}] Incorrect number of buffers provided", nameof(buffers));
-                if (samplers.Length != binding.ImageSamplerCount)
+                if (samplers.Length != binding.ImageSamplerCount || textures.Length != binding.ImageSamplerCount)
                     throw new ArgumentException(
-                        $"[{nameof(Chunk)}] Incorrect number of samplers provided", nameof(samplers));
+                        $"[{nameof(Chunk)}] Incorrect number of samplers or textures provided");
 
                 var set = sets[block.Id];
                 var writes = new WriteDescriptorSet[binding.TotalBindings];
@@ -145,7 +147,7 @@ namespace HT.Engine.Rendering
                         imageInfo: isBuffer ? null : new [] {
                             new DescriptorImageInfo(
                                 sampler: samplers[i - binding.UniformBufferCount].Sampler,
-                                imageView: samplers[i - binding.UniformBufferCount].View,
+                                imageView: textures[i - binding.UniformBufferCount].View,
                                 imageLayout: ImageLayout.ShaderReadOnlyOptimal) },
                         bufferInfo: !isBuffer ? null : new [] {
                             new DescriptorBufferInfo(

@@ -10,51 +10,34 @@ namespace HT.Engine.Rendering
     {
         //Properties
         internal Sampler Sampler => sampler;
-        internal ImageView View => deviceTexture.View;
 
         //Data
-        private readonly DeviceTexture deviceTexture;
         private readonly Sampler sampler;
         private bool disposed;
 
         internal DeviceSampler(
-            TextureInfo textureInfo,
             Device logicalDevice,
-            Memory.Pool memoryPool,
-            Memory.HostBuffer stagingBuffer,
-            TransientExecutor executor)
+            int mipLevels = 1,
+            bool repeat = false,
+            float maxAnisotropy = -1f)
         {
-            if (textureInfo.Texture == null)
-                throw new ArgumentNullException(nameof(textureInfo));
             if (logicalDevice == null)
                 throw new ArgumentNullException(nameof(logicalDevice));
-            if (memoryPool == null)
-                throw new ArgumentNullException(nameof(memoryPool));
-            if (stagingBuffer == null)
-                throw new ArgumentNullException(nameof(stagingBuffer));
-            if (executor == null)
-                throw new ArgumentNullException(nameof(executor));
-            
-            //Upload the texture
-            deviceTexture = DeviceTexture.UploadTexture(
-                    textureInfo.Texture as IInternalTexture,
-                    generateMipMaps: textureInfo.UseMipMaps,
-                    logicalDevice, memoryPool, stagingBuffer, executor);
 
             //Create a sampler
             sampler = logicalDevice.CreateSampler(new SamplerCreateInfo {
                 MagFilter = Filter.Linear,
                 MinFilter = Filter.Linear,
-                AddressModeU = textureInfo.Repeat ? SamplerAddressMode.Repeat : SamplerAddressMode.ClampToEdge,
-                AddressModeV = textureInfo.Repeat ? SamplerAddressMode.Repeat : SamplerAddressMode.ClampToEdge,
-                AddressModeW = textureInfo.Repeat ? SamplerAddressMode.Repeat : SamplerAddressMode.ClampToEdge,
-                AnisotropyEnable = true,
-                MaxAnisotropy = 8f,
+                AddressModeU = repeat ? SamplerAddressMode.Repeat : SamplerAddressMode.ClampToEdge,
+                AddressModeV = repeat ? SamplerAddressMode.Repeat : SamplerAddressMode.ClampToEdge,
+                AddressModeW = repeat ? SamplerAddressMode.Repeat : SamplerAddressMode.ClampToEdge,
+                AnisotropyEnable = maxAnisotropy > 0,
+                MaxAnisotropy = maxAnisotropy,
                 CompareEnable = false,
                 MipmapMode = SamplerMipmapMode.Linear,
                 MipLodBias = 0f,
                 MinLod = 0f,
-                MaxLod = deviceTexture.MipLevels,
+                MaxLod = mipLevels,
                 BorderColor = BorderColor.IntOpaqueBlack,
                 UnnormalizedCoordinates = false});
         }
@@ -63,7 +46,6 @@ namespace HT.Engine.Rendering
         {
             ThrowIfDisposed();
 
-            deviceTexture.Dispose();
             sampler.Dispose();
             disposed = true;
         }

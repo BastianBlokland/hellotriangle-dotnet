@@ -40,7 +40,6 @@ namespace HT.Engine.Rendering
         private Int2 swapchainSize;
         private VulkanCore.Image[] swapchainImages;
         private ImageView[] swapchainImageViews;
-        private Framebuffer[] framebuffers;
         private CommandPool commandPool;
         private CommandBuffer[] commandbuffers;
         private Semaphore imageAvailableSemaphore;
@@ -100,8 +99,6 @@ namespace HT.Engine.Rendering
 
             //Release resources that are tied to the previous scene
             this.scene?.Dispose();
-            framebuffers?.DisposeAll();
-            framebuffers = null;
 
             this.scene = scene;
             CreateRenderCommands(scene);
@@ -158,7 +155,6 @@ namespace HT.Engine.Rendering
 
                 //Dispose of the scene resources
                 scene?.Dispose();
-                framebuffers?.DisposeAll();
 
                 //Dispose of the swapchain
                 swapchainImageViews.DisposeAll();
@@ -177,16 +173,7 @@ namespace HT.Engine.Rendering
 
         private void CreateRenderCommands(RenderScene scene)
         {
-            //If we have no framebuffers then first create those, can also happen during window resize
-            if (framebuffers == null || framebuffers.Length == 0)
-            {
-                framebuffers = new Framebuffer[swapchainImages.Length];
-                for (int i = 0; i < framebuffers.Length; i++)
-                    framebuffers[i] = scene.CreateFramebuffer(
-                        swapchainImageViews[i],
-                        swapchainSize,
-                        surfaceFormat);
-            }
+            scene.CreateResources(swapchainSize, swapchainImageViews);
 
             //Reset the pool (to release any previously created buffers)
             commandPool.Reset(CommandPoolResetFlags.ReleaseResources);
@@ -194,14 +181,14 @@ namespace HT.Engine.Rendering
             //Allocate new command buffers
             commandbuffers = commandPool.AllocateBuffers(new CommandBufferAllocateInfo(
                 level: CommandBufferLevel.Primary,
-                count: framebuffers.Length
+                count: swapchainImageViews.Length
             ));
 
             //Record the primary command-buffers
             for (int i = 0; i < commandbuffers.Length; i++)
             {
                 commandbuffers[i].Begin(new CommandBufferBeginInfo(flags: CommandBufferUsages.None));
-                scene.Record(commandbuffers[i], framebuffers[i]);
+                scene.Record(commandbuffers[i], i);
                 commandbuffers[i].End();
             }
 
@@ -316,10 +303,6 @@ $@"Swapchain created:
 
                 if (scene != null)
                 {
-                    //We have to dispose the framebuffers because they are tied to the old swapchain
-                    framebuffers.DisposeAll();
-                    framebuffers = null;
-
                     //Create new render-commands on this new setup (will automatically create new 
                     //framebuffers too)
                     CreateRenderCommands(scene);
