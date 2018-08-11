@@ -218,8 +218,9 @@ namespace HT.Engine.Parsing
                         position: position,
                         color: color,
                         normal: normal,
-                        uv1: texcoord1,
-                        uv2: texcoord2));
+                        //Convert uv to be origin = bottom left
+                        uv1: (texcoord1.X, 1f - texcoord1.Y),
+                        uv2: (texcoord2.X, 1f - texcoord2.Y)));
                 }
             }
             return meshBuilder.ToMesh();
