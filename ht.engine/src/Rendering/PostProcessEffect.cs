@@ -36,12 +36,12 @@ namespace HT.Engine.Rendering
             fragModule = fragProg.CreateModule(scene.LogicalDevice);
 
             //Create the samplers (1 for each scene target)
-            samplers = new DeviceSampler[2];
+            samplers = new DeviceSampler[3];
             for (int i = 0; i < samplers.Length; i++)
                 samplers[i] = new DeviceSampler(scene.LogicalDevice);    
 
             //Create the descriptor binding
-            var binding = new DescriptorBinding(uniformBufferCount: 1, imageSamplerCount: 2);
+            var binding = new DescriptorBinding(uniformBufferCount: 1, imageSamplerCount: samplers.Length);
             descriptorBlock = scene.DescriptorManager.Allocate(binding);
 
             //Create the pipeline
@@ -65,12 +65,15 @@ namespace HT.Engine.Rendering
             disposed = true;
         }
 
-        internal void BindSceneTargets(DeviceTexture sceneColor, DeviceTexture sceneDepth)
+        internal void BindSceneTargets(
+            DeviceTexture sceneColor,
+            DeviceTexture sceneNormal,
+            DeviceTexture sceneDepth)
         {
             descriptorBlock.Update(
                 buffers: new Memory.IBuffer[] { scene.SceneDataBuffer },
                 samplers: samplers,
-                textures: new [] { sceneColor, sceneDepth });
+                textures: new [] { sceneColor, sceneNormal, sceneDepth });
         }
 
         internal void Record(CommandBuffer commandbuffer)

@@ -10,10 +10,12 @@ layout(binding = 3) uniform sampler2D detail2TexSampler;
 
 //Output
 layout(location = 0) out vec4 outColor;
+layout(location = 1) out vec4 outNormal;
 
 //Vert to frag input
 layout(location = 0) in vec4 baseColor;
 layout(location = 1) in vec2 worldUv;
+layout(location = 2) in vec3 worldNormal;
 
 void main() 
 {
@@ -24,4 +26,5 @@ void main()
         baseColor * 
         texture(detail1TexSampler, worldUv * detail1TexScale) *
         texture(detail2TexSampler, worldUv * detail2TexScale);
+    outNormal.xyz = normalize(worldNormal);
 }

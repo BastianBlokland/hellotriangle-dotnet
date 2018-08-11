@@ -18,6 +18,7 @@ out gl_PerVertex
 };
 layout(location = 0) out vec4 baseColor;
 layout(location = 1) out vec2 worldUv;
+layout(location = 2) out vec3 worldNormal;
 
 void main()
 {
@@ -25,11 +26,22 @@ void main()
     
     //Calculate the world uv based on the world pos
     worldUv = getWorldUv(vertWorldPosition.xyz);
+
+    //Main sample at this position
     const vec4 terrainSample = texture(terrainTexSampler, worldUv);
+
+    //Calculate the world normal by taking samples around this location and normalizing the 
+    //difference. Note: it uses '2' in z because the samples are '2' units away
+    float leftHeight = textureOffset(terrainTexSampler, worldUv, ivec2(-1, 0)).a * heightmapScale;
+    float rightHeight = textureOffset(terrainTexSampler, worldUv, ivec2(1, 0)).a * heightmapScale;
+    float downHeight = textureOffset(terrainTexSampler, worldUv, ivec2(0, -1)).a * heightmapScale;
+    float upHeight = textureOffset(terrainTexSampler, worldUv, ivec2(0, 1)).a * heightmapScale;
+    vec3 normal = normalize(vec3(leftHeight - rightHeight, downHeight - upHeight, 2.0));
 
     //Offset by the terrain height
     vertWorldPosition.y += terrainSample.a * heightmapScale;
 
-    gl_Position = sceneData.viewProjectionMatrix * vertWorldPosition;
+    worldNormal = normal;
     baseColor = vec4(terrainSample.rgb, 1.0);
+    gl_Position = sceneData.viewProjectionMatrix * vertWorldPosition;
 }

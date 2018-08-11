@@ -5,7 +5,8 @@
 
 //Texture input
 layout(binding = 1) uniform sampler2D sceneColor;
-layout(binding = 2) uniform sampler2D sceneDepth;
+layout(binding = 2) uniform sampler2D sceneNormal;
+layout(binding = 3) uniform sampler2D sceneDepth;
 
 //Output
 layout(location = 0) out vec4 outColor;
@@ -18,6 +19,7 @@ void main()
     float linearDepth = LinearizeDepth(rawDepth);
     float normDepth = linearDepth / sceneData.farClipDistance;
 
-    outColor = vec4(normDepth, normDepth, normDepth, 1.0) * 2.0;
-    //outColor = texture(sceneColor, location);
+    //outColor = vec4(normDepth, normDepth, normDepth, 1.0) * 2.0;
+    outColor = texture(sceneColor, location);
+    //outColor = vec4(((texture(sceneNormal, location) + 1) / 2));
 }

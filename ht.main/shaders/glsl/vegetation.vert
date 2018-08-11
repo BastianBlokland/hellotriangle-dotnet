@@ -18,6 +18,7 @@ out gl_PerVertex
 };
 layout(location = 0) out vec2 colorUv;
 layout(location = 1) out vec4 colorTint;
+layout(location = 2) out vec3 worldNormal;
 
 vec4 getTint()
 {
@@ -43,12 +44,14 @@ void main()
     vec4 vertWorldPosition = instanceModelMatrix * vec4(vertPosition, 1.0);
 
     //Apply bending to simulate wind
-    vertWorldPosition.xyz = windBend(vertWorldPosition.xyz, instanceWorldPositon);
+    vec4 bendWorldPosition = vec4(windBend(vertWorldPosition.xyz, instanceWorldPositon), 1.0);
+    vec3 bendOffset = bendWorldPosition.xyz - vertWorldPosition.xyz;
 
     //Offset by the terrain height
-    vertWorldPosition.y += texture(terrainTexSampler, getWorldUv(instanceWorldPositon)).a * heightmapScale;
+    bendWorldPosition.y += texture(terrainTexSampler, getWorldUv(instanceWorldPositon)).a * heightmapScale;
 
     colorUv = vertUv1;
     colorTint = getTint();
-    gl_Position = sceneData.viewProjectionMatrix * vertWorldPosition;
+    worldNormal = mat3(instanceModelMatrix) * (vertNormal + bendOffset);
+    gl_Position = sceneData.viewProjectionMatrix * bendWorldPosition;
 }

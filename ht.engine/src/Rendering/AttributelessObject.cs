@@ -131,10 +131,12 @@ namespace HT.Engine.Rendering
             var blending = new PipelineColorBlendStateCreateInfo(
                 attachments: new [] 
                 { 
+                    //Color target
                     new PipelineColorBlendAttachmentState(
-                        colorWriteMask: ColorComponents.All,
-                        blendEnable: false
-                    )
+                        colorWriteMask: ColorComponents.All, blendEnable: false),
+                    //Normal target
+                    new PipelineColorBlendAttachmentState(
+                        colorWriteMask: ColorComponents.All, blendEnable: false),
                 },
                 logicOpEnable: false
             );

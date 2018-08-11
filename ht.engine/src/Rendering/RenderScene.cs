@@ -10,6 +10,10 @@ namespace HT.Engine.Rendering
 {
     public sealed class RenderScene : IDisposable
     {
+        private readonly static Format ColorTargetFormat = Format.R8G8B8A8UNorm;
+        private readonly static Format NormalTargetFormat = Format.R8G8B8A8SNorm;
+        private readonly static Format DepthTargetFormat = Format.D32SFloat;
+
         //Public properties
         public Camera Camera => camera;
 
@@ -45,6 +49,7 @@ namespace HT.Engine.Rendering
         private Framebuffer[] presentFrameBuffers;
         private Int2 swapchainSize;
         private DeviceTexture colorTarget;
+        private DeviceTexture normalTarget;
         private DeviceTexture depthTarget;
         private bool dirty;
         private bool disposed;
@@ -108,6 +113,7 @@ namespace HT.Engine.Rendering
             geometryRenderpass.Dispose();
             compositionRenderpass.Dispose();
             colorTarget?.Dispose();
+            normalTarget?.Dispose();
             depthTarget?.Dispose();
             geometryFrameBuffer?.Dispose();
             presentFrameBuffers?.DisposeAll();
@@ -128,6 +134,7 @@ namespace HT.Engine.Rendering
 
             //Dispose of the old color and depth targets
             colorTarget?.Dispose();
+            normalTarget?.Dispose();
             depthTarget?.Dispose();
             //Dispose of old framebuffers
             geometryFrameBuffer?.Dispose();
@@ -135,15 +142,18 @@ namespace HT.Engine.Rendering
 
             //Create new rendertargets
             colorTarget = DeviceTexture.CreateColorTarget(
-                swapchainSize, Format.R8G8B8A8UNorm, SampleCounts.Count1,
+                swapchainSize, ColorTargetFormat, SampleCounts.Count1,
+                window.LogicalDevice, memoryPool, executor, allowSampling: true);
+            normalTarget = DeviceTexture.CreateColorTarget(
+                swapchainSize, NormalTargetFormat, SampleCounts.Count1,
                 window.LogicalDevice, memoryPool, executor, allowSampling: true);
             depthTarget = DeviceTexture.CreateDepthTarget(
-                swapchainSize, SampleCounts.Count1,
+                swapchainSize, DepthTargetFormat, SampleCounts.Count1,
                 window.LogicalDevice, memoryPool, executor, allowSampling: true);
 
             //Create geometry framebuffer
             geometryFrameBuffer = geometryRenderpass.CreateFramebuffer(new FramebufferCreateInfo(
-                attachments: new [] { colorTarget.View, depthTarget.View },
+                attachments: new [] { colorTarget.View, normalTarget.View, depthTarget.View },
                 width: swapchainSize.X,
                 height: swapchainSize.Y));
 
@@ -157,7 +167,10 @@ namespace HT.Engine.Rendering
 
             //Give the rendertargets to the post-effects so they can use them as inputs
             for (int i = 0; i < postEffects.Count; i++)
-                postEffects[i].BindSceneTargets(colorTarget, depthTarget);
+                postEffects[i].BindSceneTargets(colorTarget, normalTarget, depthTarget);
+
+            //All added / removed objects have been taking into account so we can unset the dirty flag
+            dirty = false;
         }
 
         internal void Record(CommandBuffer commandbuffer, int swapchainImageIndex)
@@ -173,9 +186,6 @@ namespace HT.Engine.Rendering
                 dstStageMask: PipelineStages.FragmentShader);
 
             RecordCompositionRenderPass(commandbuffer, swapchainImageIndex);
-
-            //After recording all objects we unset the dirty flag
-            dirty = false;
         }
 
         internal void PreDraw(FrameTracker tracker)
@@ -203,10 +213,12 @@ namespace HT.Engine.Rendering
                 renderArea: new Rect2D(x: 0, y: 0, width: swapchainSize.X, height: swapchainSize.Y),
                 clearValues: new []
                 {
-                    //Framebuffer color
+                    //Color target
                     new ClearValue(new ClearColorValue(new ColorF4(
                         normClearColor.R, normClearColor.G, normClearColor.B, normClearColor.A))),
-                    //Depthbuffer value
+                    //Normal target
+                    new ClearValue(new ClearColorValue(ColorF4.Zero)),
+                    //Depth target
                     new ClearValue(new ClearDepthStencilValue(depth: 1f, stencil: 0))
                 }));
 
@@ -256,9 +268,21 @@ namespace HT.Engine.Rendering
             //Description of our color target (output)
             var colorAttachment = new AttachmentDescription(
                 flags: AttachmentDescriptions.MayAlias,
-                format: Format.R8G8B8A8UNorm,
+                format: ColorTargetFormat,
                 samples: SampleCounts.Count1,
                 loadOp: clearColor == null ? AttachmentLoadOp.DontCare : AttachmentLoadOp.Clear,
+                storeOp: AttachmentStoreOp.Store,
+                stencilLoadOp: AttachmentLoadOp.DontCare,
+                stencilStoreOp: AttachmentStoreOp.DontCare,
+                initialLayout: ImageLayout.Undefined,
+                finalLayout: ImageLayout.ShaderReadOnlyOptimal
+            );
+            //Description of our normal target (output)
+            var normalAttachment = new AttachmentDescription(
+                flags: AttachmentDescriptions.MayAlias,
+                format: NormalTargetFormat,
+                samples: SampleCounts.Count1,
+                loadOp: AttachmentLoadOp.Clear,
                 storeOp: AttachmentStoreOp.Store,
                 stencilLoadOp: AttachmentLoadOp.DontCare,
                 stencilStoreOp: AttachmentStoreOp.DontCare,
@@ -268,7 +292,7 @@ namespace HT.Engine.Rendering
             //Description of our depth target (output)
             var depthAttachment = new AttachmentDescription(
                 flags: AttachmentDescriptions.MayAlias,
-                format: DeviceTexture.DepthFormat,
+                format: DepthTargetFormat,
                 samples: SampleCounts.Count1,
                 loadOp: AttachmentLoadOp.Clear,
                 storeOp: AttachmentStoreOp.Store,
@@ -306,14 +330,15 @@ namespace HT.Engine.Rendering
                         colorAttachments: new []
                         {
                             //Color attachment
-                            new AttachmentReference(0, ImageLayout.ColorAttachmentOptimal)
+                            new AttachmentReference(0, ImageLayout.ColorAttachmentOptimal),
+                            new AttachmentReference(1, ImageLayout.ColorAttachmentOptimal)
                         },
                         //Depth attachment
                         depthStencilAttachment:
-                            new AttachmentReference(1, ImageLayout.DepthStencilAttachmentOptimal)
+                            new AttachmentReference(2, ImageLayout.DepthStencilAttachmentOptimal)
                     )
                 },
-                attachments: new [] { colorAttachment, depthAttachment },
+                attachments: new [] { colorAttachment, normalAttachment, depthAttachment },
                 dependencies: new [] { beginTransitionDependency, endTransitionDependency } 
             ));
         }

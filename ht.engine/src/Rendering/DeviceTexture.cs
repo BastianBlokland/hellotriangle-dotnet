@@ -13,8 +13,6 @@ namespace HT.Engine.Rendering
     //NOTE: Does not hold on to the cpu representation of the texture so it can be garbage collected
     internal sealed class DeviceTexture : IDisposable
     {
-        public static Format DepthFormat = Format.D32SFloat;
-
         //Properties
         internal ImageView View => view;
         internal int MipLevels => mipLevels;
@@ -126,6 +124,7 @@ namespace HT.Engine.Rendering
 
         internal static DeviceTexture CreateDepthTarget(
             Int2 size,
+            Format format,
             SampleCounts samples,
             Device logicalDevice,
             Memory.Pool memoryPool,
@@ -145,7 +144,7 @@ namespace HT.Engine.Rendering
             var aspects = ImageAspects.Depth;
             var image = CreateImage(
                 logicalDevice, 
-                DepthFormat,
+                format,
                 samples,
                 size,
                 mipLevels: 1,
@@ -163,8 +162,8 @@ namespace HT.Engine.Rendering
                 newLayout: ImageLayout.DepthStencilAttachmentOptimal,
                 executor: executor);
 
-            var view = CreateView(image, DepthFormat, mipLevels: 1, aspects, cubeMap: false);
-            return new DeviceTexture(DepthFormat, mipLevels: 1, aspects, image, memory, view);
+            var view = CreateView(image, format, mipLevels: 1, aspects, cubeMap: false);
+            return new DeviceTexture(format, mipLevels: 1, aspects, image, memory, view);
         }
 
         internal static DeviceTexture CreateColorTarget(

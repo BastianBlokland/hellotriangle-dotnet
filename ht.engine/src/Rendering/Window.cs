@@ -112,7 +112,10 @@ namespace HT.Engine.Rendering
 
             //If the scene is dirty we re-record the command-buffers
             if (scene?.Dirty == true)
+            {
+                logicalDevice.WaitIdle();
                 CreateRenderCommands(scene);
+            }
 
             int nextImage = swapchain.AcquireNextImage(semaphore: imageAvailableSemaphore);
 

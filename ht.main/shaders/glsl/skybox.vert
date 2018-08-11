@@ -12,20 +12,30 @@ out gl_PerVertex
 {
     vec4 gl_Position;
 };
-layout(location = 0) out vec3 viewDirection;
+layout(location = 0) out vec3 skyboxDirection;
+layout(location = 1) out vec3 worldNormal;
 
 void main()
 {
-    //Can be used to tweak the rotatin of the skybox
+    //Can be used to tweak the rotation of the skybox
     const float offsetAngle = 2.1;
 
     //Fullscreen triangle, more info: https://www.saschawillems.de/?page_id=2122
     gl_Position = vec4((gl_VertexIndex << 1 & 2) * 2.0 - 1, (gl_VertexIndex & 2) * 2.0 - 1, 1, 1);
 
-    //Create world space viewDirection by transforming the clip-space vertices back into view-space
-    //by using a inverse of the projection-matrix and then transforming them from view-space into
-    //world space by using the cameraMatrix
-    viewDirection = yRotMatrix(offsetAngle) *
-                    mat3(sceneData.cameraMatrix) *
-                    (inverse(sceneData.projectionMatrix) * gl_Position).xyz;
+    //Calculate where this vertex is in viewspace (so relative to the 'camera'). These form a giant
+    //triangle on the far clip plane of the camera.
+    //We use a inverse of the projection matrix to go from clip-space into view-space (unroll the 
+    //projection)
+    vec3 viewSpaceVertPos = (inverse(sceneData.projectionMatrix) * gl_Position).xyz;
+
+    //Calculate where this vertex is in worldspace. 
+    vec3 worldSpaceVertPos = mat3(sceneData.cameraMatrix) * viewSpaceVertPos;
+
+    //Apply offset to be able to rotate the skybox
+    skyboxDirection = yRotMatrix(offsetAngle) * worldSpaceVertPos;
+
+    //Normal of the skybox is the inverse of the view direction (as the skybox 'looks' back at us)
+    //Note: This is NOT normalized yet
+    worldNormal = worldSpaceVertPos * -1;
 }

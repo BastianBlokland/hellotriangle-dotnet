@@ -10,9 +10,11 @@ layout(binding = 2) uniform sampler2D terrainTexSampler;
 //Vert to frag input
 layout(location = 0) in vec2 colorUv;
 layout(location = 1) in vec4 colorTint;
+layout(location = 2) in vec3 worldNormal;
 
 //Output
 layout(location = 0) out vec4 outColor;
+layout(location = 1) out vec4 outNormal;
 
 void main() 
 {
@@ -21,4 +23,5 @@ void main()
     {
         discard;
     }
+    outNormal.xyz = normalize(worldNormal);
 }
