@@ -32,8 +32,10 @@ namespace HT.Main
                     textureSources: new []
                     { 
                         ("textures/terrain.tga", useMipMaps: false, repeat: false),
-                        ("textures/terrain_detail_1.tga", useMipMaps: false, repeat: true),
-                        ("textures/terrain_detail_2.tga", useMipMaps: true, repeat: true)
+                        ("textures/terrain_detail_1_color.tga", useMipMaps: true, repeat: true),
+                        ("textures/terrain_detail_1_normal.tga", useMipMaps: true, repeat: true),
+                        ("textures/terrain_detail_2_color.tga", useMipMaps: true, repeat: true),
+                        ("textures/terrain_detail_2_normal.tga", useMipMaps: true, repeat: true)
                     },
                     vertShaderPath: "shaders/bin/terrain.vert.spv",
                     fragShaderPath: "shaders/bin/terrain.frag.spv");
@@ -60,7 +62,11 @@ namespace HT.Main
                 //Add the fighter to the scene
                 var fighter = AddInstancedObject(nativeApp, taskRunner, scene, renderOrder: 0,
                     modelSource: ("models/fighter.dae", scale: 2f),
-                    textureSources: new [] { ("textures/fighter_color.tga", useMipMaps: true, repeat: false) },
+                    textureSources: new []
+                    { 
+                        ("textures/fighter_color.tga", useMipMaps: true, repeat: false),
+                        ("textures/fighter_normal.tga", useMipMaps: true, repeat: false)
+                    },
                     vertShaderPath: "shaders/bin/fighter.vert.spv",
                     fragShaderPath: "shaders/bin/fighter.frag.spv");
                 InstanceData[] fighterInstances = new InstanceData[16 * 16];
@@ -76,7 +82,7 @@ namespace HT.Main
                     //Rotate the camera
                     scene.Camera.Transformation = Float4x4.CreateOrbit(
                         center: (0f, 3f, 0f),
-                        offset: (0f, 1f, -5f),
+                        offset: (0f, 1f, -5f), //-100f, 25f, 0f
                         axis: Float3.Up,
                         angle: (float)frameTracker.ElapsedTime * .25f);
 

@@ -8,8 +8,10 @@
 
 //Texture input
 layout(binding = 1) uniform sampler2D terrainTexSampler;
-layout(binding = 2) uniform sampler2D detail1TexSampler;
-layout(binding = 3) uniform sampler2D detail2TexSampler;
+layout(binding = 2) uniform sampler2D detail1ColorTexSampler;
+layout(binding = 3) uniform sampler2D detail1NormalTexSampler;
+layout(binding = 4) uniform sampler2D detail2ColorTexSampler;
+layout(binding = 5) uniform sampler2D detail2NormalTexSampler;
 
 //Output
 out gl_PerVertex
@@ -18,7 +20,8 @@ out gl_PerVertex
 };
 layout(location = 0) out vec4 baseColor;
 layout(location = 1) out vec2 worldUv;
-layout(location = 2) out vec3 worldNormal;
+layout(location = 2) out vec3 worldPosition;
+layout(location = 3) out vec3 worldNormal;
 
 void main()
 {
@@ -36,12 +39,12 @@ void main()
     float rightHeight = textureOffset(terrainTexSampler, worldUv, ivec2(1, 0)).a * heightmapScale;
     float downHeight = textureOffset(terrainTexSampler, worldUv, ivec2(0, -1)).a * heightmapScale;
     float upHeight = textureOffset(terrainTexSampler, worldUv, ivec2(0, 1)).a * heightmapScale;
-    vec3 normal = normalize(vec3(leftHeight - rightHeight, downHeight - upHeight, 2.0));
+    worldNormal = normalize(vec3(leftHeight - rightHeight, 2.0, downHeight - upHeight));
 
     //Offset by the terrain height
     vertWorldPosition.y += terrainSample.a * heightmapScale;
 
-    worldNormal = normal;
     baseColor = vec4(terrainSample.rgb, 1.0);
+    worldPosition = vertWorldPosition.xyz;
     gl_Position = sceneData.viewProjectionMatrix * vertWorldPosition;
 }

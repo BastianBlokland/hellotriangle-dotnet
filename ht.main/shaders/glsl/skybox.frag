@@ -17,5 +17,7 @@ layout(location = 1) out vec4 outNormal;
 void main() 
 {
     outColor = texture(skyboxTexture, skyboxDirection);
+
     outNormal.xyz = normalize(worldNormal);
+    outNormal.a = 1.0; //Store emissiveness. (1 because skybox is prelit)
 }

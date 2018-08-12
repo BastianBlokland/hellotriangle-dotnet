@@ -8,6 +8,7 @@
 
 //Texture input
 layout(binding = 1) uniform sampler2D colorTexSampler;
+layout(binding = 2) uniform sampler2D normalTexSampler;
 
 //Output
 out gl_PerVertex
@@ -15,8 +16,10 @@ out gl_PerVertex
     vec4 gl_Position;
 };
 layout(location = 0) out vec2 colorUv;
-layout(location = 1) out vec4 additiveColor;
-layout(location = 2) out vec3 worldNormal;
+layout(location = 1) out float exhaustIntensity;
+layout(location = 2) out float exhaustMask;
+layout(location = 3) out vec3 worldPosition;
+layout(location = 4) out vec3 worldNormal;
 
 void main()
 {
@@ -36,18 +39,13 @@ void main()
     const float minExhaustScale = 1.5;
     const float maxExhaustScale = 3.5;
     const float frequency = 20.0;
-    const float exhaustIntensity = 
+    exhaustIntensity = vertColor.g *
         abs(sin((adjustedPos.x + adjustedPos.y + sceneData.time + (gl_InstanceIndex * 0.5312)) * frequency));
-    
-    const vec4 hotExhaustColor = vec4(0.9, 0.9, 2.0, 1.0);
-    const vec4 coldExhaustColor = vec4(0.2, 0.2, 2.0, 1.0);
     adjustedPos.z -= vertColor.g * mix(minExhaustScale, maxExhaustScale, exhaustIntensity);
-    additiveColor = mix(
-        hotExhaustColor,
-        coldExhaustColor,
-        vertColor.g * exhaustIntensity) * vertColor.r;
+    exhaustMask = vertColor.r;
 
     colorUv = vertUv1;
+    worldPosition = (instanceModelMatrix * vec4(adjustedPos, 1.0)).xyz;
     worldNormal = mat3(instanceModelMatrix) * adjustedNorm;
-    gl_Position = sceneData.viewProjectionMatrix * instanceModelMatrix * vec4(adjustedPos, 1.0);
+    gl_Position = sceneData.viewProjectionMatrix * vec4(worldPosition, 1.0);
 }

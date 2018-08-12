@@ -29,3 +29,11 @@ mat3 zRotMatrix(float angle)
                 s,      c,      0.0,
                 0.0,    0.0,    1.0);
 }
+
+//Simple method for blending normals, more experimentation can be done to improve this
+//Allot of info in this article: http://blog.selfshadow.com/publications/blending-in-detail/
+vec3 blendNormals(vec3 normal1, vec3 normal2)
+{
+    vec3 result = vec3(normal1.xy + normal2.xy, normal1.z * normal2.z);
+    return normalize(result);
+}
