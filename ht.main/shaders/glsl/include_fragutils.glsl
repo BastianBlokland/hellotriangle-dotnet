@@ -17,9 +17,9 @@ vec3 perturbNormal(vec3 tangentNormal, vec3 worldNormal, vec3 worldPos, vec2 uv)
 	return normalize(tbn * tangentNormal);
 }
 
-vec3 applyNormalTex(sampler2D normalTexSampler, vec3 worldNormal, vec3 worldPos, vec2 uv)
+vec3 applyNormalTex(sampler2D normalSampler, vec3 worldNormal, vec3 worldPos, vec2 uv)
 {
     //Sample and convert from 0 to 1 to -1 to 1
-    vec3 tangentNormal = texture(normalTexSampler, uv).xyz * 2.0 - 1.0;
+    vec3 tangentNormal = texture(normalSampler, uv).xyz * 2.0 - 1.0;
     return perturbNormal(tangentNormal, worldNormal, worldPos, uv);
 }

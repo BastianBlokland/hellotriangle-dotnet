@@ -28,7 +28,7 @@ void main()
     #define detail2Uv inWorldUv * 100
 
     outColor = 
-        inBaseColor * 
+        vec4(inBaseColor.rgb, 1.0) * 
         texture(detail1ColorSampler, detail1Uv) *
         texture(detail2ColorSampler, detail2Uv);
     

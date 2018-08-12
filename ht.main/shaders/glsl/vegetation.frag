@@ -11,7 +11,7 @@ layout(binding = 2) uniform sampler2D normalSampler;
 layout(binding = 3) uniform sampler2D terrainSampler;
 
 //Input
-layout(location = 0) in vec2 inColorUv;
+layout(location = 0) in vec2 inUv;
 layout(location = 1) in vec4 inColorTint;
 layout(location = 2) in vec3 inWorldPosition;
 layout(location = 3) in vec3 inWorldNormal;
@@ -23,10 +23,16 @@ layout(location = 1) out vec4 outNormal;
 
 void main()
 {
-    outColor = texture(colorSampler, inColorUv) * inColorTint;
+    outColor = texture(colorSampler, inUv) * inColorTint;
     if (outColor.a < 0.01)
     {
         discard;
     }
-    outNormal.xyz = applyNormalTex(normalSampler, inWorldNormal, inWorldPosition, inColorUv);
+
+    vec4 normalSample = texture(normalSampler, inUv);
+    float specularIntensity = normalSample.a; //Store spec intensity in the normalmap alpha
+    vec3 tangentNormal = normalSample.xyz * 2.0 - 1.0;
+
+    outColor.a = specularIntensity;
+    outNormal.xyz = perturbNormal(tangentNormal, inWorldNormal, inWorldPosition, inUv);
 }

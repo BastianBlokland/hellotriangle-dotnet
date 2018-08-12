@@ -17,7 +17,7 @@ out gl_PerVertex
 {
     vec4 gl_Position;
 };
-layout(location = 0) out vec2 outColorUv;
+layout(location = 0) out vec2 outUv;
 layout(location = 1) out vec4 outColorTint;
 layout(location = 2) out vec3 outWorldPosition;
 layout(location = 3) out vec3 outWorldNormal;
@@ -52,7 +52,7 @@ void main()
     //Offset by the terrain height
     bendWorldPosition.y += texture(terrainSampler, getWorldUv(instanceWorldPositon)).a * heightmapScale;
 
-    outColorUv = vertUv1;
+    outUv = vertUv1;
     outColorTint = getTint();
     outWorldNormal = mat3(instanceModelMatrix) * (vertNormal + bendOffset);
     outWorldPosition = bendWorldPosition.xyz;
