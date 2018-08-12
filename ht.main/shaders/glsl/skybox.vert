@@ -18,7 +18,7 @@ layout(location = 1) out vec3 worldNormal;
 void main()
 {
     //Can be used to tweak the rotation of the skybox
-    const float offsetAngle = 2.1;
+    #define offsetAngle 2.1
 
     //Fullscreen triangle, more info: https://www.saschawillems.de/?page_id=2122
     gl_Position = vec4((gl_VertexIndex << 1 & 2) * 2.0 - 1, (gl_VertexIndex & 2) * 2.0 - 1, 1, 1);

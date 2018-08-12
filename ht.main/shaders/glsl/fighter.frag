@@ -21,8 +21,8 @@ layout(location = 1) out vec4 outNormal;
 
 void main() 
 {
-    const vec4 hotExhaustColor = vec4(0.9, 0.9, 2.0, 1.0);
-    const vec4 coldExhaustColor = vec4(0.2, 0.2, 2.0, 1.0);
+    #define hotExhaustColor vec4(0.9, 0.9, 2.0, 1.0)
+    #define coldExhaustColor vec4(0.2, 0.2, 2.0, 1.0)
 
     outColor = 
         texture(colorTexSampler, colorUv) + 

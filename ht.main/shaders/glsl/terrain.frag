@@ -24,8 +24,8 @@ layout(location = 3) in vec3 worldNormal;
 
 void main() 
 {
-    const vec2 detail1Uv = worldUv * 5;
-    const vec2 detail2Uv = worldUv * 100;
+    #define detail1Uv worldUv * 5
+    #define detail2Uv worldUv * 100
 
     outColor = 
         baseColor * 

@@ -24,9 +24,10 @@ layout(location = 4) out vec3 worldNormal;
 void main()
 {
     //Wobble effect
-    const vec2 wobbleFrequencies = vec2(1.2, 1.5);
+    #define wobbleFrequencies vec2(1.2, 1.5)
+    #define wobbleStrenghts vec2(0.06, 0.08)
     const vec2 wobbleAngles = 
-        sin((sceneData.time + gl_InstanceIndex) * wobbleFrequencies) * vec2(0.06, 0.08);
+        sin((sceneData.time + gl_InstanceIndex) * wobbleFrequencies) * wobbleStrenghts;
     mat3 wobbleMatrix = xRotMatrix(wobbleAngles.x) * zRotMatrix(wobbleAngles.y);
     
     //Apply wobble matrix
@@ -36,9 +37,9 @@ void main()
     //Exhaust effect
     //red channel contains mask for exhaust vertices
     //green channel of vert color contains exhaust intensity
-    const float minExhaustScale = 1.5;
-    const float maxExhaustScale = 3.5;
-    const float frequency = 20.0;
+    #define minExhaustScale 1.5
+    #define maxExhaustScale 3.5
+    #define frequency 20.0
     exhaustIntensity = vertColor.g *
         abs(sin((adjustedPos.x + adjustedPos.y + sceneData.time + (gl_InstanceIndex * 0.5312)) * frequency));
     adjustedPos.z -= vertColor.g * mix(minExhaustScale, maxExhaustScale, exhaustIntensity);
