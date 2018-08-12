@@ -6,20 +6,20 @@
 #include "include_instanceinput.glsl"
 #include "include_math.glsl"
 
-//Texture input
-layout(binding = 1) uniform sampler2D colorTexSampler;
-layout(binding = 2) uniform sampler2D normalTexSampler;
+//Textures
+layout(binding = 1) uniform sampler2D colorSampler;
+layout(binding = 2) uniform sampler2D normalSampler;
 
 //Output
 out gl_PerVertex
 {
     vec4 gl_Position;
 };
-layout(location = 0) out vec2 colorUv;
-layout(location = 1) out float exhaustIntensity;
-layout(location = 2) out float exhaustMask;
-layout(location = 3) out vec3 worldPosition;
-layout(location = 4) out vec3 worldNormal;
+layout(location = 0) out vec2 outUv;
+layout(location = 1) out float outExhaustIntensity;
+layout(location = 2) out float outExhaustMask;
+layout(location = 3) out vec3 outWorldPosition;
+layout(location = 4) out vec3 outWorldNormal;
 
 void main()
 {
@@ -40,13 +40,13 @@ void main()
     #define minExhaustScale 1.5
     #define maxExhaustScale 3.5
     #define frequency 20.0
-    exhaustIntensity = vertColor.g *
+    outExhaustIntensity = vertColor.g *
         abs(sin((adjustedPos.x + adjustedPos.y + sceneData.time + (gl_InstanceIndex * 0.5312)) * frequency));
-    adjustedPos.z -= vertColor.g * mix(minExhaustScale, maxExhaustScale, exhaustIntensity);
-    exhaustMask = vertColor.r;
+    adjustedPos.z -= vertColor.g * mix(minExhaustScale, maxExhaustScale, outExhaustIntensity);
+    outExhaustMask = vertColor.r;
 
-    colorUv = vertUv1;
-    worldPosition = (instanceModelMatrix * vec4(adjustedPos, 1.0)).xyz;
-    worldNormal = mat3(instanceModelMatrix) * adjustedNorm;
-    gl_Position = sceneData.viewProjectionMatrix * vec4(worldPosition, 1.0);
+    outUv = vertUv1;
+    outWorldPosition = (instanceModelMatrix * vec4(adjustedPos, 1.0)).xyz;
+    outWorldNormal = mat3(instanceModelMatrix) * adjustedNorm;
+    gl_Position = sceneData.viewProjectionMatrix * vec4(outWorldPosition, 1.0);
 }

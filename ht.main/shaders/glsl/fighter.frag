@@ -4,16 +4,16 @@
 #include "include_sceneinput.glsl"
 #include "include_fragutils.glsl"
 
-//Texture input
-layout(binding = 1) uniform sampler2D colorTexSampler;
-layout(binding = 2) uniform sampler2D normalTexSampler;
+//Textures
+layout(binding = 1) uniform sampler2D colorSampler;
+layout(binding = 2) uniform sampler2D normalSampler;
 
-//Vert to frag input
-layout(location = 0) in vec2 colorUv;
-layout(location = 1) in float exhaustIntensity;
-layout(location = 2) in float exhaustMask;
-layout(location = 3) in vec3 worldPosition;
-layout(location = 4) in vec3 worldNormal;
+//Input
+layout(location = 0) in vec2 inUv;
+layout(location = 1) in float inExhaustIntensity;
+layout(location = 2) in float inExhaustMask;
+layout(location = 3) in vec3 inWorldPosition;
+layout(location = 4) in vec3 inWorldNormal;
 
 //Output
 layout(location = 0) out vec4 outColor;
@@ -25,9 +25,9 @@ void main()
     #define coldExhaustColor vec4(0.2, 0.2, 2.0, 1.0)
 
     outColor = 
-        texture(colorTexSampler, colorUv) + 
-        mix(coldExhaustColor, hotExhaustColor, exhaustIntensity) * exhaustMask;
+        texture(colorSampler, inUv) + 
+        mix(coldExhaustColor, hotExhaustColor, inExhaustIntensity) * inExhaustMask;
 
-    outNormal.xyz = applyNormalTex(normalTexSampler, worldNormal, worldPosition, colorUv);
-    outNormal.a = exhaustMask; //Store emissiveness
+    outNormal.xyz = applyNormalTex(normalSampler, inWorldNormal, inWorldPosition, inUv);
+    outNormal.a = inExhaustMask; //Store emissiveness
 }

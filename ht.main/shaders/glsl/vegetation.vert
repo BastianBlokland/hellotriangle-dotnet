@@ -7,20 +7,20 @@
 #include "include_math.glsl"
 #include "include_game.glsl"
 
-//Texture input
-layout(binding = 1) uniform sampler2D colorTexSampler;
-layout(binding = 2) uniform sampler2D normalTexSampler;
-layout(binding = 3) uniform sampler2D terrainTexSampler;
+//Input
+layout(binding = 1) uniform sampler2D colorSampler;
+layout(binding = 2) uniform sampler2D normalSampler;
+layout(binding = 3) uniform sampler2D terrainSampler;
 
 //Output
 out gl_PerVertex
 {
     vec4 gl_Position;
 };
-layout(location = 0) out vec2 colorUv;
-layout(location = 1) out vec4 colorTint;
-layout(location = 2) out vec3 worldPosition;
-layout(location = 3) out vec3 worldNormal;
+layout(location = 0) out vec2 outColorUv;
+layout(location = 1) out vec4 outColorTint;
+layout(location = 2) out vec3 outWorldPosition;
+layout(location = 3) out vec3 outWorldNormal;
 
 vec4 getTint()
 {
@@ -50,11 +50,11 @@ void main()
     vec3 bendOffset = bendWorldPosition.xyz - vertWorldPosition.xyz;
 
     //Offset by the terrain height
-    bendWorldPosition.y += texture(terrainTexSampler, getWorldUv(instanceWorldPositon)).a * heightmapScale;
+    bendWorldPosition.y += texture(terrainSampler, getWorldUv(instanceWorldPositon)).a * heightmapScale;
 
-    colorUv = vertUv1;
-    colorTint = getTint();
-    worldNormal = mat3(instanceModelMatrix) * (vertNormal + bendOffset);
-    worldPosition = bendWorldPosition.xyz;
+    outColorUv = vertUv1;
+    outColorTint = getTint();
+    outWorldNormal = mat3(instanceModelMatrix) * (vertNormal + bendOffset);
+    outWorldPosition = bendWorldPosition.xyz;
     gl_Position = sceneData.viewProjectionMatrix * bendWorldPosition;
 }

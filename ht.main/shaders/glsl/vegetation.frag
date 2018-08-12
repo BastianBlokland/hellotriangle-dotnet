@@ -5,16 +5,16 @@
 #include "include_math.glsl"
 #include "include_fragutils.glsl"
 
-//Texture input
-layout(binding = 1) uniform sampler2D colorTexSampler;
-layout(binding = 2) uniform sampler2D normalTexSampler;
-layout(binding = 3) uniform sampler2D terrainTexSampler;
+//Textures
+layout(binding = 1) uniform sampler2D colorSampler;
+layout(binding = 2) uniform sampler2D normalSampler;
+layout(binding = 3) uniform sampler2D terrainSampler;
 
-//Vert to frag input
-layout(location = 0) in vec2 colorUv;
-layout(location = 1) in vec4 colorTint;
-layout(location = 2) in vec3 worldPosition;
-layout(location = 3) in vec3 worldNormal;
+//Input
+layout(location = 0) in vec2 inColorUv;
+layout(location = 1) in vec4 inColorTint;
+layout(location = 2) in vec3 inWorldPosition;
+layout(location = 3) in vec3 inWorldNormal;
 
 //Output
 layout(location = 0) out vec4 outColor;
@@ -23,10 +23,10 @@ layout(location = 1) out vec4 outNormal;
 
 void main()
 {
-    outColor = texture(colorTexSampler, colorUv) * colorTint;
+    outColor = texture(colorSampler, inColorUv) * inColorTint;
     if (outColor.a < 0.01)
     {
         discard;
     }
-    outNormal.xyz = applyNormalTex(normalTexSampler, worldNormal, worldPosition, colorUv);
+    outNormal.xyz = applyNormalTex(normalSampler, inWorldNormal, inWorldPosition, inColorUv);
 }

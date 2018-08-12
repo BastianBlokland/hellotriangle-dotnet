@@ -4,16 +4,16 @@
 #include "include_sceneinput.glsl"
 #include "include_math.glsl"
 
-//Texture input
-layout(binding = 1) uniform samplerCube skyboxTexture;
+//Textures
+layout(binding = 1) uniform samplerCube skyboxSampler;
 
 //Output
 out gl_PerVertex
 {
     vec4 gl_Position;
 };
-layout(location = 0) out vec3 skyboxDirection;
-layout(location = 1) out vec3 worldNormal;
+layout(location = 0) out vec3 outSkyboxDirection;
+layout(location = 1) out vec3 outWorldNormal;
 
 void main()
 {
@@ -33,9 +33,9 @@ void main()
     vec3 worldSpaceVertPos = mat3(sceneData.cameraMatrix) * viewSpaceVertPos;
 
     //Apply offset to be able to rotate the skybox
-    skyboxDirection = yRotMatrix(offsetAngle) * worldSpaceVertPos;
+    outSkyboxDirection = yRotMatrix(offsetAngle) * worldSpaceVertPos;
 
     //Normal of the skybox is the inverse of the view direction (as the skybox 'looks' back at us)
     //Note: This is NOT normalized yet
-    worldNormal = worldSpaceVertPos * -1;
+    outWorldNormal = worldSpaceVertPos * -1;
 }
