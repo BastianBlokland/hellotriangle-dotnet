@@ -9,6 +9,7 @@
 layout(binding = 1) uniform sampler2D sceneColorSampler;
 layout(binding = 2) uniform sampler2D sceneNormalSampler;
 layout(binding = 3) uniform sampler2D sceneDepthSampler;
+layout(binding = 4) uniform sampler2D sceneShadowSampler;
 
 //Input
 layout(location = 0) in vec2 inUv;

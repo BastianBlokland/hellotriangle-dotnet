@@ -38,7 +38,8 @@ namespace HT.Main
                         ("textures/terrain_detail_2_normal.tga", useMipMaps: true, repeat: true)
                     },
                     vertShaderPath: "shaders/bin/terrain.vert.spv",
-                    fragShaderPath: "shaders/bin/terrain.frag.spv");
+                    fragShaderPath: "shaders/bin/terrain.frag.spv",
+                    shadowFragShaderPath: "shaders/bin/shadow.frag.spv");
 
                 //Add vegetation
                 AddVegetation(nativeApp, taskRunner, scene, renderOrder: 950,
@@ -50,14 +51,16 @@ namespace HT.Main
                         ("textures/terrain.tga", useMipMaps: false, repeat: false)
                     },
                     vertShaderPath: "shaders/bin/vegetation.vert.spv",
-                    fragShaderPath: "shaders/bin/vegetation.frag.spv");
+                    fragShaderPath: "shaders/bin/vegetation.frag.spv",
+                    shadowFragShaderPath: "shaders/bin/shadow_discard.frag.spv");
 
                 //Add skybox to the scene
                 AddAttributelessObject(nativeApp, taskRunner, scene, renderOrder: 1000,
                     vertexCount: 3, //Uses fullscreen triangle 'trick'
                     textureSources: new [] { ("textures/skybox.cube", useMipMaps: false, repeat: false) },
                     vertShaderPath: "shaders/bin/skybox.vert.spv",
-                    fragShaderPath: "shaders/bin/skybox.frag.spv");
+                    fragShaderPath: "shaders/bin/skybox.frag.spv",
+                    shadowFragShaderPath: "shaders/bin/shadow.frag.spv");
 
                 //Add the fighter to the scene
                 var fighter = AddInstancedObject(nativeApp, taskRunner, scene, renderOrder: 0,
@@ -68,7 +71,8 @@ namespace HT.Main
                         ("textures/fighter_normal.tga", useMipMaps: true, repeat: false)
                     },
                     vertShaderPath: "shaders/bin/fighter.vert.spv",
-                    fragShaderPath: "shaders/bin/fighter.frag.spv");
+                    fragShaderPath: "shaders/bin/fighter.frag.spv",
+                    shadowFragShaderPath: "shaders/bin/shadow.frag.spv");
                 InstanceData[] fighterInstances = new InstanceData[16 * 16];
                 for (int x = 0; x < 16; x++)
                 for (int y = 0; y < 16; y++)
@@ -114,7 +118,8 @@ namespace HT.Main
             int renderOrder,
             (string path, bool useMipMaps, bool repeat)[] textureSources,
             string vertShaderPath,
-            string fragShaderPath)
+            string fragShaderPath,
+            string shadowFragShaderPath)
         {
             const int PATCH_SEGMENTS = 64;
             const int PATCH_SIZE = 32;
@@ -138,7 +143,8 @@ namespace HT.Main
                 renderOrder,
                 textureSources,
                 vertShaderPath,
-                fragShaderPath);
+                fragShaderPath,
+                shadowFragShaderPath);
             terrain.UpdateInstances(instances);
             return terrain;
         }
@@ -151,14 +157,15 @@ namespace HT.Main
             (string path, float scale) modelSource,
             (string path, bool useMipMaps, bool repeat)[] textureSources,
             string vertShaderPath,
-            string fragShaderPath)
+            string fragShaderPath,
+            string shadowFragShaderPath)
         {
             const int BUSH_COUNT = 5_000;
             
             var random = new ShiftRandom(seed: 1337);
             var bush = AddInstancedObject(
                 app, taskRunner, scene, renderOrder,
-                modelSource, textureSources, vertShaderPath, fragShaderPath);
+                modelSource, textureSources, vertShaderPath, fragShaderPath, shadowFragShaderPath);
 
             InstanceData[] bushInstances = new InstanceData[BUSH_COUNT];
             for (int i = 0; i < BUSH_COUNT; i++)
@@ -182,12 +189,14 @@ namespace HT.Main
             int renderOrder,
             (string path, bool useMipMaps, bool repeat)[] textureSources,
             string vertShaderPath,
-            string fragShaderPath)
+            string fragShaderPath,
+            string shadowFragShaderPath)
         {
             var loader = Load(app, taskRunner, ArrayUtils.Build<string>(
                 textureSources.Morph(a => a.path),
                 vertShaderPath,
-                fragShaderPath));
+                fragShaderPath,
+                shadowFragShaderPath));
 
             var textures = new TextureInfo[textureSources.Length];
             for (int i = 0; i < textures.Length; i++)
@@ -199,7 +208,8 @@ namespace HT.Main
             InstancedObject renderObject = new InstancedObject(
                 scene, renderOrder, model, textures,
                 loader.GetResult<ShaderProgram>(vertShaderPath),
-                loader.GetResult<ShaderProgram>(fragShaderPath));
+                loader.GetResult<ShaderProgram>(fragShaderPath),
+                loader.GetResult<ShaderProgram>(shadowFragShaderPath));
             scene.AddObject(renderObject);
             return renderObject;
         }
@@ -212,13 +222,15 @@ namespace HT.Main
             (string path, float scale) modelSource,
             (string path, bool useMipMaps, bool repeat)[] textureSources,
             string vertShaderPath,
-            string fragShaderPath)
+            string fragShaderPath,
+            string shadowFragShaderPath)
         {
             var loader = Load(app, taskRunner, ArrayUtils.Build<string>(
                 modelSource.path,
                 textureSources.Morph(a => a.path),
                 vertShaderPath,
-                fragShaderPath));
+                fragShaderPath,
+                shadowFragShaderPath));
 
             var mesh = loader.GetResult<Mesh>(modelSource.path);
             mesh.Scale(modelSource.scale);
@@ -233,7 +245,8 @@ namespace HT.Main
             InstancedObject renderObject = new InstancedObject(
                 scene, renderOrder, mesh, textures,
                 loader.GetResult<ShaderProgram>(vertShaderPath),
-                loader.GetResult<ShaderProgram>(fragShaderPath));
+                loader.GetResult<ShaderProgram>(fragShaderPath),
+                loader.GetResult<ShaderProgram>(shadowFragShaderPath));
             scene.AddObject(renderObject);
             return renderObject;
         }
@@ -246,12 +259,14 @@ namespace HT.Main
             int vertexCount,
             (string path, bool useMipMaps, bool repeat)[] textureSources,
             string vertShaderPath,
-            string fragShaderPath)
+            string fragShaderPath,
+            string shadowFragShaderPath)
         {
             var loader = Load(app, taskRunner, ArrayUtils.Build<string>(
                 textureSources.Morph(a => a.path),
                 vertShaderPath,
-                fragShaderPath));
+                fragShaderPath,
+                shadowFragShaderPath));
 
             var textures = new TextureInfo[textureSources.Length];
             for (int i = 0; i < textures.Length; i++)
@@ -263,7 +278,8 @@ namespace HT.Main
             AttributelessObject renderObject = new AttributelessObject(
                 scene, renderOrder, vertexCount, textures,
                 loader.GetResult<ShaderProgram>(vertShaderPath),
-                loader.GetResult<ShaderProgram>(fragShaderPath));
+                loader.GetResult<ShaderProgram>(fragShaderPath),
+                loader.GetResult<ShaderProgram>(shadowFragShaderPath));
             scene.AddObject(renderObject);
             return renderObject;
         }

@@ -20,11 +20,10 @@ layout(location = 3) in vec3 inWorldNormal;
 layout(location = 0) out vec4 outColor;
 layout(location = 1) out vec4 outNormal;
 
-
 void main()
 {
     outColor = texture(colorSampler, inUv) * inColorTint;
-    if (outColor.a < 0.01)
+    if (outColor.a < discardAlpha)
     {
         discard;
     }

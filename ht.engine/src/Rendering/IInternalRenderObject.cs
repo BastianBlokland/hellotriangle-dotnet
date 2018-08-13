@@ -4,6 +4,6 @@ namespace HT.Engine.Rendering
 {
     internal interface IInternalRenderObject : IRenderObject
     {
-         void Record(CommandBuffer commandbuffer);
+         void Record(CommandBuffer commandbuffer, bool shadowPass);
     }
 }

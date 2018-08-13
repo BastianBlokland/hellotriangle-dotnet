@@ -17,11 +17,13 @@ namespace HT.Engine.Rendering
         private readonly int vertexCount;
         private readonly ShaderModule vertModule;
         private readonly ShaderModule fragModule;
+        private readonly ShaderModule shadowFragModule;
         private readonly DeviceSampler[] samplers;
         private readonly DeviceTexture[] textures;
         private readonly DescriptorManager.Block descriptorBlock;
         private readonly PipelineLayout pipelineLayout;
         private readonly Pipeline pipeline;
+        private readonly Pipeline shadowPipeline;
         private int renderOrder;
         private bool disposed;
 
@@ -31,7 +33,8 @@ namespace HT.Engine.Rendering
             int vertexCount,
             TextureInfo[] textureInfos,
             ShaderProgram vertProg,
-            ShaderProgram fragProg)
+            ShaderProgram fragProg,
+            ShaderProgram shadowFragProg)
         {
             if (scene == null)
                 throw new ArgumentNullException(nameof(scene));
@@ -41,6 +44,8 @@ namespace HT.Engine.Rendering
                 throw new ArgumentNullException(nameof(vertProg));
             if (fragProg == null)
                 throw new ArgumentNullException(nameof(fragProg));
+            if (shadowFragProg == null)
+                throw new ArgumentNullException(nameof(shadowFragProg));
             this.scene = scene;
             this.renderOrder = renderOrder;
             this.vertexCount = vertexCount;
@@ -48,6 +53,7 @@ namespace HT.Engine.Rendering
             //Create the shader modules
             vertModule = vertProg.CreateModule(scene.LogicalDevice);
             fragModule = fragProg.CreateModule(scene.LogicalDevice);
+            shadowFragModule = shadowFragProg.CreateModule(scene.LogicalDevice);
 
             //Setup textures and samplers
             textures = new DeviceTexture[textureInfos.Length];
@@ -74,7 +80,8 @@ namespace HT.Engine.Rendering
                 setLayouts: new [] { descriptorBlock.Layout },
                 pushConstantRanges:  null ));
 
-            pipeline = CreatePipeline(scene.LogicalDevice, scene.GeometryRenderpass);
+            pipeline = CreatePipeline(scene.LogicalDevice, scene.GeometryRenderpass, shadowPass: false);
+            shadowPipeline = CreatePipeline(scene.LogicalDevice, scene.ShadowRenderpass, shadowPass: true);
         }
 
         public void Dispose()
@@ -86,12 +93,13 @@ namespace HT.Engine.Rendering
             descriptorBlock.Free();
             pipelineLayout.Dispose();
             pipeline.Dispose();
+            shadowPipeline.Dispose();
             vertModule.Dispose();
             fragModule.Dispose();
             disposed = true;
         }
 
-        void IInternalRenderObject.Record(CommandBuffer commandbuffer)
+        void IInternalRenderObject.Record(CommandBuffer commandbuffer, bool shadowPass)
         {
             commandbuffer.CmdBindDescriptorSet(
                 PipelineBindPoint.Graphics,
@@ -99,20 +107,22 @@ namespace HT.Engine.Rendering
                 descriptorBlock.Set);
 
             //Bind pipeline
-            commandbuffer.CmdBindPipeline(PipelineBindPoint.Graphics, pipeline);
+            commandbuffer.CmdBindPipeline(PipelineBindPoint.Graphics,
+                pipeline: shadowPass ? shadowPipeline : pipeline);
 
             //Draw
             commandbuffer.CmdDraw(vertexCount, instanceCount: 1, firstVertex: 0, firstInstance: 0);
         }
 
-        private Pipeline CreatePipeline(Device logicalDevice, RenderPass renderpass)
+        private Pipeline CreatePipeline(Device logicalDevice, RenderPass renderpass, bool shadowPass)
         {
             var shaderStages = new []
             {
                 new PipelineShaderStageCreateInfo(
                     stage: ShaderStages.Vertex, module: vertModule, name: "main"),
                 new PipelineShaderStageCreateInfo(
-                    stage: ShaderStages.Fragment, module: fragModule, name: "main")
+                    stage: ShaderStages.Fragment, 
+                    module: shadowPass ? shadowFragModule : fragModule, name: "main")
             };
             var depthTest = new PipelineDepthStencilStateCreateInfo {
                 DepthTestEnable = true,
@@ -124,12 +134,12 @@ namespace HT.Engine.Rendering
             var rasterizer = new PipelineRasterizationStateCreateInfo(
                 depthClampEnable: false,
                 polygonMode: PolygonMode.Fill,
-                cullMode: CullModes.Back,
+                cullMode: shadowPass ? CullModes.Front : CullModes.Back,
                 frontFace: FrontFace.Clockwise,
                 lineWidth: 1f
             );
             var blending = new PipelineColorBlendStateCreateInfo(
-                attachments: new [] 
+                attachments: shadowPass ? new PipelineColorBlendAttachmentState[0] : new [] 
                 { 
                     //Color target
                     new PipelineColorBlendAttachmentState(

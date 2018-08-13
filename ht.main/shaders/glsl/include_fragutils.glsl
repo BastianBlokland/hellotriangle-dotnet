@@ -1,3 +1,5 @@
+#define discardAlpha 0.01
+
 //Apply a tangent normal (from a normalmap for example) to a worldNormal
 //It derrives the tangent and bitangent vectors from change in position and uv
 //this eliminates the need to have tangents in the pipeline. 

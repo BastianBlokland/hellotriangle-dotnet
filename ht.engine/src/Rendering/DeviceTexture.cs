@@ -51,7 +51,6 @@ namespace HT.Engine.Rendering
             var image = CreateImage(
                 logicalDevice,
                 texture.Format,
-                SampleCounts.Count1,
                 texture.Size,
                 mipLevels,
                 //Also include 'TransferSrc' because we read from the image to generate the mip-maps
@@ -125,7 +124,6 @@ namespace HT.Engine.Rendering
         internal static DeviceTexture CreateDepthTarget(
             Int2 size,
             Format format,
-            SampleCounts samples,
             Device logicalDevice,
             Memory.Pool memoryPool,
             TransientExecutor executor,
@@ -145,7 +143,6 @@ namespace HT.Engine.Rendering
             var image = CreateImage(
                 logicalDevice, 
                 format,
-                samples,
                 size,
                 mipLevels: 1,
                 usage,
@@ -169,7 +166,6 @@ namespace HT.Engine.Rendering
         internal static DeviceTexture CreateColorTarget(
             Int2 size,
             Format format,
-            SampleCounts samples,
             Device logicalDevice,
             Memory.Pool memoryPool,
             TransientExecutor executor,
@@ -189,7 +185,6 @@ namespace HT.Engine.Rendering
             var image = CreateImage(
                 logicalDevice, 
                 format,
-                samples,
                 size,
                 mipLevels: 1,
                 usage,
@@ -240,7 +235,6 @@ namespace HT.Engine.Rendering
         private static Image CreateImage(
             Device logicalDevice,
             Format format,
-            SampleCounts samples,
             Int2 size,
             int mipLevels,
             ImageUsages usage,
@@ -252,7 +246,7 @@ namespace HT.Engine.Rendering
                 Extent = new Extent3D(size.X, size.Y, 1),
                 MipLevels = mipLevels,
                 ArrayLayers = cubeMap ? 6 : 1,
-                Samples = samples,
+                Samples = SampleCounts.Count1,
                 Tiling = ImageTiling.Optimal,
                 Usage = usage,
                 SharingMode = SharingMode.Exclusive,

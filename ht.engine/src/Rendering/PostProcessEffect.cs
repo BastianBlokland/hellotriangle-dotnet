@@ -36,7 +36,7 @@ namespace HT.Engine.Rendering
             fragModule = fragProg.CreateModule(scene.LogicalDevice);
 
             //Create the samplers (1 for each scene target)
-            samplers = new DeviceSampler[3];
+            samplers = new DeviceSampler[4];
             for (int i = 0; i < samplers.Length; i++)
                 samplers[i] = new DeviceSampler(scene.LogicalDevice);    
 
@@ -68,12 +68,13 @@ namespace HT.Engine.Rendering
         internal void BindSceneTargets(
             DeviceTexture sceneColor,
             DeviceTexture sceneNormal,
-            DeviceTexture sceneDepth)
+            DeviceTexture sceneDepth,
+            DeviceTexture sceneShadow)
         {
             descriptorBlock.Update(
                 buffers: new Memory.IBuffer[] { scene.SceneDataBuffer },
                 samplers: samplers,
-                textures: new [] { sceneColor, sceneNormal, sceneDepth });
+                textures: new [] { sceneColor, sceneNormal, sceneDepth, sceneShadow });
         }
 
         internal void Record(CommandBuffer commandbuffer)
