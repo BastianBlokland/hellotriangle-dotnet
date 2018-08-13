@@ -21,6 +21,7 @@ namespace HT.Engine.Rendering
         private readonly DeviceSampler[] samplers;
         private readonly DeviceTexture[] textures;
         private readonly DescriptorManager.Block descriptorBlock;
+        private readonly DescriptorManager.Block shadowDescriptorBlock;
         private readonly PipelineLayout pipelineLayout;
         private readonly Pipeline pipeline;
         private readonly Pipeline shadowPipeline;
@@ -75,6 +76,9 @@ namespace HT.Engine.Rendering
             descriptorBlock = scene.DescriptorManager.Allocate(binding);
             descriptorBlock.Update(
                 new Memory.IBuffer[] { scene.CameraBuffer, scene.SceneDataBuffer }, samplers, textures);
+            shadowDescriptorBlock = scene.DescriptorManager.Allocate(binding);
+            shadowDescriptorBlock.Update(
+                new Memory.IBuffer[] { scene.ShadowCameraBuffer, scene.SceneDataBuffer }, samplers, textures);
 
             //Create the pipeline
             pipelineLayout = scene.LogicalDevice.CreatePipelineLayout(new PipelineLayoutCreateInfo(
@@ -92,6 +96,7 @@ namespace HT.Engine.Rendering
             textures.DisposeAll();
             samplers.DisposeAll();
             descriptorBlock.Free();
+            shadowDescriptorBlock.Free();
             pipelineLayout.Dispose();
             pipeline.Dispose();
             shadowPipeline.Dispose();
@@ -106,7 +111,7 @@ namespace HT.Engine.Rendering
             commandbuffer.CmdBindDescriptorSet(
                 PipelineBindPoint.Graphics,
                 pipelineLayout,
-                descriptorBlock.Set);
+                shadowPass ? shadowDescriptorBlock.Set : descriptorBlock.Set);
 
             //Bind pipeline
             commandbuffer.CmdBindPipeline(PipelineBindPoint.Graphics,

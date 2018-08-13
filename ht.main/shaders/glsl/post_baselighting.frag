@@ -49,8 +49,8 @@ void main()
     //Emmisiveness decides how much of the raw unlit color we use
     outColor = vec4(mix(litResult, color, emmisiveness), 1.0);
 
-    float rawDepth = texture(sceneShadowSampler, inUv).x;
-    float linearDepth = LinearizeDepth(rawDepth);
-    float normDepth = linearDepth / cameraData.farClipDistance;
-    outColor = vec4(normDepth, normDepth, normDepth, 1.0) * 2.0;
+    // float rawDepth = texture(sceneShadowSampler, inUv).x;
+    // float linearDepth = LinearizeDepth(rawDepth);
+    // float normDepth = linearDepth / cameraData.farClipDistance;
+    // outColor = vec4(normDepth, normDepth, normDepth, 1.0) * 2.0;
 }

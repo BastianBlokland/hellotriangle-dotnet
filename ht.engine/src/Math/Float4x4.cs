@@ -169,6 +169,9 @@ namespace HT.Engine.Math
             return CreateTranslation(position) * CreateRotationFromAxis(center - position, axis);
         }
 
+        public static Float4x4 CreateRotationFromAxis(Float3 forward)
+            => CreateRotationFromAxis(forward, Float3.Up);
+
         public static Float4x4 CreateRotationFromAxis(Float3 forward, Float3 up)
         {
             Float3 zAxis = Float3.FastNormalize(-forward);
@@ -246,6 +249,26 @@ namespace HT.Engine.Math
                 row1: (0f,      -yScale, 0f,                 0f),
                 row2: (0f,      0f,      far / (near - far), (near * far) / (near - far)),
                 row3: (0f,      0f,      -1f,                0f));
+        }
+
+        /// <summary>
+        /// Matrix to transform from view-space into clip-space
+        /// Clip space:
+        /// TopLeft: -1,-1
+        /// BottomRight: 1,1
+        /// MinDepth: 0,
+        /// MaxDepth: 1
+        /// </summary>
+        public static Float4x4 CreateOrthographicProjection(
+            float width, float height, float nearDistance, float farDistance)
+        {
+            float far = farDistance;
+            float near = nearDistance;
+            return Float4x4.CreateFromRows(
+                row0: (2f / width,  0f,             0f,                0f),
+                row1: (0f,          -(2f / height), 0f,                0f),
+                row2: (0f,          0f,             1f / (near - far), near / (near - far)),
+                row3: (0f,          0f,             0f,                1f));
         }
 
         //Arithmetic operators

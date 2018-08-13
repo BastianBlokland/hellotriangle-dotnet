@@ -14,7 +14,13 @@ namespace HT.Engine.Rendering
         private readonly static Format NormalTargetFormat = Format.R8G8B8A8SNorm;
         private readonly static Format DepthTargetFormat = Format.D32SFloat;
         private readonly static Format ShadowTargetFormat = Format.D32SFloat;
-        private readonly static int SHADOW_TARGET_SIZE = 1024;
+        private readonly static Int2 ShadowTargetSize = new Int2(1024, 768);
+        private readonly static Float3 SunOffset = new Float3(0f, 15f, 0f);
+        private readonly static Float3 SunDirection = Float3.Normalize(new Float3(-1f, -.6f, -.1f));
+        private readonly static float SunNearClipDistance = -100f;
+        private readonly static float SunFarClipDistance = 100f;
+        private readonly static float SunShadowMapSize = 170f;
+
 
         //Public properties
         public Camera Camera => camera;
@@ -32,6 +38,7 @@ namespace HT.Engine.Rendering
         internal Memory.HostBuffer StagingBuffer => stagingBuffer;
         internal Memory.HostBuffer SceneDataBuffer => sceneDataBuffer;
         internal Memory.HostBuffer CameraBuffer => cameraBuffer;
+        internal Memory.HostBuffer ShadowCameraBuffer => shadowCameraBuffer;
         internal bool Dirty => dirty;
 
         //Data
@@ -44,6 +51,7 @@ namespace HT.Engine.Rendering
         private readonly Memory.HostBuffer stagingBuffer;
         private readonly Memory.HostBuffer sceneDataBuffer;
         private readonly Memory.HostBuffer cameraBuffer;
+        private readonly Memory.HostBuffer shadowCameraBuffer;
         private readonly DescriptorManager descriptorManager;
         private readonly List<IInternalRenderObject> renderObjects = new List<IInternalRenderObject>();
         private readonly List<PostProcessEffect> postEffects = new List<PostProcessEffect>();
@@ -90,6 +98,8 @@ namespace HT.Engine.Rendering
                 window.LogicalDevice, memoryPool, BufferUsages.UniformBuffer, SceneData.SIZE);
             cameraBuffer = new Memory.HostBuffer(
                 window.LogicalDevice, memoryPool, BufferUsages.UniformBuffer, CameraData.SIZE);
+            shadowCameraBuffer = new Memory.HostBuffer(
+                window.LogicalDevice, memoryPool, BufferUsages.UniformBuffer, CameraData.SIZE);
             descriptorManager = new DescriptorManager(window.LogicalDevice, logger);
 
             //Create the renderpasses
@@ -133,6 +143,7 @@ namespace HT.Engine.Rendering
             stagingBuffer.Dispose();
             sceneDataBuffer.Dispose();
             cameraBuffer.Dispose();
+            shadowCameraBuffer.Dispose();
             memoryPool.Dispose();
             executor.Dispose();
             disposed = true;
@@ -166,7 +177,7 @@ namespace HT.Engine.Rendering
                 swapchainSize, DepthTargetFormat,
                 window.LogicalDevice, memoryPool, executor, allowSampling: true);
             shadowTarget = DeviceTexture.CreateDepthTarget(
-                (SHADOW_TARGET_SIZE, SHADOW_TARGET_SIZE), ShadowTargetFormat,
+                ShadowTargetSize, ShadowTargetFormat,
                 window.LogicalDevice, memoryPool, executor, allowSampling: true);
 
             //Create geometry framebuffer
@@ -178,8 +189,8 @@ namespace HT.Engine.Rendering
             //Create shadow framebuffer
             shadowFrameBuffer = shadowRenderpass.CreateFramebuffer(new FramebufferCreateInfo(
                 attachments: new [] { shadowTarget.View },
-                width: SHADOW_TARGET_SIZE,
-                height: SHADOW_TARGET_SIZE));
+                width: ShadowTargetSize.X,
+                height: ShadowTargetSize.Y));
 
             //Create present framebuffers (need to create 1 for each swapchain image)
             presentFrameBuffers = new Framebuffer[swapchainImages.Length];
@@ -227,13 +238,23 @@ namespace HT.Engine.Rendering
                 tracker.DeltaTime);
             sceneDataBuffer.Write(sceneData);
 
-            float aspect = (float)swapchainSize.X / swapchainSize.Y;
             CameraData camData = new CameraData(
                 camera.Transformation,
-                camera.GetProjection(aspect),
+                camera.GetProjection(aspect: (float)swapchainSize.X / swapchainSize.Y),
                 Camera.NEAR_CLIP_DISTANCE,
                 Camera.FAR_CLIP_DISTANCE);
             cameraBuffer.Write(camData);
+
+            CameraData shadowCamData = new CameraData(
+                Float4x4.CreateTranslation(SunOffset) * Float4x4.CreateRotationFromAxis(SunDirection),
+                Float4x4.CreateOrthographicProjection(
+                    width: SunShadowMapSize * ((float)ShadowTargetSize.X / ShadowTargetSize.Y), 
+                    height: SunShadowMapSize, 
+                    SunNearClipDistance, 
+                    SunFarClipDistance),
+                SunNearClipDistance,
+                SunFarClipDistance);
+            shadowCameraBuffer.Write(shadowCamData);
         }
 
         private void RecordGeometryRenderPass(CommandBuffer commandbuffer)
@@ -267,7 +288,7 @@ namespace HT.Engine.Rendering
             commandbuffer.CmdBeginRenderPass(new RenderPassBeginInfo(
                 renderPass: shadowRenderpass,
                 framebuffer: shadowFrameBuffer,
-                renderArea: new Rect2D(0, 0, SHADOW_TARGET_SIZE, SHADOW_TARGET_SIZE),
+                renderArea: new Rect2D(0, 0, ShadowTargetSize.X, ShadowTargetSize.Y),
                 clearValues: new []
                 {
                     //Depth target
