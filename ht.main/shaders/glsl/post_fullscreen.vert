@@ -20,6 +20,6 @@ void main()
 
     //Calculate the world-space view direction
     //NOTE: This is NOT normalized yet
-    vec3 viewSpaceVertPos = (inverse(sceneData.projectionMatrix) * gl_Position).xyz;
-    outWorldViewDirection = mat3(sceneData.cameraMatrix) * viewSpaceVertPos;
+    vec3 viewSpaceVertPos = (inverse(cameraData.projectionMatrix) * gl_Position).xyz;
+    outWorldViewDirection = mat3(cameraData.cameraMatrix) * viewSpaceVertPos;
 }

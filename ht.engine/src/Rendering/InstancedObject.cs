@@ -98,9 +98,10 @@ namespace HT.Engine.Rendering
                 instanceCount: 0, firstIndex: 0, vertexOffset: 0, firstInstance: 0));
 
             //Create the descriptor binding
-            var binding = new DescriptorBinding(uniformBufferCount: 1, imageSamplerCount: textures.Length);
+            var binding = new DescriptorBinding(uniformBufferCount: 2, imageSamplerCount: textures.Length);
             descriptorBlock = scene.DescriptorManager.Allocate(binding);
-            descriptorBlock.Update(new Memory.IBuffer[] { scene.SceneDataBuffer }, samplers, textures);
+            descriptorBlock.Update(
+                new Memory.IBuffer[] { scene.CameraBuffer, scene.SceneDataBuffer }, samplers, textures);
 
             //Create the pipeline
             pipelineLayout = scene.LogicalDevice.CreatePipelineLayout(new PipelineLayoutCreateInfo(
@@ -137,6 +138,7 @@ namespace HT.Engine.Rendering
             shadowPipeline.Dispose();
             vertModule.Dispose();
             fragModule.Dispose();
+            shadowFragModule.Dispose();
             disposed = true;
         }
 

@@ -9,42 +9,19 @@ namespace HT.Engine.Rendering
     internal readonly struct SceneData : IEquatable<SceneData>
     {
         public const int SIZE = 
-            Float4x4.SIZE * 4 +
-            sizeof(float) * 2 +
-            Int2.SIZE +
             sizeof(int) +
             sizeof(float) * 2;
         
         //Data
-        public readonly Float4x4 CameraMatrix; //Inverse of view matrix
-        public readonly Float4x4 ViewMatrix; //Inverse of camera matrix
-        public readonly Float4x4 ProjectionMatrix;
-        public readonly Float4x4 ViewProjectionMatrix; //Projection * View
-        public readonly float NearClipDistance;
-        public readonly float FarClipDistance;
-        public readonly Int2 SurfaceSize;
         public readonly int Frame;
         public readonly float Time;
         public readonly float DeltaTime;
         
         internal SceneData(
-            Float4x4 cameraMatrix,
-            Float4x4 projectionMatrix,
-            float nearClipDistance,
-            float farClipDistance,
-            Int2 surfaceSize,
             int frame,
             float time,
             float deltaTime)
         {
-            Float4x4 viewMatrix = cameraMatrix.Invert();
-            CameraMatrix = cameraMatrix;
-            ViewMatrix = viewMatrix;
-            ProjectionMatrix = projectionMatrix;
-            ViewProjectionMatrix = projectionMatrix * viewMatrix;
-            NearClipDistance = nearClipDistance;
-            FarClipDistance = farClipDistance;
-            SurfaceSize = surfaceSize;
             Frame = frame;
             Time = time;
             DeltaTime = deltaTime;
@@ -58,39 +35,18 @@ namespace HT.Engine.Rendering
         public override bool Equals(object obj) 
             => obj is SceneData && Equals((SceneData)obj);
 
-        public bool Equals(SceneData other) => 
-            other.CameraMatrix == CameraMatrix &&
-            other.ViewMatrix == ViewMatrix &&
-            other.ProjectionMatrix == ProjectionMatrix &&
-            other.NearClipDistance == NearClipDistance &&
-            other.FarClipDistance == FarClipDistance &&
-            other.SurfaceSize == SurfaceSize &&
+        public bool Equals(SceneData other) =>
             other.Frame == Frame &&
             other.Time == Time &&
             other.DeltaTime == DeltaTime;
 
         public override int GetHashCode() =>
-            CameraMatrix.GetHashCode() ^
-            ViewMatrix.GetHashCode() ^ 
-            ProjectionMatrix.GetHashCode() ^
-            NearClipDistance.GetHashCode() ^
-            FarClipDistance.GetHashCode() ^
-            SurfaceSize.GetHashCode() ^
             Frame.GetHashCode() ^
             Time.GetHashCode() ^
             DeltaTime.GetHashCode();
 
         public override string ToString() => 
 $@"(
-    CameraMatrix:
-    {CameraMatrix},
-    ViewMatrix:
-    {ViewMatrix},
-    ProjectionMatrix:
-    {ProjectionMatrix},
-    NearPlaneDistance: {NearClipDistance},
-    FarPlaneDistance: {FarClipDistance},
-    SurfaceSize: {SurfaceSize},
     Frame: {Frame},
     Time: {Time},
     DeltaTime: {DeltaTime}

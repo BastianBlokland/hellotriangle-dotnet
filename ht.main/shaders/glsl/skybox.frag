@@ -4,7 +4,7 @@
 #include "include_sceneinput.glsl"
 
 //Textures
-layout(binding = 1) uniform samplerCube skyboxTexture;
+layout(binding = 2) uniform samplerCube skyboxTexture;
 
 //Input
 layout(location = 0) in vec3 inSkyboxDirection;

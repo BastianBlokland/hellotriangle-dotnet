@@ -5,7 +5,7 @@
 #include "include_math.glsl"
 
 //Textures
-layout(binding = 1) uniform samplerCube skyboxSampler;
+layout(binding = 2) uniform samplerCube skyboxSampler;
 
 //Output
 out gl_PerVertex
@@ -27,10 +27,10 @@ void main()
     //triangle on the far clip plane of the camera.
     //We use a inverse of the projection matrix to go from clip-space into view-space (unroll the 
     //projection)
-    vec3 viewSpaceVertPos = (inverse(sceneData.projectionMatrix) * gl_Position).xyz;
+    vec3 viewSpaceVertPos = (inverse(cameraData.projectionMatrix) * gl_Position).xyz;
 
     //Calculate where this vertex is in worldspace. 
-    vec3 worldSpaceVertPos = mat3(sceneData.cameraMatrix) * viewSpaceVertPos;
+    vec3 worldSpaceVertPos = mat3(cameraData.cameraMatrix) * viewSpaceVertPos;
 
     //Apply offset to be able to rotate the skybox
     outSkyboxDirection = yRotMatrix(offsetAngle) * worldSpaceVertPos;

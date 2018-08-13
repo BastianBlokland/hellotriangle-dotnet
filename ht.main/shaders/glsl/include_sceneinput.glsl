@@ -1,5 +1,4 @@
-//Scene input
-layout(binding = 0) uniform SceneData 
+layout(binding = 0) uniform CameraData 
 {
     mat4 cameraMatrix;
 	mat4 viewMatrix;
@@ -7,8 +6,10 @@ layout(binding = 0) uniform SceneData
     mat4 viewProjectionMatrix;
     float nearClipDistance;
     float farClipDistance;
-    int surfaceSizeX;
-    int surfaceSizeY;
+} cameraData;
+
+layout(binding = 1) uniform SceneData 
+{
     int frame;
     float time;
     float deltaTime;
@@ -16,8 +17,8 @@ layout(binding = 0) uniform SceneData
 
 float LinearizeDepth(float depth)
 {
-    float near = sceneData.nearClipDistance;
-    float far = sceneData.farClipDistance;
+    float near = cameraData.nearClipDistance;
+    float far = cameraData.farClipDistance;
     float z = depth * 2.0 - 1.0; // back to NDC
     return (2.0 * near * far) / (far + near - z * (far - near));
 }

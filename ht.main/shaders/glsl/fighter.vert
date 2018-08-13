@@ -7,8 +7,8 @@
 #include "include_math.glsl"
 
 //Textures
-layout(binding = 1) uniform sampler2D colorSampler;
-layout(binding = 2) uniform sampler2D normalSampler;
+layout(binding = 2) uniform sampler2D colorSampler;
+layout(binding = 3) uniform sampler2D normalSampler;
 
 //Output
 out gl_PerVertex
@@ -48,5 +48,5 @@ void main()
     outUv = vertUv1;
     outWorldPosition = (instanceModelMatrix * vec4(adjustedPos, 1.0)).xyz;
     outWorldNormal = mat3(instanceModelMatrix) * adjustedNorm;
-    gl_Position = sceneData.viewProjectionMatrix * vec4(outWorldPosition, 1.0);
+    gl_Position = cameraData.viewProjectionMatrix * vec4(outWorldPosition, 1.0);
 }

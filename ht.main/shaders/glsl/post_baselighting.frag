@@ -6,10 +6,10 @@
 #include "include_game.glsl"
 
 //Texture input
-layout(binding = 1) uniform sampler2D sceneColorSampler;
-layout(binding = 2) uniform sampler2D sceneNormalSampler;
-layout(binding = 3) uniform sampler2D sceneDepthSampler;
-layout(binding = 4) uniform sampler2D sceneShadowSampler;
+layout(binding = 2) uniform sampler2D sceneColorSampler;
+layout(binding = 3) uniform sampler2D sceneNormalSampler;
+layout(binding = 4) uniform sampler2D sceneDepthSampler;
+layout(binding = 5) uniform sampler2D sceneShadowSampler;
 
 //Input
 layout(location = 0) in vec2 inUv;
@@ -48,4 +48,9 @@ void main()
 
     //Emmisiveness decides how much of the raw unlit color we use
     outColor = vec4(mix(litResult, color, emmisiveness), 1.0);
+
+    float rawDepth = texture(sceneShadowSampler, inUv).x;
+    float linearDepth = LinearizeDepth(rawDepth);
+    float normDepth = linearDepth / cameraData.farClipDistance;
+    outColor = vec4(normDepth, normDepth, normDepth, 1.0) * 2.0;
 }

@@ -6,11 +6,11 @@
 #include "include_math.glsl"
 
 //Textures
-layout(binding = 1) uniform sampler2D terrainSampler;
-layout(binding = 2) uniform sampler2D detail1ColorSampler;
-layout(binding = 3) uniform sampler2D detail1NormalSampler;
-layout(binding = 4) uniform sampler2D detail2ColorSampler;
-layout(binding = 5) uniform sampler2D detail2NormalSampler;
+layout(binding = 2) uniform sampler2D terrainSampler;
+layout(binding = 3) uniform sampler2D detail1ColorSampler;
+layout(binding = 4) uniform sampler2D detail1NormalSampler;
+layout(binding = 5) uniform sampler2D detail2ColorSampler;
+layout(binding = 6) uniform sampler2D detail2NormalSampler;
 
 //Input
 layout(location = 0) in vec4 inBaseColor;

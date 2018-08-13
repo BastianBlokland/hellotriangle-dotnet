@@ -8,9 +8,9 @@
 #include "include_game.glsl"
 
 //Input
-layout(binding = 1) uniform sampler2D colorSampler;
-layout(binding = 2) uniform sampler2D normalSampler;
-layout(binding = 3) uniform sampler2D terrainSampler;
+layout(binding = 2) uniform sampler2D colorSampler;
+layout(binding = 3) uniform sampler2D normalSampler;
+layout(binding = 4) uniform sampler2D terrainSampler;
 
 //Output
 out gl_PerVertex
@@ -56,5 +56,5 @@ void main()
     outColorTint = getTint();
     outWorldNormal = mat3(instanceModelMatrix) * (vertNormal + bendOffset);
     outWorldPosition = bendWorldPosition.xyz;
-    gl_Position = sceneData.viewProjectionMatrix * bendWorldPosition;
+    gl_Position = cameraData.viewProjectionMatrix * bendWorldPosition;
 }

@@ -31,6 +31,7 @@ namespace HT.Engine.Rendering
         internal TransientExecutor Executor => executor;
         internal Memory.HostBuffer StagingBuffer => stagingBuffer;
         internal Memory.HostBuffer SceneDataBuffer => sceneDataBuffer;
+        internal Memory.HostBuffer CameraBuffer => cameraBuffer;
         internal bool Dirty => dirty;
 
         //Data
@@ -42,6 +43,7 @@ namespace HT.Engine.Rendering
         private readonly Memory.Pool memoryPool;
         private readonly Memory.HostBuffer stagingBuffer;
         private readonly Memory.HostBuffer sceneDataBuffer;
+        private readonly Memory.HostBuffer cameraBuffer;
         private readonly DescriptorManager descriptorManager;
         private readonly List<IInternalRenderObject> renderObjects = new List<IInternalRenderObject>();
         private readonly List<PostProcessEffect> postEffects = new List<PostProcessEffect>();
@@ -85,10 +87,9 @@ namespace HT.Engine.Rendering
                 BufferUsages.TransferSrc,
                 size: ByteUtils.MegabyteToByte(16));
             sceneDataBuffer = new Memory.HostBuffer(
-                window.LogicalDevice,
-                memoryPool,
-                BufferUsages.UniformBuffer,
-                size: SceneData.SIZE);
+                window.LogicalDevice, memoryPool, BufferUsages.UniformBuffer, SceneData.SIZE);
+            cameraBuffer = new Memory.HostBuffer(
+                window.LogicalDevice, memoryPool, BufferUsages.UniformBuffer, CameraData.SIZE);
             descriptorManager = new DescriptorManager(window.LogicalDevice, logger);
 
             //Create the renderpasses
@@ -131,6 +132,7 @@ namespace HT.Engine.Rendering
             descriptorManager.Dispose();
             stagingBuffer.Dispose();
             sceneDataBuffer.Dispose();
+            cameraBuffer.Dispose();
             memoryPool.Dispose();
             executor.Dispose();
             disposed = true;
@@ -219,17 +221,19 @@ namespace HT.Engine.Rendering
         internal void PreDraw(FrameTracker tracker)
         {
             //Update the scene data
-            float aspect = (float)swapchainSize.X / swapchainSize.Y;
             SceneData sceneData = new SceneData(
-                camera.Transformation,
-                camera.GetProjection(aspect),
-                Camera.NEAR_CLIP_DISTANCE,
-                Camera.FAR_CLIP_DISTANCE,
-                swapchainSize,
                 tracker.FrameNumber,
                 (float)tracker.ElapsedTime,
                 tracker.DeltaTime);
             sceneDataBuffer.Write(sceneData);
+
+            float aspect = (float)swapchainSize.X / swapchainSize.Y;
+            CameraData camData = new CameraData(
+                camera.Transformation,
+                camera.GetProjection(aspect),
+                Camera.NEAR_CLIP_DISTANCE,
+                Camera.FAR_CLIP_DISTANCE);
+            cameraBuffer.Write(camData);
         }
 
         private void RecordGeometryRenderPass(CommandBuffer commandbuffer)

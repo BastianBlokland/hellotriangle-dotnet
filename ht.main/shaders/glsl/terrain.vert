@@ -7,11 +7,11 @@
 #include "include_game.glsl"
 
 //Textures
-layout(binding = 1) uniform sampler2D terrainSampler;
-layout(binding = 2) uniform sampler2D detail1ColorSampler;
-layout(binding = 3) uniform sampler2D detail1NormalSampler;
-layout(binding = 4) uniform sampler2D detail2ColorSampler;
-layout(binding = 5) uniform sampler2D detail2NormalSampler;
+layout(binding = 2) uniform sampler2D terrainSampler;
+layout(binding = 3) uniform sampler2D detail1ColorSampler;
+layout(binding = 4) uniform sampler2D detail1NormalSampler;
+layout(binding = 5) uniform sampler2D detail2ColorSampler;
+layout(binding = 6) uniform sampler2D detail2NormalSampler;
 
 //Output
 out gl_PerVertex
@@ -46,5 +46,5 @@ void main()
 
     outBaseColor = vec4(terrainSample.rgb, 1.0);
     outWorldPosition = vertWorldPosition.xyz;
-    gl_Position = sceneData.viewProjectionMatrix * vertWorldPosition;
+    gl_Position = cameraData.viewProjectionMatrix * vertWorldPosition;
 }

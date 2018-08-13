@@ -4,7 +4,7 @@
 #include "include_fragutils.glsl"
 
 //Textures
-layout(binding = 1) uniform sampler2D texSampler;
+layout(binding = 2) uniform sampler2D texSampler;
 
 //Input
 layout(location = 0) in vec2 inUv;
