@@ -4,6 +4,10 @@
 #include "include_sceneinput.glsl"
 #include "include_math.glsl"
 
+//Uniforms
+layout(binding = 0) uniform CameraData cameraData;
+layout(binding = 1) uniform SceneData sceneData;
+
 //Output
 out gl_PerVertex
 {
@@ -21,5 +25,5 @@ void main()
     //Calculate the world-space view direction
     //NOTE: This is NOT normalized yet
     vec3 viewSpaceVertPos = (inverse(cameraData.projectionMatrix) * gl_Position).xyz;
-    outWorldViewDirection = mat3(cameraData.cameraMatrix) * viewSpaceVertPos;
+    outWorldViewDirection = mat3(cameraData.inverseViewMatrix) * viewSpaceVertPos;
 }

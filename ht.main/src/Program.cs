@@ -14,7 +14,7 @@ namespace HT.Main
     public static class Program
     {
         private static readonly HostDeviceRequirements deviceRequirements 
-            = new HostDeviceRequirements(samplerAnisotropy: true);
+            = new HostDeviceRequirements();
         
         public static void Run(INativeApp nativeApp, Logger logger = null)
         {

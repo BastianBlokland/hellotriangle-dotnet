@@ -193,9 +193,11 @@ namespace HT.Engine.Rendering
             };
             var rasterizer = new PipelineRasterizationStateCreateInfo(
                 depthClampEnable: false,
+                rasterizerDiscardEnable: false,
                 polygonMode: PolygonMode.Fill,
-                cullMode: shadowPass ? CullModes.Front : CullModes.Back,
+                cullMode: CullModes.Back,
                 frontFace: deviceMesh.GetFrontFace(),
+                depthBiasEnable: shadowPass,
                 lineWidth: 1f
             );
             var blending = new PipelineColorBlendStateCreateInfo(
@@ -219,7 +221,8 @@ namespace HT.Engine.Rendering
             //resize
             var dynamicState = new PipelineDynamicStateCreateInfo(
                 DynamicState.Viewport,
-                DynamicState.Scissor
+                DynamicState.Scissor,
+                DynamicState.DepthBias
             );
 
             //Gather the attribute descriptions

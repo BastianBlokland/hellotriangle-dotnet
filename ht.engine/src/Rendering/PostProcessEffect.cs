@@ -41,7 +41,7 @@ namespace HT.Engine.Rendering
                 samplers[i] = new DeviceSampler(scene.LogicalDevice);    
 
             //Create the descriptor binding
-            var binding = new DescriptorBinding(uniformBufferCount: 2, imageSamplerCount: samplers.Length);
+            var binding = new DescriptorBinding(uniformBufferCount: 3, imageSamplerCount: samplers.Length);
             descriptorBlock = scene.DescriptorManager.Allocate(binding);
 
             //Create the pipeline
@@ -72,7 +72,8 @@ namespace HT.Engine.Rendering
             DeviceTexture sceneShadow)
         {
             descriptorBlock.Update(
-                buffers: new Memory.IBuffer[] { scene.CameraBuffer, scene.SceneDataBuffer },
+                buffers: new Memory.IBuffer[] { 
+                    scene.CameraBuffer, scene.ShadowCameraBuffer, scene.SceneDataBuffer },
                 samplers: samplers,
                 textures: new [] { sceneColor, sceneNormal, sceneDepth, sceneShadow });
         }

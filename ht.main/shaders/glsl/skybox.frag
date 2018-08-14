@@ -3,7 +3,9 @@
 #extension GL_GOOGLE_include_directive : enable
 #include "include_sceneinput.glsl"
 
-//Textures
+//Uniforms
+layout(binding = 0) uniform CameraData cameraData;
+layout(binding = 1) uniform SceneData sceneData;
 layout(binding = 2) uniform samplerCube skyboxTexture;
 
 //Input

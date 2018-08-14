@@ -4,7 +4,9 @@
 #include "include_sceneinput.glsl"
 #include "include_fragutils.glsl"
 
-//Textures
+//Uniforms
+layout(binding = 0) uniform CameraData cameraData;
+layout(binding = 1) uniform SceneData sceneData;
 layout(binding = 2) uniform sampler2D colorSampler;
 layout(binding = 3) uniform sampler2D normalSampler;
 

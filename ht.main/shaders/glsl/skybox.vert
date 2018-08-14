@@ -4,7 +4,9 @@
 #include "include_sceneinput.glsl"
 #include "include_math.glsl"
 
-//Textures
+//Uniforms
+layout(binding = 0) uniform CameraData cameraData;
+layout(binding = 1) uniform SceneData sceneData;
 layout(binding = 2) uniform samplerCube skyboxSampler;
 
 //Output
@@ -30,7 +32,7 @@ void main()
     vec3 viewSpaceVertPos = (inverse(cameraData.projectionMatrix) * gl_Position).xyz;
 
     //Calculate where this vertex is in worldspace. 
-    vec3 worldSpaceVertPos = mat3(cameraData.cameraMatrix) * viewSpaceVertPos;
+    vec3 worldSpaceVertPos = mat3(cameraData.inverseViewMatrix) * viewSpaceVertPos;
 
     //Apply offset to be able to rotate the skybox
     outSkyboxDirection = yRotMatrix(offsetAngle) * worldSpaceVertPos;

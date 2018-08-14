@@ -14,13 +14,14 @@ namespace HT.Engine.Rendering
         private readonly static Format NormalTargetFormat = Format.R8G8B8A8SNorm;
         private readonly static Format DepthTargetFormat = Format.D32SFloat;
         private readonly static Format ShadowTargetFormat = Format.D32SFloat;
-        private readonly static Int2 ShadowTargetSize = new Int2(1024, 768);
+        private readonly static Int2 ShadowTargetSize = new Int2(1024, 768) * 4;
         private readonly static Float3 SunOffset = new Float3(0f, 15f, 0f);
         private readonly static Float3 SunDirection = Float3.Normalize(new Float3(-1f, -.6f, -.1f));
         private readonly static float SunNearClipDistance = -100f;
         private readonly static float SunFarClipDistance = 100f;
         private readonly static float SunShadowMapSize = 170f;
-
+        private readonly static float ShadowDepthBiasConstant = 1.25f;
+        private readonly static float ShadowDepthBiasSlope = 1.75f;
 
         //Public properties
         public Camera Camera => camera;
@@ -259,6 +260,8 @@ namespace HT.Engine.Rendering
 
         private void RecordGeometryRenderPass(CommandBuffer commandbuffer)
         {
+            SetViewport(commandbuffer, swapchainSize);
+
             Float4 normClearColor = clearColor == null ? (0f, 0f, 0f, 1f) : clearColor.Value.Normalized;
             commandbuffer.CmdBeginRenderPass(new RenderPassBeginInfo(
                 renderPass: geometryRenderpass,
@@ -274,7 +277,6 @@ namespace HT.Engine.Rendering
                     //Depth target
                     new ClearValue(new ClearDepthStencilValue(depth: 1f, stencil: 0))
                 }));
-            SetViewport(commandbuffer, swapchainSize);
 
             //Record all individual objects
             for (int i = 0; i < renderObjects.Count; i++)
@@ -285,6 +287,11 @@ namespace HT.Engine.Rendering
 
         private void RecordShadowRenderPass(CommandBuffer commandbuffer)
         {
+            SetViewport(commandbuffer, ShadowTargetSize);
+
+            commandbuffer.CmdSetDepthBias(
+                ShadowDepthBiasConstant, depthBiasClamp: 0f, ShadowDepthBiasSlope);
+
             commandbuffer.CmdBeginRenderPass(new RenderPassBeginInfo(
                 renderPass: shadowRenderpass,
                 framebuffer: shadowFrameBuffer,
@@ -294,7 +301,6 @@ namespace HT.Engine.Rendering
                     //Depth target
                     new ClearValue(new ClearDepthStencilValue(depth: 1f, stencil: 0))
                 }));
-            SetViewport(commandbuffer, swapchainSize);
 
             //Record all individual objects
             for (int i = 0; i < renderObjects.Count; i++)
@@ -305,12 +311,13 @@ namespace HT.Engine.Rendering
 
         private void RecordCompositionRenderPass(CommandBuffer commandbuffer, int swapchainImageIndex)
         {
+            SetViewport(commandbuffer, swapchainSize);
+
             commandbuffer.CmdBeginRenderPass(new RenderPassBeginInfo(
                 renderPass: compositionRenderpass,
                 framebuffer: presentFrameBuffers[swapchainImageIndex],
                 renderArea: new Rect2D(x: 0, y: 0, width: swapchainSize.X, height: swapchainSize.Y),
                 clearValues: new [] { new ClearValue() }));
-            SetViewport(commandbuffer, swapchainSize);
 
             for (int i = 0; i < postEffects.Count; i++)
                 postEffects[i].Record(commandbuffer);

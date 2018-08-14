@@ -177,11 +177,7 @@ namespace HT.Engine.Rendering
         }
 
         internal bool AreRequirementsMet(HostDeviceRequirements requirements)
-        {
-            if (requirements.SamplerAnisotropy && !supportedFeatures.SamplerAnisotropy)
-                return false;
-            return true;
-        }
+            => requirements.DoesSupportRequirements(supportedFeatures);
 
         internal bool IsSurfaceSupported(SurfaceKhr surface)
         {

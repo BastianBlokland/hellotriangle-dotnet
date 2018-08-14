@@ -9,14 +9,15 @@ namespace HT.Engine.Rendering
     internal readonly struct CameraData : IEquatable<CameraData>
     {
         public const int SIZE = 
-            Float4x4.SIZE * 4 +
+            Float4x4.SIZE * 5 +
             sizeof(float) * 2;
         
         //Data
-        public readonly Float4x4 CameraMatrix; //Inverse of view matrix
-        public readonly Float4x4 ViewMatrix; //Inverse of camera matrix
+        public readonly Float4x4 InverseViewMatrix;
+        public readonly Float4x4 ViewMatrix;
         public readonly Float4x4 ProjectionMatrix;
-        public readonly Float4x4 ViewProjectionMatrix; //Projection * View
+        public readonly Float4x4 ViewProjectionMatrix;
+        public readonly Float4x4 InverseViewProjectionMatrix;
         public readonly float NearClipDistance;
         public readonly float FarClipDistance;
         
@@ -27,10 +28,11 @@ namespace HT.Engine.Rendering
             float farClipDistance)
         {
             Float4x4 viewMatrix = cameraMatrix.Invert();
-            CameraMatrix = cameraMatrix;
+            InverseViewMatrix = cameraMatrix;
             ViewMatrix = viewMatrix;
             ProjectionMatrix = projectionMatrix;
             ViewProjectionMatrix = projectionMatrix * viewMatrix;
+            InverseViewProjectionMatrix = ViewProjectionMatrix.Invert();
             NearClipDistance = nearClipDistance;
             FarClipDistance = farClipDistance;
         }
@@ -44,14 +46,14 @@ namespace HT.Engine.Rendering
             => obj is CameraData && Equals((CameraData)obj);
 
         public bool Equals(CameraData other) => 
-            other.CameraMatrix == CameraMatrix &&
+            other.InverseViewMatrix == InverseViewMatrix &&
             other.ViewMatrix == ViewMatrix &&
             other.ProjectionMatrix == ProjectionMatrix &&
             other.NearClipDistance == NearClipDistance &&
             other.FarClipDistance == FarClipDistance;
 
         public override int GetHashCode() =>
-            CameraMatrix.GetHashCode() ^
+            InverseViewMatrix.GetHashCode() ^
             ViewMatrix.GetHashCode() ^ 
             ProjectionMatrix.GetHashCode() ^
             NearClipDistance.GetHashCode() ^
@@ -59,8 +61,6 @@ namespace HT.Engine.Rendering
 
         public override string ToString() => 
 $@"(
-    CameraMatrix:
-    {CameraMatrix},
     ViewMatrix:
     {ViewMatrix},
     ProjectionMatrix:

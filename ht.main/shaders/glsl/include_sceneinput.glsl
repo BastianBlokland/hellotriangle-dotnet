@@ -1,24 +1,28 @@
-layout(binding = 0) uniform CameraData 
-{
-    mat4 cameraMatrix;
-	mat4 viewMatrix;
-    mat4 projectionMatrix;
-    mat4 viewProjectionMatrix;
-    float nearClipDistance;
-    float farClipDistance;
-} cameraData;
+#define CameraData CameraData           \
+{                                       \
+    mat4 inverseViewMatrix;             \
+	mat4 viewMatrix;                    \
+    mat4 projectionMatrix;              \
+    mat4 viewProjectionMatrix;          \
+    mat4 inverseViewProjectionMatrix;   \
+    float nearClipDistance;             \
+    float farClipDistance;              \
+}
 
-layout(binding = 1) uniform SceneData 
-{
-    int frame;
-    float time;
-    float deltaTime;
-} sceneData;
+#define ShadowData ShadowData           \
+{                                       \
+    mat4 inverseViewMatrix;             \
+	mat4 viewMatrix;                    \
+    mat4 projectionMatrix;              \
+    mat4 viewProjectionMatrix;          \
+    mat4 inverseViewProjectionMatrix;   \
+    float nearClipDistance;             \
+    float farClipDistance;              \
+}
 
-float LinearizeDepth(float depth)
-{
-    float near = cameraData.nearClipDistance;
-    float far = cameraData.farClipDistance;
-    float z = depth * 2.0 - 1.0; // back to NDC
-    return (2.0 * near * far) / (far + near - z * (far - near));
+#define SceneData SceneData             \
+{                                       \
+    int frame;                          \
+    float time;                         \
+    float deltaTime;                    \
 }
