@@ -20,8 +20,6 @@ namespace HT.Engine.Rendering
         private readonly static float SunNearClipDistance = -100f;
         private readonly static float SunFarClipDistance = 100f;
         private readonly static float SunShadowMapSize = 170f;
-        private readonly static float ShadowDepthBiasConstant = 1.25f;
-        private readonly static float ShadowDepthBiasSlope = 1.75f;
 
         //Public properties
         public Camera Camera => camera;
@@ -288,9 +286,6 @@ namespace HT.Engine.Rendering
         private void RecordShadowRenderPass(CommandBuffer commandbuffer)
         {
             SetViewport(commandbuffer, ShadowTargetSize);
-
-            commandbuffer.CmdSetDepthBias(
-                ShadowDepthBiasConstant, depthBiasClamp: 0f, ShadowDepthBiasSlope);
 
             commandbuffer.CmdBeginRenderPass(new RenderPassBeginInfo(
                 renderPass: shadowRenderpass,

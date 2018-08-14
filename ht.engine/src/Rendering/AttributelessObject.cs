@@ -145,6 +145,8 @@ namespace HT.Engine.Rendering
                 cullMode: CullModes.Back,
                 frontFace: FrontFace.Clockwise,
                 depthBiasEnable: shadowPass,
+                depthBiasConstantFactor: 1.25f,
+                depthBiasSlopeFactor: 1.75f,
                 lineWidth: 1f
             );
             var blending = new PipelineColorBlendStateCreateInfo(
@@ -168,8 +170,7 @@ namespace HT.Engine.Rendering
             //resize
             var dynamicState = new PipelineDynamicStateCreateInfo(
                 DynamicState.Viewport,
-                DynamicState.Scissor,
-                DynamicState.DepthBias
+                DynamicState.Scissor
             );
             
             return logicalDevice.CreateGraphicsPipeline(new GraphicsPipelineCreateInfo(

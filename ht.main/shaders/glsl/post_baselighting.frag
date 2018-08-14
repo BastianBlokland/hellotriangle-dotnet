@@ -24,9 +24,19 @@ layout(location = 0) out vec4 outColor;
 
 float getShadow(vec3 worldPos)
 {
+    vec2 texelSize = 1.0 / textureSize(sceneShadowSampler, 0);
     vec4 clipPos = shadowData.viewProjectionMatrix * vec4(worldPos, 1.0);
     vec2 shadowCoord = clipPos.xy * 0.5 + 0.5; //To texture space
-    return float(texture(sceneShadowSampler, shadowCoord).r  < clipPos.z);
+
+    //Take multiple samples with a offset to apply blurring for softer shadows
+    float shadowSum = 0.0;
+    for (float y = -1.5; y <= 1.5; y += 1.0)
+    for (float x = -1.5; x <= 1.5; x += 1.0)
+    {
+        vec2 offset = vec2(x, y) * texelSize;
+        shadowSum += float(texture(sceneShadowSampler, shadowCoord + offset).r  < clipPos.z);
+    }
+    return shadowSum / 16.0;
 }
 
 void main()
