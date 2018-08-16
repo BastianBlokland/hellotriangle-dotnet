@@ -192,13 +192,13 @@ namespace HT.Engine.Rendering
                 StencilTestEnable = false
             };
             var rasterizer = new PipelineRasterizationStateCreateInfo(
-                depthClampEnable: false,
+                depthClampEnable: shadowPass,
                 rasterizerDiscardEnable: false,
                 polygonMode: PolygonMode.Fill,
                 cullMode: CullModes.Back,
                 frontFace: deviceMesh.GetFrontFace(),
                 depthBiasEnable: shadowPass,
-                depthBiasConstantFactor: 1.25f,
+                depthBiasConstantFactor: .1f,
                 depthBiasSlopeFactor: 1.75f,
                 lineWidth: 1f
             );

@@ -12,6 +12,8 @@ namespace HT.Engine.Math
 
         //Presets
         public static readonly Float2 Zero = new Float2(0f, 0f);
+        public static readonly Float2 Max = new Float2(float.MaxValue, float.MaxValue);
+        public static readonly Float2 Min = new Float2(float.MinValue, float.MinValue);
         public static readonly Float2 One = new Float2(1f, 1f);
         public static readonly Float2 Up = new Float2(0f, 1f);
         public static readonly Float2 Down = new Float2(0f, -1f);
@@ -61,10 +63,10 @@ namespace HT.Engine.Math
         }
 
         //Arithmetic methods
-        public static Float2 Max(Float2 left, Float2 right)
+        public static Float2 GetMax(Float2 left, Float2 right)
             => new Float2(System.Math.Max(left.X, right.X), System.Math.Max(left.Y, right.Y));
 
-        public static Float2 Min(Float2 left, Float2 right)
+        public static Float2 GetMin(Float2 left, Float2 right)
             => new Float2(System.Math.Min(left.X, right.X), System.Math.Min(left.Y, right.Y));
 
         //Arithmetic operators

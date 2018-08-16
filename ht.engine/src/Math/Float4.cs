@@ -12,6 +12,10 @@ namespace HT.Engine.Math
 
         //Presets
         public static readonly Float4 Zero = new Float4(0f, 0f, 0f, 0f);
+        public static readonly Float4 Max = new Float4(
+            float.MaxValue, float.MaxValue, float.MaxValue, float.MaxValue);
+        public static readonly Float4 Min = new Float4(
+            float.MinValue, float.MinValue, float.MinValue, float.MinValue);
         public static readonly Float4 One = new Float4(1f, 1f, 1f, 1f);
 
         //Component swizzling
@@ -65,6 +69,9 @@ namespace HT.Engine.Math
             z = Z;
             w = W;
         }
+
+        //Utilities
+        public Float3 PerspectiveDivide() => XYZ / W;
 
         //Creation
         public static Float4 CreateFrom32Bit(byte x, byte y, byte z, byte w)

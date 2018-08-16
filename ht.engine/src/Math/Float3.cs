@@ -15,6 +15,8 @@ namespace HT.Engine.Math
 
         //Presets
         public static readonly Float3 Zero = new Float3(0f, 0f, 0f);
+        public static readonly Float3 Max = new Float3(float.MaxValue, float.MaxValue, float.MaxValue);
+        public static readonly Float3 Min = new Float3(float.MinValue, float.MinValue, float.MinValue);
         public static readonly Float3 One = new Float3(1f, 1f, 1f);
         public static readonly Float3 Up = new Float3(0f, 1f, 0f);
         public static readonly Float3 Down = new Float3(0f, -1f, 0f);
@@ -32,6 +34,7 @@ namespace HT.Engine.Math
         public Float2 XZ => new Float2(X, Z);
         public Float3 YZX => new Float3(Y, Z, X);
         public Float3 ZXY => new Float3(Z, X, Y);
+        public Float4 XYZ0 => new Float4(X, Y, Z, 0f);
         public Float4 XYZ1 => new Float4(X, Y, Z, 1f);
 
         //Component index accessor

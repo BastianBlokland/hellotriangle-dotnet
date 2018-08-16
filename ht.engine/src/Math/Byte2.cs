@@ -12,8 +12,8 @@ namespace HT.Engine.Math
 
         //Presets
         public static readonly Byte2 Zero = new Byte2(0, 0);
+        public static readonly Byte2 Max = new Byte2(byte.MaxValue, byte.MaxValue);
         public static readonly Byte2 One = new Byte2(1, 1);
-        public static readonly Byte2 Max = new Byte2(255, 255);
 
         //Component index accessor
         public int ComponentCount => 2;

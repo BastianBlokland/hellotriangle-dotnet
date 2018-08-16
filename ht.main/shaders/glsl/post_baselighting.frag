@@ -24,14 +24,17 @@ layout(location = 0) out vec4 outColor;
 
 float getShadow(vec3 worldPos)
 {
-    #define blurSize 2.0
+    #define blurSize 1.0
 
     vec2 texelSize = 1.0 / textureSize(sceneShadowSampler, 0);
     vec4 clipPos = shadowData.viewProjectionMatrix * vec4(worldPos, 1.0);
     vec2 baseShadowCoord = clipPos.xy * 0.5 + 0.5; //To texture space
 
-    if (clipPos.z < -1.0 || clipPos.z > 1.0) //Outside depth range
-       return 0.0;
+    //No shadow if outside range of shadow-texture
+    if (clipPos.x < -1.0 || clipPos.x > 1.0 ||
+        clipPos.y < -1.0 || clipPos.y > 1.0 ||
+        clipPos.z < 0.0 || clipPos.z > 1.0 ) 
+        return 0.0;
 
     //Take multiple samples with a offset to apply blurring for softer shadows
     float shadowSum = 0.0;
@@ -81,4 +84,8 @@ void main()
 
     //Emmisiveness decides how much of the raw unlit color we use
     outColor = vec4(mix(litResult, color, emmisiveness), 1.0);
+
+    //outColor = vec4(shadow);
+    //outColor = mix(outColor, texture(sceneShadowSampler, inUv), 1.0);
+    //outColor = mix(outColor, texture(sceneShadowSampler, inUv), mod(sceneData.time, 1.0));
 }

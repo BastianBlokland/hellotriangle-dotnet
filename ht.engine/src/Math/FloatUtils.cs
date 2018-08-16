@@ -1,6 +1,6 @@
 using HT.Engine.Math;
 
-using static System.Math;
+using static System.MathF;
 
 namespace HT.Engine.Math
 {
@@ -27,6 +27,8 @@ namespace HT.Engine.Math
 
         public static float UnLerp(float value, float a, float b)
             => (a == b) ? 0f : (value - a) / (b - a);
+
+        public static float CubeRoot(float val) => Pow(val, 1f / 3f);
 
         //Implementation based on: https://en.wikipedia.org/wiki/Fast_inverse_square_root
         public static float FastInverseSquareRoot(float number, int precision = 2)

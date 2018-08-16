@@ -8,10 +8,13 @@ namespace HT.Engine.Rendering
             => new PhysicalDeviceFeatures
             {
                 SamplerAnisotropy = true,
-                DepthBiasClamp = true
+                DepthBiasClamp = true,
+                DepthClamp = true
             };
 
-        internal bool DoesSupportRequirements(PhysicalDeviceFeatures features)
-            => features.SamplerAnisotropy && features.DepthBiasClamp;
+        internal bool DoesSupportRequirements(PhysicalDeviceFeatures features) => 
+            features.SamplerAnisotropy &&
+            features.DepthBiasClamp &&
+            features.DepthClamp;
     }
 }

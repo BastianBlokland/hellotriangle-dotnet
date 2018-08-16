@@ -12,8 +12,9 @@ namespace HT.Engine.Math
 
         //Presets
         public static readonly Byte4 Zero = new Byte4(0, 0, 0, 0);
+        public static readonly Byte4 Max = new Byte4(
+            byte.MaxValue, byte.MaxValue, byte.MaxValue, byte.MaxValue);
         public static readonly Byte4 One = new Byte4(1, 1, 1, 1);
-        public static readonly Byte4 Max = new Byte4(255, 255, 255, 255);
 
         //Component index accessor
         public int ComponentCount => 4;

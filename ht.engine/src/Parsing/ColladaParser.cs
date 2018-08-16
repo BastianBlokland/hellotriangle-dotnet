@@ -206,7 +206,7 @@ namespace HT.Engine.Parsing
                     int normalIndex = GetIndex(i, vertexIndex: j, semantic: "NORMAL");
                     Float3 normal = normalIndex < 0 ? 
                         surfaceNormal :
-                        transform.TransformVector(Float3.FastNormalize(normals.Data[normalIndex]));
+                        transform.TransformDirection(Float3.FastNormalize(normals.Data[normalIndex]));
 
                     int texcoord1Index = GetIndex(i, vertexIndex: j, semantic: "TEXCOORD", set: minTexcoordSet);
                     Float2 texcoord1 = texcoord1Index < 0 ? Float2.Zero : texcoords1.Data[texcoord1Index];

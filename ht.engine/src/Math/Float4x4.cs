@@ -121,14 +121,8 @@ namespace HT.Engine.Math
         }
 
         //Tranformations
-        public Float3 TransformVector(Float3 vector)
-            => new Float3(
-                x: vector.X * Column0.X + vector.Y * Column1.X + vector.Z * Column2.X,
-                y: vector.X * Column0.Y + vector.Y * Column1.Y + vector.Z * Column2.Y,
-                z: vector.X * Column0.Z + vector.Y * Column1.Z + vector.Z * Column2.Z);
-
-        public Float3 TransformPoint(Float3 point)
-            => TransformVector(point) + Translation;
+        public Float3 TransformDirection(Float3 vector) => (this * vector.XYZ0).XYZ;
+        public Float3 TransformPoint(Float3 point) => (this * point.XYZ1).PerspectiveDivide();
 
         //Creation
         public static Float4x4 CreateFromRows(Float4 row0, Float4 row1, Float4 row2, Float4 row3)
@@ -163,9 +157,15 @@ namespace HT.Engine.Math
             row2: (0f,      0f,      scale.Z, centerPoint.Z * (1 - scale.Z)),
             row3: (0f,      0f,      0f,      1f));
 
+        public static Float4x4 CreateLookAt(Float3 position, Float3 target)
+            => CreateLookAt(position, target, up: Float3.Up);
+
+        public static Float4x4 CreateLookAt(Float3 position, Float3 target, Float3 up)
+            => CreateTranslation(position) * CreateRotationFromAxis(target - position, up);
+
         public static Float4x4 CreateOrbit(Float3 center, Float3 offset, Float3 axis, float angle)
         {
-            Float3 position = center + CreateRotationAngleAxis(axis, angle).TransformVector(offset);
+            Float3 position = center + CreateRotationAngleAxis(axis, angle).TransformDirection(offset);
             return CreateTranslation(position) * CreateRotationFromAxis(center - position, axis);
         }
 
@@ -272,27 +272,49 @@ namespace HT.Engine.Math
         }
 
         //Arithmetic operators
+        public static Float4 operator *(Float4x4 left, Float4 right) => (
+            x: 
+                left.Row0.X * right.X + 
+                left.Row0.Y * right.Y + 
+                left.Row0.Z * right.Z + 
+                left.Row0.W * right.W,
+            y: 
+                left.Row1.X * right.X + 
+                left.Row1.Y * right.Y + 
+                left.Row1.Z * right.Z + 
+                left.Row1.W * right.W,
+            z:  
+                left.Row2.X * right.X +
+                left.Row2.Y * right.Y +
+                left.Row2.Z * right.Z +
+                left.Row2.W * right.W,
+            w:
+                left.Row3.X * right.X +
+                left.Row3.Y * right.Y +
+                left.Row3.Z * right.Z +
+                left.Row3.W * right.W);
+
         public static Float4x4 operator *(Float4x4 left, Float4x4 right)
         {
-            Float4 row0 =   left.Row0.X * right.Row0 +
-                            left.Row0.Y * right.Row1 +
-                            left.Row0.Z * right.Row2 +
-                            left.Row0.W * right.Row3;
+            Float4 row0 =   left.Column0.X * right.Row0 +
+                            left.Column1.X * right.Row1 +
+                            left.Column2.X * right.Row2 +
+                            left.Column3.X * right.Row3;
             
-            Float4 row1 =   left.Row1.X * right.Row0 +
-                            left.Row1.Y * right.Row1 +
-                            left.Row1.Z * right.Row2 +
-                            left.Row1.W * right.Row3;
+            Float4 row1 =   left.Column0.Y * right.Row0 +
+                            left.Column1.Y * right.Row1 +
+                            left.Column2.Y * right.Row2 +
+                            left.Column3.Y * right.Row3;
             
-            Float4 row2 =   left.Row2.X * right.Row0 +
-                            left.Row2.Y * right.Row1 +
-                            left.Row2.Z * right.Row2 +
-                            left.Row2.W * right.Row3;
+            Float4 row2 =   left.Column0.Z * right.Row0 +
+                            left.Column1.Z * right.Row1 +
+                            left.Column2.Z * right.Row2 +
+                            left.Column3.Z * right.Row3;
             
-            Float4 row3 =   left.Row3.X * right.Row0 +
-                            left.Row3.Y * right.Row1 +
-                            left.Row3.Z * right.Row2 +
-                            left.Row3.W * right.Row3;
+            Float4 row3 =   left.Column0.W * right.Row0 +
+                            left.Column1.W * right.Row1 +
+                            left.Column2.W * right.Row2 +
+                            left.Column3.W * right.Row3;
             
             return CreateFromRows(row0, row1, row2, row3);
         }

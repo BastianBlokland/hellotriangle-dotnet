@@ -90,18 +90,20 @@ namespace HT.Engine.Resources
         void ITaskExecutor.ExecuteTask(int taskId)
         {
             string path = paths[taskId];
-            using (var parser = ResourceUtils.CreateParser(app, path))
-                results[taskId] = parser.Parse();
-
+            if (path != null)
+            {
+                using (var parser = ResourceUtils.CreateParser(app, path))
+                    results[taskId] = parser.Parse();
+            }
             if (Interlocked.Decrement(ref remainingTasks) == 0)
-				Complete();
+                Complete();
         }
 
         private void Complete()
-		{
-			isRunning = false;
+        {
+            isRunning = false;
             isFinished = true;
-			FinishedLoading?.Invoke();
+            FinishedLoading?.Invoke();
         }
     }
 }

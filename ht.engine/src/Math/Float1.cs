@@ -12,6 +12,8 @@ namespace HT.Engine.Math
 
         //Presets
         public static readonly Float1 Zero = 0f;
+        public static readonly Float1 Max = new Float1(float.MaxValue);
+        public static readonly Float1 Min = new Float1(float.MinValue);
         public static readonly Float1 One = 1f;
 
         //Component index accessor

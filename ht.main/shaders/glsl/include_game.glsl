@@ -1,9 +1,9 @@
 #define worldSize vec2(256, 256)
 #define heightmapScale 40
-#define ambientColor vec3(0.45, 0.39, 0.34)
+#define ambientColor vec3(0.47, 0.38, 0.35)
 #define sunColor vec3(0.8, 0.7, 0.5)
 #define sunSpecPower 16
-#define specMultiplier 1.5
+#define specMultiplier 1.7
 
 vec2 getWorldUv(vec3 worldPosition)
 {

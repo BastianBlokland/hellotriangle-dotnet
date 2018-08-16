@@ -15,8 +15,8 @@ namespace HT.Engine.Math
 
         //Presets
         public static readonly Byte3 Zero = new Byte3(0, 0, 0);
+        public static readonly Byte3 Max = new Byte3(byte.MaxValue, byte.MaxValue, byte.MaxValue);
         public static readonly Byte3 One = new Byte3(1, 1, 1);
-        public static readonly Byte3 Max = new Byte3(255, 255, 255);
 
         //Component index accessor
         public int ComponentCount => 3;

@@ -12,6 +12,8 @@ namespace HT.Engine.Math
 
         //Presets
         public static readonly Int2 Zero = new Int2(0, 0);
+        public static readonly Int2 Max = new Int2(int.MaxValue, int.MaxValue);
+        public static readonly Int2 Min = new Int2(int.MinValue, int.MinValue);
         public static readonly Int2 One = new Int2(1, 1);
         public static readonly Int2 Up = new Int2(0, 1);
         public static readonly Int2 Down = new Int2(0, -1);
@@ -54,10 +56,10 @@ namespace HT.Engine.Math
         public Int2 Clamp(Int2 min, Int2 max)
             => new Int2(X.Clamp(min.X, max.X), Y.Clamp(min.Y, max.Y));
 
-        public static Int2 Max(Int2 left, Int2 right)
+        public static Int2 GetMax(Int2 left, Int2 right)
             => new Int2(System.Math.Max(left.X, right.X), System.Math.Max(left.Y, right.Y));
 
-        public static Int2 Min(Int2 left, Int2 right)
+        public static Int2 GetMin(Int2 left, Int2 right)
             => new Int2(System.Math.Min(left.X, right.X), System.Math.Min(left.Y, right.Y));
 
         //Arithmetic operators
