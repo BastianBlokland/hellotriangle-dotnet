@@ -4,8 +4,11 @@ namespace HT.Engine.Rendering
 {
     public sealed class Camera
     {
-        internal const float NEAR_CLIP_DISTANCE = .5f;
-        internal const float FAR_CLIP_DISTANCE = 300f;
+        internal const float NEAR_CLIP_DISTANCE = 1f;
+        internal const float FAR_CLIP_DISTANCE = 250f;
+
+        //Properties
+        public Float3 Position => Transformation.Translation;
 
         //Data
         public Float4x4 Transformation { get; set; } = Float4x4.Identity;

@@ -110,6 +110,11 @@ namespace HT.Engine.Math
 
         public static float Dot(Float3 a, Float3 b) => a.X * b.X + a.Y * b.Y + a.Z * b.Z;
 
+        public static Float3 Lerp(Float3 from, Float3 to, float t) => new Float3(
+                x: FloatUtils.Lerp(from.X, to.X, t),
+                y: FloatUtils.Lerp(from.Y, to.Y, t),
+                z: FloatUtils.Lerp(from.Z, to.Z, t));
+
         //Arithmetic operators
         public static Float3 operator +(Float3 left, Float3 right)
             => new Float3(left.X + right.X, left.Y + right.Y, left.Z + right.Z);

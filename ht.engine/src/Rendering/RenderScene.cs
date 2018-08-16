@@ -14,12 +14,11 @@ namespace HT.Engine.Rendering
         private readonly static Format NormalTargetFormat = Format.R8G8B8A8SNorm;
         private readonly static Format DepthTargetFormat = Format.D32SFloat;
         private readonly static Format ShadowTargetFormat = Format.D32SFloat;
-        private readonly static Int2 ShadowTargetSize = new Int2(1024, 768) * 4;
-        private readonly static Float3 SunOffset = new Float3(0f, 15f, 0f);
-        private readonly static Float3 SunDirection = Float3.Normalize(new Float3(-1f, -.6f, -.1f));
+        private readonly static int shadowTargetSize = 2048;
+        private readonly static Float3 SunDirection = Float3.Normalize(new Float3(-1f, -.3f, -.1f));
         private readonly static float SunNearClipDistance = -100f;
         private readonly static float SunFarClipDistance = 100f;
-        private readonly static float SunShadowMapSize = 170f;
+        private readonly static Float2 SunShadowMapSize = new Float2(70f, 45f);
 
         //Public properties
         public Camera Camera => camera;
@@ -176,20 +175,18 @@ namespace HT.Engine.Rendering
                 swapchainSize, DepthTargetFormat,
                 window.LogicalDevice, memoryPool, executor, allowSampling: true);
             shadowTarget = DeviceTexture.CreateDepthTarget(
-                ShadowTargetSize, ShadowTargetFormat,
+                (shadowTargetSize, shadowTargetSize), ShadowTargetFormat,
                 window.LogicalDevice, memoryPool, executor, allowSampling: true);
 
             //Create geometry framebuffer
             geometryFrameBuffer = geometryRenderpass.CreateFramebuffer(new FramebufferCreateInfo(
                 attachments: new [] { colorTarget.View, normalTarget.View, depthTarget.View },
-                width: swapchainSize.X,
-                height: swapchainSize.Y));
+                width: swapchainSize.X, height: swapchainSize.Y));
 
             //Create shadow framebuffer
             shadowFrameBuffer = shadowRenderpass.CreateFramebuffer(new FramebufferCreateInfo(
                 attachments: new [] { shadowTarget.View },
-                width: ShadowTargetSize.X,
-                height: ShadowTargetSize.Y));
+                width: shadowTargetSize, height: shadowTargetSize));
 
             //Create present framebuffers (need to create 1 for each swapchain image)
             presentFrameBuffers = new Framebuffer[swapchainImages.Length];
@@ -245,11 +242,10 @@ namespace HT.Engine.Rendering
             cameraBuffer.Write(camData);
 
             CameraData shadowCamData = new CameraData(
-                Float4x4.CreateTranslation(SunOffset) * Float4x4.CreateRotationFromAxis(SunDirection),
+                Float4x4.CreateRotationFromAxis(SunDirection),
                 Float4x4.CreateOrthographicProjection(
-                    width: SunShadowMapSize * ((float)ShadowTargetSize.X / ShadowTargetSize.Y), 
-                    height: SunShadowMapSize, 
-                    SunNearClipDistance, 
+                    size: SunShadowMapSize,
+                    SunNearClipDistance,
                     SunFarClipDistance),
                 SunNearClipDistance,
                 SunFarClipDistance);
@@ -285,12 +281,12 @@ namespace HT.Engine.Rendering
 
         private void RecordShadowRenderPass(CommandBuffer commandbuffer)
         {
-            SetViewport(commandbuffer, ShadowTargetSize);
+            SetViewport(commandbuffer, (shadowTargetSize, shadowTargetSize));
 
             commandbuffer.CmdBeginRenderPass(new RenderPassBeginInfo(
                 renderPass: shadowRenderpass,
                 framebuffer: shadowFrameBuffer,
-                renderArea: new Rect2D(0, 0, ShadowTargetSize.X, ShadowTargetSize.Y),
+                renderArea: new Rect2D(0, 0, shadowTargetSize, shadowTargetSize),
                 clearValues: new []
                 {
                     //Depth target

@@ -260,13 +260,13 @@ namespace HT.Engine.Math
         /// MaxDepth: 1
         /// </summary>
         public static Float4x4 CreateOrthographicProjection(
-            float width, float height, float nearDistance, float farDistance)
+            Float2 size, float nearDistance, float farDistance)
         {
             float far = farDistance;
             float near = nearDistance;
             return Float4x4.CreateFromRows(
-                row0: (2f / width,  0f,             0f,                0f),
-                row1: (0f,          -(2f / height), 0f,                0f),
+                row0: (2f / size.X, 0f,             0f,                0f),
+                row1: (0f,          -(2f / size.Y), 0f,                0f),
                 row2: (0f,          0f,             1f / (near - far), near / (near - far)),
                 row3: (0f,          0f,             0f,                1f));
         }
