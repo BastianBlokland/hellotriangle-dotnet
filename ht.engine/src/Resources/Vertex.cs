@@ -19,6 +19,9 @@ namespace HT.Engine.Resources
         public readonly Float2 Uv1;
         public readonly Float2 Uv2;
 
+        public Vertex(Float3 position, Float4 color, Float3 normal, Float2 uv1)
+            : this(position, color, normal, uv1, uv2: Float2.Zero) {}
+
         public Vertex(Float3 position, Float4 color, Float3 normal, Float2 uv1, Float2 uv2)
         {
             Position = position;

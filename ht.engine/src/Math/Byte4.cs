@@ -134,5 +134,8 @@ namespace HT.Engine.Math
         //Conversions
         public static implicit operator Byte4((byte x, byte y, byte z, byte w) tuple)
             => new Byte4(tuple.x, tuple.y, tuple.z, tuple.w);
+
+        public static implicit operator Float4(Byte4 data)
+            => new Float4(data.X, data.Y, data.Z, data.W);
     }
 }

@@ -71,15 +71,15 @@ namespace HT.Engine.Math
             Float3 center = Center;
             Float3 halfSize = HalfSize;
             //Top
-            points[0] = center + (+halfSize.X, +halfSize.Y, +halfSize.Z);
-            points[1] = center + (-halfSize.X, +halfSize.Y, +halfSize.Z);
-            points[2] = center + (+halfSize.X, +halfSize.Y, -halfSize.Z);
-            points[3] = center + (-halfSize.X, +halfSize.Y, -halfSize.Z);
+            points[0] = center + (-halfSize.X, +halfSize.Y, -halfSize.Z);
+            points[1] = center + (+halfSize.X, +halfSize.Y, -halfSize.Z);
+            points[2] = center + (+halfSize.X, +halfSize.Y, +halfSize.Z);
+            points[3] = center + (-halfSize.X, +halfSize.Y, +halfSize.Z);
             //Bottom
-            points[4] = center + (+halfSize.X, -halfSize.Y, +halfSize.Z);
+            points[4] = center + (-halfSize.X, -halfSize.Y, -halfSize.Z);
             points[5] = center + (-halfSize.X, -halfSize.Y, +halfSize.Z);
-            points[6] = center + (+halfSize.X, -halfSize.Y, -halfSize.Z);
-            points[7] = center + (-halfSize.X, -halfSize.Y, -halfSize.Z);
+            points[6] = center + (+halfSize.X, -halfSize.Y, +halfSize.Z);
+            points[7] = center + (+halfSize.X, -halfSize.Y, -halfSize.Z);
         }
 
         //Creation
