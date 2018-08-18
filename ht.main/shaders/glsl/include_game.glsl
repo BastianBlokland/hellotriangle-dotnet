@@ -3,7 +3,7 @@
 #define ambientColor vec3(0.47, 0.38, 0.35)
 #define sunColor vec3(0.8, 0.7, 0.5)
 #define sunSpecPower 16
-#define specMultiplier 1.7
+#define specMultiplier 1.8
 
 vec2 getWorldUv(vec3 worldPosition)
 {
@@ -12,7 +12,7 @@ vec2 getWorldUv(vec3 worldPosition)
 
 vec3 windBend(vec3 worldVertexPos, const vec3 instWorldPositon, float sceneTime)
 {
-    #define distOffset 0.11
+    #define distOffset 0.13
     #define frequencies vec4(4.8, 1.4, 1.9, 1.3)
     #define forces vec4(0.04, 0.04, 0.12, 0.12)
 

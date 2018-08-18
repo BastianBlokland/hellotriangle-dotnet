@@ -88,4 +88,9 @@ void main()
 
     //Emmisiveness decides how much of the raw unlit color we use
     outColor = vec4(mix(litResult, color, emmisiveness), 1.0);
+
+    //Apply fog
+    float fogHeightBlend = smoothstep(1000.0, 3.0, worldPos.y * worldPos.y);
+    float fogDistanceBlend = clamp(linearDepth / 100, 0.01, 0.7);
+    outColor = mix(outColor, vec4(sunColor, 1), fogHeightBlend * fogDistanceBlend);
 }

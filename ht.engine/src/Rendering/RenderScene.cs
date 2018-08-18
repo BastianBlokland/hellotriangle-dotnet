@@ -16,7 +16,7 @@ namespace HT.Engine.Rendering
         public readonly static Format AttributeTargetFormat = Format.R8G8B8A8UNorm;
         public readonly static Format DepthTargetFormat = Format.D32SFloat;
         public readonly static Format ShadowTargetFormat = Format.D32SFloat;
-        public readonly static int ShadowTargetSize = 2048;
+        public readonly static int ShadowTargetSize = 1024;
         public readonly static Float3 SunDirection = Float3.Normalize(new Float3(-1f, -.3f, -.1f));
         public readonly static float ShadowDistance = 85f;
 

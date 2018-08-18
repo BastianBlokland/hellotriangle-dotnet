@@ -86,7 +86,7 @@ namespace HT.Main
                 {
                     //Rotate the camera
                     scene.Camera.Transformation = Float4x4.CreateOrbit(
-                        center: Float3.Lerp((0f, 1f, 0f), (75f, 5f, 0f), 0f),//(float)frameTracker.ElapsedTime * .03f),
+                        center: Float3.Lerp((0f, 10f, 0f), (75f, 5f, 0f), 0f),//(float)frameTracker.ElapsedTime * .03f),
                         offset: (-3f, 1f, 0f), //-100f, 25f, 0f
                         axis: Float3.Up,
                         angle: (float)frameTracker.ElapsedTime * .25f);
