@@ -12,9 +12,9 @@ vec2 getWorldUv(vec3 worldPosition)
 
 vec3 windBend(vec3 worldVertexPos, const vec3 instWorldPositon, float sceneTime)
 {
-    #define distOffset 0.1
-    #define frequencies vec4(3.8, 1, 1.7, 0.9)
-    #define forces vec4(0.04, 0.04, 0.1, 0.1)
+    #define distOffset 0.11
+    #define frequencies vec4(4.8, 1.4, 1.9, 1.3)
+    #define forces vec4(0.04, 0.04, 0.12, 0.12)
 
     vec3 localPos = worldVertexPos - instWorldPositon;
     

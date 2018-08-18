@@ -11,6 +11,7 @@ namespace HT.Engine.Rendering
         internal readonly struct Block
         {
             //Properties
+            internal bool Valid => Container != null;
             internal DescriptorSetLayout Layout => Container.Layout;
             internal DescriptorSet Set => Container.GetDescriptorSet(this);
 

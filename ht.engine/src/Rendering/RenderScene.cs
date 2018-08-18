@@ -16,6 +16,7 @@ namespace HT.Engine.Rendering
         public readonly static Format ShadowTargetFormat = Format.D32SFloat;
         public readonly static int ShadowTargetSize = 2048;
         public readonly static Float3 SunDirection = Float3.Normalize(new Float3(-1f, -.3f, -.1f));
+        public readonly static float ShadowDistance = 85f;
 
         //Public properties
         public Camera Camera => camera;
@@ -231,37 +232,63 @@ namespace HT.Engine.Rendering
                 tracker.DeltaTime);
             sceneDataBuffer.Write(sceneData);
 
-            CameraData camData = new CameraData(
-                camera.Transformation,
-                camera.GetProjection(aspect: (float)swapchainSize.X / swapchainSize.Y),
-                Camera.NEAR_CLIP_DISTANCE,
-                Camera.FAR_CLIP_DISTANCE);
+            //Update the camera projection data
+            float swapchainAspect = (float)swapchainSize.X / swapchainSize.Y;
+            CameraData camData = CameraData.FromCamera(camera, swapchainAspect);
             cameraBuffer.Write(camData);
 
-            Float4x4 shadowMatrix = Float4x4.CreateRotationFromAxis(SunDirection, Float3.Forward);
-            Float4x4 temp = 
-                shadowMatrix.Invert() * //From worldspace to 'lightspace'
-                camData.InverseViewProjectionMatrix; //From clipspace to worldspace
-            FloatBox shadowViewFrustum = new FloatBox((-1f, -1f, 0f), (1f, 1f, .98f)).Transform(temp);
+            //Calculate and update shadow projection
+            Float4x4 shadowRotationMat = Float4x4.CreateRotationFromAxis(SunDirection, Float3.Forward);
+            FloatBox shadowFrustum = GetShadowFrustum(
+                camData.InverseViewProjectionMatrix, shadowRotationMat.Invert());
 
-            CameraData shadowCamData = new CameraData(
-                //shadowMatrix,
-                shadowMatrix * Float4x4.CreateTranslation(shadowViewFrustum.Center),
-                Float4x4.CreateOrthographicProjection(
-                    shadowViewFrustum.Size.XY,
-                    shadowViewFrustum.Min.Z,
-                    shadowViewFrustum.Max.Z),
-                shadowViewFrustum.Min.Z,
-                shadowViewFrustum.Max.Z);
-            shadowCameraBuffer.Write(shadowCamData);
+            //Then the values for the shadow projection can be derived from the shadow-frustum
+            Float3 shadowCenter = shadowFrustum.Center;
+            Float2 shadowSize = shadowFrustum.Size.XY;
+            float shadowNearClip = -shadowFrustum.HalfSize.Z;
+            float shadowFarClip = shadowFrustum.HalfSize.Z;
 
-            //  camData = new CameraData(
-            //     Float4x4.CreateTranslation(temp.TransformPoint(Float3.Zero)),// shadowViewFrustum.Center),
-            //     //Float4x4.CreateLookAt((1f, 100f, -1f), Float3.Zero),
-            //     camera.GetProjection(aspect: (float)swapchainSize.X / swapchainSize.Y),
-            //     Camera.NEAR_CLIP_DISTANCE,
-            //     Camera.FAR_CLIP_DISTANCE);
-            // cameraBuffer.Write(camData);
+            //Calculate the matrices for the shadow projection
+            Float4x4 shadowCameraMat = shadowRotationMat * Float4x4.CreateTranslation(shadowCenter);
+            Float4x4 shadowViewMat = shadowCameraMat.Invert();
+            Float4x4 shadowProjMat = Float4x4.CreateOrthographicProjection(
+                shadowSize, shadowNearClip, shadowFarClip);
+            Float4x4 shadowViewProj = shadowProjMat * shadowViewMat;
+
+            //Calculate a rounding matrix to fix shadow 'shimmering' as objects constantly 'switch'
+            //between pixels in the shadowmap
+            float targetHalfSize = ShadowTargetSize / 2f;
+            Float2 shadowOrigin = shadowViewProj.TransformPoint((0f, 0f, 0f)).XY * targetHalfSize;
+            Float2 rounding = (shadowOrigin.Round() - shadowOrigin) / targetHalfSize;
+            Float4x4 roundingMat = Float4x4.CreateTranslation(rounding.XY0);
+
+            //Apply rounding
+            shadowProjMat = roundingMat * shadowProjMat;
+            shadowViewProj = roundingMat * shadowViewProj;
+
+            //Update shadow projection data in the buffer
+            shadowCameraBuffer.Write(new CameraData(
+                shadowCameraMat,
+                shadowViewMat,
+                shadowProjMat,
+                shadowViewProj,
+                shadowViewProj.Invert(),
+                shadowNearClip,
+                shadowFarClip));
+        }
+
+        private FloatBox GetShadowFrustum(Float4x4 ndcToWorldMat, Float4x4 worldToLightMat)
+        {
+            //Frustum of the camera that will be covered by the shadow map in NDC space
+            //Note: this covers the entire screen but only to a certain depth
+            FloatBox shadowNDC = new FloatBox(
+                min: (-1f, -1f, 0f),
+                max: (1f, 1f, DepthUtils.LinearToDepth(
+                    ShadowDistance, 
+                    Camera.NEAR_CLIP_DISTANCE, 
+                    Camera.FAR_CLIP_DISTANCE)));
+            //Transform the ndc box to worldspace and then to light space
+            return shadowNDC.Transform(worldToLightMat * ndcToWorldMat);
         }
 
         private void RecordGeometryRenderPass(CommandBuffer commandbuffer)

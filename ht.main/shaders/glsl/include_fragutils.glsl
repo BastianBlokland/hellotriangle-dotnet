@@ -1,10 +1,15 @@
 #define discardAlpha 0.01
 
-vec3 worldPosFromDepth(sampler2D depthSampler, vec2 uv, mat4 inverseViewProjection)
+vec3 worldPosFromDepth(float depth, vec2 uv, mat4 inverseViewProjection)
 {
-    vec4 clipPos = vec4(uv * 2.0 - 1.0, texture(depthSampler, uv).r, 1.0);
+    vec4 clipPos = vec4(uv * 2.0 - 1.0, depth, 1.0);
     vec4 result = inverseViewProjection * clipPos;
     return result.xyz / result.w;
+}
+
+vec3 worldPosFromDepth(sampler2D depthSampler, vec2 uv, mat4 inverseViewProjection)
+{
+    return worldPosFromDepth(texture(depthSampler, uv).r, uv, inverseViewProjection);
 }
 
 //Apply a tangent normal (from a normalmap for example) to a worldNormal

@@ -1,3 +1,8 @@
+float linearizeDepth(float depthSample, float near, float far)
+{
+    return 2.0 * near * far / (far + near - depthSample * (far - near));
+}
+
 vec3 getPosition(const mat4 matrix) 
 { 
     return matrix[3].xyz; 

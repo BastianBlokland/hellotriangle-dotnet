@@ -50,15 +50,13 @@ namespace HT.Engine.Rendering
                 throw new ArgumentNullException(nameof(vertProg));
             if (fragProg == null)
                 throw new ArgumentNullException(nameof(fragProg));
-            if (shadowFragProg == null)
-                throw new ArgumentNullException(nameof(shadowFragProg));
             this.scene = scene;
             this.renderOrder = renderOrder;
 
             //Create the shader modules
             vertModule = vertProg.CreateModule(scene.LogicalDevice);
             fragModule = fragProg.CreateModule(scene.LogicalDevice);
-            shadowFragModule = shadowFragProg.CreateModule(scene.LogicalDevice);
+            shadowFragModule = shadowFragProg?.CreateModule(scene.LogicalDevice);
 
             //Upload our mesh to the gpu
             deviceMesh = new DeviceMesh(
@@ -103,17 +101,21 @@ namespace HT.Engine.Rendering
             descriptorBlock = scene.DescriptorManager.Allocate(binding);
             descriptorBlock.Update(
                 new Memory.IBuffer[] { scene.CameraBuffer, scene.SceneDataBuffer }, samplers, textures);
-            shadowDescriptorBlock = scene.DescriptorManager.Allocate(binding);
-            shadowDescriptorBlock.Update(
-                new Memory.IBuffer[] { scene.ShadowCameraBuffer, scene.SceneDataBuffer }, samplers, textures);
-
+            if (shadowFragProg != null)
+            {
+                shadowDescriptorBlock = scene.DescriptorManager.Allocate(binding);
+                shadowDescriptorBlock.Update(
+                    new Memory.IBuffer[] { scene.ShadowCameraBuffer, scene.SceneDataBuffer }, samplers, textures);
+            }
+            
             //Create the pipeline
             pipelineLayout = scene.LogicalDevice.CreatePipelineLayout(new PipelineLayoutCreateInfo(
                 setLayouts: new [] { descriptorBlock.Layout },
                 pushConstantRanges:  null ));
 
             pipeline = CreatePipeline(scene.LogicalDevice, scene.GeometryRenderpass, shadowPass: false);
-            shadowPipeline = CreatePipeline(scene.LogicalDevice, scene.ShadowRenderpass, shadowPass: true);
+            if (shadowFragProg != null)
+                shadowPipeline = CreatePipeline(scene.LogicalDevice, scene.ShadowRenderpass, shadowPass: true);
         }
 
         public void UpdateInstances(Span<InstanceData> instances)
@@ -137,18 +139,22 @@ namespace HT.Engine.Rendering
             instanceDataBuffer.Dispose();
             indirectArgumentsBuffer.Dispose();
             descriptorBlock.Free();
-            shadowDescriptorBlock.Free();
+            if (shadowDescriptorBlock.Valid)
+                shadowDescriptorBlock.Free();
             pipelineLayout.Dispose();
             pipeline.Dispose();
-            shadowPipeline.Dispose();
+            shadowPipeline?.Dispose();
             vertModule.Dispose();
             fragModule.Dispose();
-            shadowFragModule.Dispose();
+            shadowFragModule?.Dispose();
             disposed = true;
         }
 
         void IInternalRenderObject.Record(CommandBuffer commandbuffer, bool shadowPass)
         {
+            if (shadowPass && shadowFragModule == null)
+                return;
+
             //Bind mesh data
             deviceMesh.RecordBind(commandbuffer, binding: 0);
             //Binding instance data

@@ -1,6 +1,6 @@
 #define CameraData CameraData           \
 {                                       \
-    mat4 inverseViewMatrix;             \
+    mat4 cameraMatrix;                  \
 	mat4 viewMatrix;                    \
     mat4 projectionMatrix;              \
     mat4 viewProjectionMatrix;          \
@@ -11,7 +11,7 @@
 
 #define ShadowData ShadowData           \
 {                                       \
-    mat4 inverseViewMatrix;             \
+    mat4 cameraMatrix;                  \
 	mat4 viewMatrix;                    \
     mat4 projectionMatrix;              \
     mat4 viewProjectionMatrix;          \

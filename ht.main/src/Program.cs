@@ -20,7 +20,7 @@ namespace HT.Main
         {
             using (var taskRunner = new TaskRunner(logger))
             using (var host = new Host(nativeApp, appName: "Test", appVersion: 1, logger: logger))
-            using (var window = host.CreateWindow(windowSize: (800, 600), deviceRequirements))
+            using (var window = host.CreateWindow(windowSize: (1280, 720), deviceRequirements))
             {
                 RenderScene scene = new RenderScene(window, clearColor: null,
                     compositionVertProg: LoadProg("shaders/bin/post_fullscreen.vert.spv"),
@@ -85,7 +85,7 @@ namespace HT.Main
                 {
                     //Rotate the camera
                     scene.Camera.Transformation = Float4x4.CreateOrbit(
-                        center: Float3.Lerp((0f, 2f, 0f), (75f, 4.5f, 0f), 0f),// (float)frameTracker.ElapsedTime * .1f),
+                        center: Float3.Lerp((0f, 15f, 0f), (75f, 5f, 0f), 0f),//(float)frameTracker.ElapsedTime * .03f),
                         offset: (-5f, 1f, 0f), //-100f, 25f, 0f
                         axis: Float3.Up,
                         angle: (float)frameTracker.ElapsedTime * .25f);
@@ -144,7 +144,7 @@ namespace HT.Main
                 textureSources,
                 vertShaderPath,
                 fragShaderPath,
-                shadowFragShaderPath);
+                drawShadows: false, shadowFragShaderPath);
             terrain.UpdateInstances(instances);
             return terrain;
         }
@@ -190,7 +190,7 @@ namespace HT.Main
             (string path, bool useMipMaps, bool repeat)[] textureSources,
             string vertShaderPath,
             string fragShaderPath,
-            string shadowFragShaderPath)
+            bool drawShadows, string shadowFragShaderPath)
         {
             var loader = Load(app, taskRunner, ArrayUtils.Build<string>(
                 textureSources.Morph(a => a.path),
@@ -209,7 +209,7 @@ namespace HT.Main
                 scene, renderOrder, model, textures,
                 loader.GetResult<ShaderProgram>(vertShaderPath),
                 loader.GetResult<ShaderProgram>(fragShaderPath),
-                loader.GetResult<ShaderProgram>(shadowFragShaderPath));
+                drawShadows ? loader.GetResult<ShaderProgram>(shadowFragShaderPath) : null);
             scene.AddObject(renderObject);
             return renderObject;
         }

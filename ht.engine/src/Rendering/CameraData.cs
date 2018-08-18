@@ -13,8 +13,8 @@ namespace HT.Engine.Rendering
             sizeof(float) * 2;
         
         //Data
-        public readonly Float4x4 InverseViewMatrix;
-        public readonly Float4x4 ViewMatrix;
+        public readonly Float4x4 CameraMatrix; //Inverse of view-matrix
+        public readonly Float4x4 ViewMatrix; //Inverse of camera-matrix
         public readonly Float4x4 ProjectionMatrix;
         public readonly Float4x4 ViewProjectionMatrix;
         public readonly Float4x4 InverseViewProjectionMatrix;
@@ -23,20 +23,48 @@ namespace HT.Engine.Rendering
         
         internal CameraData(
             Float4x4 cameraMatrix,
+            Float4x4 viewMatrix,
+            Float4x4 projectionMatrix,
+            Float4x4 viewProjectionMatrix,
+            Float4x4 inverseViewProjectionMatrix,
+            float nearClipDistance,
+            float farClipDistance)
+        {
+            CameraMatrix = cameraMatrix;
+            ViewMatrix = viewMatrix;
+            ProjectionMatrix = projectionMatrix;
+            ViewProjectionMatrix = viewProjectionMatrix;
+            InverseViewProjectionMatrix = inverseViewProjectionMatrix;
+            NearClipDistance = nearClipDistance;
+            FarClipDistance = farClipDistance;
+        }
+
+        //Creation
+        internal static CameraData FromCamera(Camera camera, float aspect)
+            => FromCameraAndProjection(
+                camera.Transformation,
+                camera.GetProjection(aspect),
+                Camera.NEAR_CLIP_DISTANCE,
+                Camera.FAR_CLIP_DISTANCE);
+        
+        internal static CameraData FromCameraAndProjection(
+            Float4x4 cameraMatrix,
             Float4x4 projectionMatrix,
             float nearClipDistance,
             float farClipDistance)
         {
             Float4x4 viewMatrix = cameraMatrix.Invert();
-            InverseViewMatrix = cameraMatrix;
-            ViewMatrix = viewMatrix;
-            ProjectionMatrix = projectionMatrix;
-            ViewProjectionMatrix = projectionMatrix * viewMatrix;
-            InverseViewProjectionMatrix = ViewProjectionMatrix.Invert();
-            NearClipDistance = nearClipDistance;
-            FarClipDistance = farClipDistance;
+            Float4x4 viewProjectionMatrix = projectionMatrix * viewMatrix;
+            return new CameraData(
+                cameraMatrix, 
+                viewMatrix,
+                projectionMatrix,
+                viewProjectionMatrix,
+                viewProjectionMatrix.Invert(),
+                nearClipDistance,
+                farClipDistance);
         }
-
+        
         //Equality
         public static bool operator ==(CameraData a, CameraData b) => a.Equals(b);
 
@@ -46,14 +74,14 @@ namespace HT.Engine.Rendering
             => obj is CameraData && Equals((CameraData)obj);
 
         public bool Equals(CameraData other) => 
-            other.InverseViewMatrix == InverseViewMatrix &&
+            other.CameraMatrix == CameraMatrix &&
             other.ViewMatrix == ViewMatrix &&
             other.ProjectionMatrix == ProjectionMatrix &&
             other.NearClipDistance == NearClipDistance &&
             other.FarClipDistance == FarClipDistance;
 
         public override int GetHashCode() =>
-            InverseViewMatrix.GetHashCode() ^
+            CameraMatrix.GetHashCode() ^
             ViewMatrix.GetHashCode() ^ 
             ProjectionMatrix.GetHashCode() ^
             NearClipDistance.GetHashCode() ^

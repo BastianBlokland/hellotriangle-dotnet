@@ -32,7 +32,7 @@ void main()
     vec3 viewSpaceVertPos = (inverse(cameraData.projectionMatrix) * gl_Position).xyz;
 
     //Calculate where this vertex is in worldspace. 
-    vec3 worldSpaceVertPos = mat3(cameraData.inverseViewMatrix) * viewSpaceVertPos;
+    vec3 worldSpaceVertPos = mat3(cameraData.cameraMatrix) * viewSpaceVertPos;
 
     //Apply offset to be able to rotate the skybox
     outSkyboxDirection = yRotMatrix(offsetAngle) * worldSpaceVertPos;
