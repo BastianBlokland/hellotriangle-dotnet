@@ -15,11 +15,14 @@ layout(location = 1) in vec3 inWorldNormal;
 //Output
 layout(location = 0) out vec4 outColor;
 layout(location = 1) out vec4 outNormal;
+layout(location = 2) out vec4 outAttributes;
 
 void main() 
 {
     outColor.rgb = inColor.rgb; //Color
-    outColor.a = 0.0; //Specularity
-    outNormal.xyz = inWorldNormal; //World normal
-    outNormal.a = 1.0; //Emmisiveness
+    outNormal.xyz = inWorldNormal; //Normal
+    outAttributes.x = 0.0; //Specularity
+    outAttributes.y = 1.0; //Emisiveness
+    outAttributes.z = 0.0; //Shadow receive amount
+    outAttributes.a = 0.0; //Reflectivity
 }

@@ -12,6 +12,7 @@ namespace HT.Engine.Rendering
         private readonly RenderScene scene;
         private readonly ShaderModule vertModule;
         private readonly ShaderModule fragModule;
+        private readonly DeviceTexture[] textures;
         private readonly DeviceSampler[] samplers;
         private readonly DescriptorManager.Block descriptorBlock;
         private readonly PipelineLayout pipelineLayout;
@@ -20,11 +21,14 @@ namespace HT.Engine.Rendering
 
         public PostProcessEffect(
             RenderScene scene,
+            TextureInfo[] textureInfos,
             ShaderProgram vertProg,
             ShaderProgram fragProg)
         {
             if (scene == null)
                 throw new ArgumentNullException(nameof(scene));
+            if (textureInfos == null)
+                throw new ArgumentNullException(nameof(textureInfos));
             if (vertProg == null)
                 throw new ArgumentNullException(nameof(vertProg));
             if (fragProg == null)
@@ -35,10 +39,26 @@ namespace HT.Engine.Rendering
             vertModule = vertProg.CreateModule(scene.LogicalDevice);
             fragModule = fragProg.CreateModule(scene.LogicalDevice);
 
-            //Create the samplers (1 for each scene target)
-            samplers = new DeviceSampler[4];
-            for (int i = 0; i < samplers.Length; i++)
-                samplers[i] = new DeviceSampler(scene.LogicalDevice);    
+            //Create the textures and samplers
+            textures = new DeviceTexture[RenderScene.RENDER_TARGET_COUNT + textureInfos.Length];
+            samplers = new DeviceSampler[RenderScene.RENDER_TARGET_COUNT + textureInfos.Length];
+            for (int i = 0; i < RenderScene.RENDER_TARGET_COUNT; i++)
+            {
+                textures[i] = null; //Will be set dynamically
+                samplers[i] = new DeviceSampler(scene.LogicalDevice);
+            }
+            for (int i = 0; i < textureInfos.Length; i++)
+            {
+                int index = RenderScene.RENDER_TARGET_COUNT + i;
+                textures[index] = DeviceTexture.UploadTexture(
+                    texture: textureInfos[i].Texture as IInternalTexture,
+                    generateMipMaps: textureInfos[i].UseMipMaps,
+                    scene.LogicalDevice, scene.MemoryPool, scene.StagingBuffer, scene.Executor);
+                samplers[index] = new DeviceSampler(scene.LogicalDevice,
+                    mipLevels: textures[index].MipLevels,
+                    repeat: textureInfos[i].Repeat,
+                    maxAnisotropy: 8f);
+            }
 
             //Create the descriptor binding
             var binding = new DescriptorBinding(uniformBufferCount: 3, imageSamplerCount: samplers.Length);
@@ -61,21 +81,34 @@ namespace HT.Engine.Rendering
             pipeline.Dispose();
             vertModule.Dispose();
             fragModule.Dispose();
+            //Note: We only need to dispose our own textures,
+            //the scene render targets will be disposed by the scene
+            for (int i = RenderScene.RENDER_TARGET_COUNT; i < textures.Length; i++)
+                textures[i].Dispose();
             samplers.DisposeAll();
+
             disposed = true;
         }
 
         internal void BindSceneTargets(
             DeviceTexture sceneColor,
             DeviceTexture sceneNormal,
+            DeviceTexture sceneAttributes,
             DeviceTexture sceneDepth,
             DeviceTexture sceneShadow)
         {
+            //Set the scene target textures
+            textures[0] = sceneColor;
+            textures[1] = sceneNormal;
+            textures[2] = sceneAttributes;
+            textures[3] = sceneDepth;
+            textures[4] = sceneShadow;
+
             descriptorBlock.Update(
                 buffers: new Memory.IBuffer[] { 
                     scene.CameraBuffer, scene.ShadowCameraBuffer, scene.SceneDataBuffer },
                 samplers: samplers,
-                textures: new [] { sceneColor, sceneNormal, sceneDepth, sceneShadow });
+                textures: textures);
         }
 
         internal void Record(CommandBuffer commandbuffer)

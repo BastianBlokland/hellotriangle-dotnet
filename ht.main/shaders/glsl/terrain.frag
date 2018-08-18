@@ -23,18 +23,23 @@ layout(location = 3) in vec3 inWorldNormal;
 //Output
 layout(location = 0) out vec4 outColor;
 layout(location = 1) out vec4 outNormal;
+layout(location = 2) out vec4 outAttributes;
 
 void main() 
 {
     #define detail1Uv inWorldUv * 5
     #define detail2Uv inWorldUv * 100
 
-    outColor = 
-        vec4(inBaseColor.rgb, 1.0) * 
+    vec4 colorAndSpec = vec4(inBaseColor.rgb, 1.0) * 
         texture(detail1ColorSampler, detail1Uv) *
         texture(detail2ColorSampler, detail2Uv);
-    
     vec3 detail1Normal = applyNormalTex(detail1NormalSampler, inWorldNormal, inWorldPosition, detail1Uv);
     vec3 detail2Normal = applyNormalTex(detail2NormalSampler, inWorldNormal, inWorldPosition, detail2Uv);
+
+    outColor.rgb = colorAndSpec.rgb;
     outNormal.xyz = blendNormals(detail1Normal, detail2Normal);
+    outAttributes.x = colorAndSpec.a; //Specularity
+    outAttributes.y = 0.0; //Emissiveness
+    outAttributes.z = 1.0; //Shadow receive amount
+    outAttributes.a = 0.0; //Reflectivity
 }

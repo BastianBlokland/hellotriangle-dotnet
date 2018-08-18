@@ -15,11 +15,14 @@ layout(location = 1) in vec3 inWorldNormal;
 //Output
 layout(location = 0) out vec4 outColor;
 layout(location = 1) out vec4 outNormal;
+layout(location = 2) out vec4 outAttributes;
 
 void main() 
 {
-    outColor = texture(skyboxTexture, inSkyboxDirection);
-
+    outColor.rgb = texture(skyboxTexture, inSkyboxDirection).rgb;
     outNormal.xyz = normalize(inWorldNormal);
-    outNormal.a = 1.0; //Store emissiveness. (1 because skybox is prelit)
+    outAttributes.x = 0.0; //Specularity
+    outAttributes.y = 1.0; //Emissiveness (1 because skybox is prelit)
+    outAttributes.z = 0.0; //Shadow receive amount
+    outAttributes.a = 0.0; //Reflectivity
 }

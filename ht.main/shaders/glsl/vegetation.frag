@@ -21,6 +21,7 @@ layout(location = 3) in vec3 inWorldNormal;
 //Output
 layout(location = 0) out vec4 outColor;
 layout(location = 1) out vec4 outNormal;
+layout(location = 2) out vec4 outAttributes;
 
 void main()
 {
@@ -34,6 +35,9 @@ void main()
     float specularIntensity = normalSample.a; //Store spec intensity in the normalmap alpha
     vec3 tangentNormal = normalSample.xyz * 2.0 - 1.0;
 
-    outColor.a = specularIntensity;
     outNormal.xyz = perturbNormal(tangentNormal, inWorldNormal, inWorldPosition, inUv);
+    outAttributes.x = specularIntensity; //Specularity
+    outAttributes.y = 0.0; //Emmisiveness
+    outAttributes.z = 1.0; //Shadow receive amount
+    outAttributes.a = specularIntensity * 0.25; //Reflectivity
 }

@@ -158,6 +158,9 @@ namespace HT.Engine.Rendering
                     //Normal target
                     new PipelineColorBlendAttachmentState(
                         colorWriteMask: ColorComponents.All, blendEnable: false),
+                    //Attribute target
+                    new PipelineColorBlendAttachmentState(
+                        colorWriteMask: ColorComponents.All, blendEnable: false)
                 },
                 logicOpEnable: false
             );

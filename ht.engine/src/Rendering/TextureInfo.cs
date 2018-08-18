@@ -10,7 +10,7 @@ namespace HT.Engine.Rendering
         public readonly bool UseMipMaps;
         public readonly bool Repeat;
 
-        public TextureInfo(ITexture texture, bool useMipMaps, bool repeat)
+        public TextureInfo(ITexture texture, bool useMipMaps = false, bool repeat = false)
         {
             Texture = texture;
             UseMipMaps = useMipMaps;

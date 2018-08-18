@@ -23,6 +23,7 @@ namespace HT.Main
             using (var window = host.CreateWindow(windowSize: (1280, 720), deviceRequirements))
             {
                 RenderScene scene = new RenderScene(window, clearColor: null,
+                    reflectionTexture: new TextureInfo(LoadTex("textures/skybox.cube")),
                     compositionVertProg: LoadProg("shaders/bin/post_fullscreen.vert.spv"),
                     compositionFragProg: LoadProg("shaders/bin/post_baselighting.frag.spv"), logger);
                 window.AttachScene(scene);
@@ -85,8 +86,8 @@ namespace HT.Main
                 {
                     //Rotate the camera
                     scene.Camera.Transformation = Float4x4.CreateOrbit(
-                        center: Float3.Lerp((0f, 15f, 0f), (75f, 5f, 0f), 0f),//(float)frameTracker.ElapsedTime * .03f),
-                        offset: (-5f, 1f, 0f), //-100f, 25f, 0f
+                        center: Float3.Lerp((0f, 1f, 0f), (75f, 5f, 0f), 0f),//(float)frameTracker.ElapsedTime * .03f),
+                        offset: (-3f, 1f, 0f), //-100f, 25f, 0f
                         axis: Float3.Up,
                         angle: (float)frameTracker.ElapsedTime * .25f);
 
@@ -106,6 +107,9 @@ namespace HT.Main
                 }
 
                 //Utilities
+                ITexture LoadTex(string path)
+                    => Load(nativeApp, taskRunner, path).GetResult<ITexture>(path);
+
                 ShaderProgram LoadProg(string path)
                     => Load(nativeApp, taskRunner, path).GetResult<ShaderProgram>(path);
             }

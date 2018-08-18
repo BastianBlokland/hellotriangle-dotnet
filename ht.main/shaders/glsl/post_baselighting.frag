@@ -12,8 +12,10 @@ layout(binding = 1) uniform ShadowData shadowData;
 layout(binding = 2) uniform SceneData sceneData;
 layout(binding = 3) uniform sampler2D sceneColorSampler;
 layout(binding = 4) uniform sampler2D sceneNormalSampler;
-layout(binding = 5) uniform sampler2D sceneDepthSampler;
-layout(binding = 6) uniform sampler2D sceneShadowSampler;
+layout(binding = 5) uniform sampler2D sceneAttributeSampler;
+layout(binding = 6) uniform sampler2D sceneDepthSampler;
+layout(binding = 7) uniform sampler2D sceneShadowSampler;
+layout(binding = 8) uniform samplerCube reflectionSampler;
 
 //Input
 layout(location = 0) in vec2 inUv;
@@ -44,26 +46,34 @@ float getShadow(vec3 worldPos)
 void main()
 {
     vec3 viewDir = normalize(inWorldViewDirection);
+    vec3 camPos = cameraData.cameraMatrix[3].xyz;
 
     //Sample data from the scene
-    vec4 colorAndSpec = texture(sceneColorSampler, inUv);
-    vec3 color = colorAndSpec.rgb;
-    float specIntensity = colorAndSpec.a * specMultiplier;
-    vec4 normalAndEmmisiveness = texture(sceneNormalSampler, inUv);
-    vec3 normal = normalAndEmmisiveness.xyz;
+    vec3 color = texture(sceneColorSampler, inUv).rgb;
+    vec3 normal = texture(sceneNormalSampler, inUv).xyz;
+    vec4 attributes = texture(sceneAttributeSampler, inUv);
     float depth = texture(sceneDepthSampler, inUv).r;
+    float specIntensity = attributes.x * specMultiplier;
+    float emmisiveness = attributes.y;
+    float shadowReceive = attributes.z;
+    float reflectivity = attributes.a;
     float linearDepth = linearizeDepth(depth, cameraData.nearClipDistance, cameraData.farClipDistance);
     vec3 worldPos = worldPosFromDepth(depth, inUv, cameraData.inverseViewProjectionMatrix);
-    float emmisiveness = normalAndEmmisiveness.a;
     vec3 sunDirection = mat3(shadowData.cameraMatrix) * vec3(0.0, 0.0, 1.0);
     
     //Calculate shadow
     #define MIN_SHADOW_DIST 70.0
     #define MAX_SHADOW_DIST 85.0
     float depthBlend = smoothstep(MAX_SHADOW_DIST, MIN_SHADOW_DIST, linearDepth);
-    float shadow = getShadow(worldPos) * depthBlend;
+    float shadow = getShadow(worldPos) * depthBlend * shadowReceive;
 
-    //Calculae lighting
+    //Calculate reflection color
+    vec3 toSurfaceDir = normalize(worldPos - camPos);
+    vec3 reflectNormal = reflect(toSurfaceDir, normal);
+    vec3 reflectColor = texture(reflectionSampler, reflectNormal).rgb;
+    color = mix(color, (color * 0.3) + reflectColor * 1.5, reflectivity);
+
+    //Calculate lighting
     vec3 litResult = color * ambientColor; //Start with the ambient
 
     //Add the sun intensity to the result
