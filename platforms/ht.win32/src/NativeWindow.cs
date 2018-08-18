@@ -177,7 +177,7 @@ namespace HT.Win32
 
             //Need to adjust the rect here because we want to the requested size to be the client 
             //size so we need extra space for the top-bar
-            IntRect windowRect = new IntRect(min: Int2.Zero, max: Int2.Max(size, minSize));
+            IntRect windowRect = new IntRect(min: Int2.Zero, max: Int2.GetMax(size, minSize));
             AdjustWindowRect(
                 ref windowRect,
                 style: windowStyle,
