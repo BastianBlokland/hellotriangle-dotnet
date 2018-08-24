@@ -153,7 +153,7 @@ namespace HT.Engine.Rendering
             disposed = true;
         }
 
-        internal void CreateResources(Int2 swapchainSize, ImageView[] swapchainImages)
+        internal void CreateResources(Int2 swapchainSize, DeviceTexture[] swapchainTargets)
         {
             ThrowIfDisposed();
 
@@ -202,10 +202,10 @@ namespace HT.Engine.Rendering
                 width: ShadowTargetSize, height: ShadowTargetSize));
 
             //Create present framebuffers (need to create 1 for each swapchain image)
-            presentFrameBuffers = new Framebuffer[swapchainImages.Length];
+            presentFrameBuffers = new Framebuffer[swapchainTargets.Length];
             for (int i = 0; i < presentFrameBuffers.Length; i++)
                 presentFrameBuffers[i] = compositionRenderpass.CreateFramebuffer(new FramebufferCreateInfo(
-                    attachments: new [] { swapchainImages[i] },
+                    attachments: new [] { swapchainTargets[i].View },
                     width: swapchainSize.X,
                     height: swapchainSize.Y));
 

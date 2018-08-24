@@ -14,16 +14,19 @@ namespace HT.Engine.Rendering
     internal sealed class DeviceTexture : IDisposable
     {
         //Properties
+        internal Int2 Size => size;
         internal ImageView View => view;
         internal int MipLevels => mipLevels;
 
         //Data
+        private readonly Int2 size;
         private readonly Format format;
         private readonly int mipLevels;
         private readonly ImageAspects aspects;
         private readonly Image image;
-        private readonly Memory.Block memory;
+        private readonly Memory.Block? memory;
         private readonly ImageView view;
+        private readonly bool disposeImage;
         private bool disposed;
 
         internal static DeviceTexture UploadTexture(
@@ -118,7 +121,8 @@ namespace HT.Engine.Rendering
 
             var view = CreateView(
                 image, texture.Format, mipLevels, aspects, cubeMap: texture.IsCubeMap);
-            return new DeviceTexture(texture.Format, mipLevels, aspects, image, memory, view);
+            return new DeviceTexture(
+                texture.Size, texture.Format, mipLevels, aspects, image, memory, view);
         }
 
         internal static DeviceTexture CreateDepthTarget(
@@ -160,7 +164,7 @@ namespace HT.Engine.Rendering
                 executor: executor);
 
             var view = CreateView(image, format, mipLevels: 1, aspects, cubeMap: false);
-            return new DeviceTexture(format, mipLevels: 1, aspects, image, memory, view);
+            return new DeviceTexture(size, format, mipLevels: 1, aspects, image, memory, view);
         }
 
         internal static DeviceTexture CreateColorTarget(
@@ -202,7 +206,22 @@ namespace HT.Engine.Rendering
                 executor: executor);
 
             var view = CreateView(image, format, mipLevels: 1, aspects, cubeMap: false);
-            return new DeviceTexture(format, mipLevels: 1, aspects, image, memory, view);
+            return new DeviceTexture(size, format, mipLevels: 1, aspects, image, memory, view);
+        }
+
+        internal static DeviceTexture CreateSwapchainTarget(Int2 size, Format format, Image image)
+        {
+            var aspects = ImageAspects.Color;
+            var view = CreateView(image, format, mipLevels: 1, aspects, cubeMap: false);
+            return new DeviceTexture(
+                size, 
+                format, 
+                mipLevels: 1,
+                aspects,
+                image,
+                memory: null,
+                view,
+                disposeImage: false); //No need to dispose as its part of the swapchain);
         }
 
         public void Dispose()
@@ -210,26 +229,31 @@ namespace HT.Engine.Rendering
             ThrowIfDisposed();
 
             view.Dispose();
-            image.Dispose();
-            memory.Free();
+            if (disposeImage)
+                image.Dispose();
+            memory?.Free();
 
             disposed = true;
         }
 
         private DeviceTexture(
+            Int2 size,
             Format format,
             int mipLevels,
             ImageAspects aspects,
             Image image,
-            Block memory,
-            ImageView view)
+            Block? memory,
+            ImageView view,
+            bool disposeImage = true)
         {
+            this.size = size;
             this.format = format;
             this.mipLevels = mipLevels;
             this.aspects = aspects;
             this.image = image;
             this.memory = memory;
             this.view = view;
+            this.disposeImage = disposeImage;
         }
 
         private static Image CreateImage(

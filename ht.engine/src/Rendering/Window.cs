@@ -38,8 +38,7 @@ namespace HT.Engine.Rendering
         private RenderScene scene;
         private SwapchainKhr swapchain;
         private Int2 swapchainSize;
-        private VulkanCore.Image[] swapchainImages;
-        private ImageView[] swapchainImageViews;
+        private DeviceTexture[] swapchainTextures;
         private CommandPool commandPool;
         private CommandBuffer[] commandbuffers;
         private Semaphore imageAvailableSemaphore;
@@ -160,7 +159,7 @@ namespace HT.Engine.Rendering
                 scene?.Dispose();
 
                 //Dispose of the swapchain
-                swapchainImageViews.DisposeAll();
+                swapchainTextures.DisposeAll();
                 swapchain.Dispose();
 
                 //Dispose of command-pool (will automatically also dispose of the commandbuffers that
@@ -176,7 +175,7 @@ namespace HT.Engine.Rendering
 
         private void CreateRenderCommands(RenderScene scene)
         {
-            scene.CreateResources(swapchainSize, swapchainImageViews);
+            scene.CreateResources(swapchainSize, swapchainTextures);
 
             //Reset the pool (to release any previously created buffers)
             commandPool.Reset(CommandPoolResetFlags.ReleaseResources);
@@ -184,7 +183,7 @@ namespace HT.Engine.Rendering
             //Allocate new command buffers
             commandbuffers = commandPool.AllocateBuffers(new CommandBufferAllocateInfo(
                 level: CommandBufferLevel.Primary,
-                count: swapchainImageViews.Length
+                count: swapchainTextures.Length
             ));
 
             //Record the primary command-buffers
@@ -238,32 +237,19 @@ namespace HT.Engine.Rendering
 
             //Create the swapchain
             swapchain = logicalDevice.CreateSwapchainKhr(createInfo);
-            swapchainImages = swapchain.GetImages();
+            var swapchainImages = swapchain.GetImages();
 
-            //Create the image views
-            swapchainImageViews = new ImageView[swapchainImages.Length];
-            for (int i = 0; i < swapchainImageViews.Length; i++)
-                swapchainImageViews[i] = swapchainImages[i].CreateView(new ImageViewCreateInfo(
-                    format: surfaceFormat,
-                    viewType: ImageViewType.Image2D,
-                    components: new ComponentMapping(
-                        r: ComponentSwizzle.R,
-                        g: ComponentSwizzle.G,
-                        b: ComponentSwizzle.B,
-                        a: ComponentSwizzle.A),
-                    subresourceRange: new ImageSubresourceRange(
-                        aspectMask: ImageAspects.Color,
-                        baseMipLevel: 0,
-                        levelCount: 1,
-                        baseArrayLayer: 0,
-                        layerCount: 1)
-                ));
+            //Create the image targets
+            swapchainTextures = new DeviceTexture[swapchainImages.Length];
+            for (int i = 0; i < swapchainTextures.Length; i++)
+                swapchainTextures[i] = DeviceTexture.CreateSwapchainTarget(
+                    swapchainSize, surfaceFormat, swapchainImages[i]);
 
             logger?.Log(nameof(Window), 
 $@"Swapchain created:
 {{
     size: {swapchainSize},
-    imgCount: {swapchainImages.Length},
+    texCount: {swapchainTextures.Length},
     mode: {presentMode},
     format: {surfaceFormat},
     colorSpace: {surfaceColorspace}
@@ -274,7 +260,7 @@ $@"Swapchain created:
         {
             imageAvailableSemaphore = logicalDevice.CreateSemaphore();
             renderFinishedSemaphore = logicalDevice.CreateSemaphore();
-            waitFences = new Fence[swapchainImages.Length];
+            waitFences = new Fence[swapchainTextures.Length];
             for (int i = 0; i < waitFences.Length; i++)
                 waitFences[i] = logicalDevice.CreateFence(
                     new FenceCreateInfo(FenceCreateFlags.Signaled));
@@ -297,7 +283,7 @@ $@"Swapchain created:
                 waitFences.DisposeAll();
             
                 //Dispose the old swapchain setup
-                swapchainImageViews.DisposeAll();
+                swapchainTextures.DisposeAll();
                 swapchain.Dispose();
 
                 //Recreate the swapchain
