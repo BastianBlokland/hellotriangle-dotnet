@@ -10,7 +10,6 @@ namespace HT.Engine.Rendering
 {
     public sealed class RenderScene : IDisposable
     {
-        public const int RENDER_TARGET_COUNT = 5;
         public readonly static Format ColorTargetFormat = Format.R8G8B8A8UNorm;
         public readonly static Format NormalTargetFormat = Format.R8G8B8A8SNorm;
         public readonly static Format AttributeTargetFormat = Format.R8G8B8A8UNorm;
@@ -25,24 +24,14 @@ namespace HT.Engine.Rendering
 
         //Internal properties
         internal Device LogicalDevice => window.LogicalDevice;
-        internal DescriptorManager DescriptorManager => descriptorManager;
-        internal RenderPass GeometryRenderpass => geometryRenderpass;
-        internal RenderPass ShadowRenderpass => shadowRenderpass;
-        internal RenderPass CompositionRenderpass => compositionRenderpass;
-        internal DeviceTexture ColorTarget => colorTarget;
-        internal DeviceTexture DepthTarget => depthTarget;
         internal Memory.Pool MemoryPool => memoryPool;
         internal TransientExecutor Executor => executor;
         internal Memory.HostBuffer StagingBuffer => stagingBuffer;
-        internal Memory.HostBuffer SceneDataBuffer => sceneDataBuffer;
-        internal Memory.HostBuffer CameraBuffer => cameraBuffer;
-        internal Memory.HostBuffer ShadowCameraBuffer => shadowCameraBuffer;
         internal bool Dirty => dirty;
 
         //Data
         private readonly Camera camera;
         private readonly Window window;
-        private readonly Byte4? clearColor;
         private readonly Logger logger;
         private readonly TransientExecutor executor;
         private readonly Memory.Pool memoryPool;
@@ -50,26 +39,23 @@ namespace HT.Engine.Rendering
         private readonly Memory.HostBuffer sceneDataBuffer;
         private readonly Memory.HostBuffer cameraBuffer;
         private readonly Memory.HostBuffer shadowCameraBuffer;
-        private readonly DescriptorManager descriptorManager;
-        private readonly List<IInternalRenderObject> renderObjects = new List<IInternalRenderObject>();
-        private readonly List<PostProcessEffect> postEffects = new List<PostProcessEffect>();
+        private readonly ShaderInputManager shaderInputManager;
+        private readonly Renderer gBufferRenderer;
+        private readonly Renderer shadowRenderer;
+        private readonly Renderer compositionRenderer;
+        private readonly AttributelessObject postRenderObject;
+        private readonly List<IInternalRenderObject> objects = new List<IInternalRenderObject>();
 
-        private RenderPass geometryRenderpass;
-        private RenderPass shadowRenderpass;
-        private RenderPass compositionRenderpass;
-        private Framebuffer geometryFrameBuffer;
-        private Framebuffer shadowFrameBuffer;
-        private Framebuffer[] presentFrameBuffers;
         private Int2 swapchainSize;
-        private DeviceTexture colorTarget;
-        private DeviceTexture normalTarget;
-        private DeviceTexture attributeTarget;
-        private DeviceTexture depthTarget;
-        private DeviceTexture shadowTarget;
+        private DeviceSampler colorTarget;
+        private DeviceSampler normalTarget;
+        private DeviceSampler attributeTarget;
+        private DeviceSampler depthTarget;
+        private DeviceSampler shadowTarget;
         private bool dirty;
         private bool disposed;
         
-        public RenderScene(Window window, Byte4? clearColor,
+        public RenderScene(Window window,
             TextureInfo reflectionTexture,
             ShaderProgram compositionVertProg, ShaderProgram compositionFragProg,
             Logger logger = null)
@@ -84,7 +70,6 @@ namespace HT.Engine.Rendering
                 throw new ArgumentNullException(nameof(compositionFragProg));
 
             this.window = window;
-            this.clearColor = clearColor;
             this.logger = logger;
             camera = new Camera();
 
@@ -102,27 +87,39 @@ namespace HT.Engine.Rendering
                 window.LogicalDevice, memoryPool, BufferUsages.UniformBuffer, CameraData.SIZE);
             shadowCameraBuffer = new Memory.HostBuffer(
                 window.LogicalDevice, memoryPool, BufferUsages.UniformBuffer, CameraData.SIZE);
-            descriptorManager = new DescriptorManager(window.LogicalDevice, logger);
+            shaderInputManager = new ShaderInputManager(window.LogicalDevice, logger);
 
-            //Create the renderpasses
-            geometryRenderpass =
-                CreateGeometryRenderPass(window.LogicalDevice, clearColor);
-            shadowRenderpass = 
-                CreateShadowRenderPass(window.LogicalDevice); 
-            compositionRenderpass = 
-                CreateCompositionRenderpass(window.LogicalDevice, window.SurfaceFormat);
+            //Create renderers
+            gBufferRenderer = new Renderer(window.LogicalDevice, shaderInputManager, logger);
+            shadowRenderer = new Renderer(window.LogicalDevice, shaderInputManager, logger);
+            compositionRenderer = new Renderer(window.LogicalDevice, shaderInputManager, logger);
 
-            //Setup composition post effect
-            postEffects.Add(new PostProcessEffect(this, 
-                new [] { reflectionTexture }, compositionVertProg, compositionFragProg));
+            postRenderObject = new AttributelessObject(this, 
+                vertexCount: 3, new [] { reflectionTexture });
+            compositionRenderer.AddObject(postRenderObject, compositionVertProg, compositionFragProg);
         }
 
-        public void AddObject(IRenderObject renderObject)
+        public void AddObject(
+            int renderOrder,
+            IRenderObject renderObject,
+            ShaderProgram vertProg,
+            ShaderProgram fragProg,
+            ShaderProgram shadowFragProg)
         {
-            if (!(renderObject is IInternalRenderObject))
+            IInternalRenderObject internalRenderObj = renderObject as IInternalRenderObject;
+            if (internalRenderObj == null)
                 throw new Exception(
                     $"[{nameof(RenderScene)}] Render objects have to be implemented at engine level");
-            renderObjects.Add(renderObject as IInternalRenderObject);
+            
+            objects.Add(internalRenderObj);
+            gBufferRenderer.AddObject(internalRenderObj, vertProg, fragProg, renderOrder,
+                depthClamp: true, depthBias: true);
+
+            if (shadowFragProg != null)
+            {
+                shadowRenderer.AddObject(internalRenderObj, vertProg, shadowFragProg, renderOrder,
+                    depthClamp: true, depthBias: true);
+            }
             dirty = true;
         }
 
@@ -130,20 +127,18 @@ namespace HT.Engine.Rendering
         {
             ThrowIfDisposed();
 
-            renderObjects.DisposeAll();
-            postEffects.DisposeAll();
-            geometryRenderpass.Dispose();
-            shadowRenderpass.Dispose();
-            compositionRenderpass.Dispose();
+            objects.DisposeAll();
+            postRenderObject.Dispose();
+            gBufferRenderer.Dispose();
+            shadowRenderer.Dispose();
+            compositionRenderer.Dispose();
+
             colorTarget?.Dispose();
             normalTarget?.Dispose();
             attributeTarget?.Dispose();
             depthTarget?.Dispose();
             shadowTarget?.Dispose();
-            geometryFrameBuffer?.Dispose();
-            shadowFrameBuffer?.Dispose();
-            presentFrameBuffers?.DisposeAll();
-            descriptorManager.Dispose();
+            shaderInputManager.Dispose();
             stagingBuffer.Dispose();
             sceneDataBuffer.Dispose();
             cameraBuffer.Dispose();
@@ -160,75 +155,73 @@ namespace HT.Engine.Rendering
             //Save swapchain size
             this.swapchainSize = swapchainSize;
 
-            //Dispose of the old color and depth targets
+            //Setup g-buffer resources
             colorTarget?.Dispose();
             normalTarget?.Dispose();
             attributeTarget?.Dispose();
             depthTarget?.Dispose();
+
+            colorTarget = new DeviceSampler(window.LogicalDevice, DeviceTexture.CreateColorTarget(
+                swapchainSize, ColorTargetFormat, window.LogicalDevice, memoryPool, executor));
+
+            normalTarget = new DeviceSampler(window.LogicalDevice, DeviceTexture.CreateColorTarget(
+                swapchainSize, NormalTargetFormat, window.LogicalDevice, memoryPool, executor));
+
+            attributeTarget = new DeviceSampler(window.LogicalDevice, DeviceTexture.CreateColorTarget(
+                swapchainSize, AttributeTargetFormat, window.LogicalDevice, memoryPool, executor));
+
+            depthTarget = new DeviceSampler(window.LogicalDevice, DeviceTexture.CreateDepthTarget(
+                swapchainSize, DepthTargetFormat, window.LogicalDevice, memoryPool, executor));
+
+            gBufferRenderer.BindGlobalInputs(new IShaderInput[] {
+                cameraBuffer,
+                sceneDataBuffer });
+
+            gBufferRenderer.BindTargets(new [] {
+                colorTarget.Texture,
+                normalTarget.Texture,
+                attributeTarget.Texture,
+                depthTarget.Texture });
+
+            gBufferRenderer.CreateResources();
+
+            //Setup shadow resources
             shadowTarget?.Dispose();
-            //Dispose of old framebuffers
-            geometryFrameBuffer?.Dispose();
-            shadowFrameBuffer?.Dispose();
-            presentFrameBuffers?.DisposeAll();
 
-            //Create new rendertargets
-            colorTarget = DeviceTexture.CreateColorTarget(
-                swapchainSize, ColorTargetFormat,
-                window.LogicalDevice, memoryPool, executor, allowSampling: true);
-            normalTarget = DeviceTexture.CreateColorTarget(
-                swapchainSize, NormalTargetFormat,
-                window.LogicalDevice, memoryPool, executor, allowSampling: true);
-            attributeTarget = DeviceTexture.CreateColorTarget(
-                swapchainSize, AttributeTargetFormat,
-                window.LogicalDevice, memoryPool, executor, allowSampling: true);
-            depthTarget = DeviceTexture.CreateDepthTarget(
-                swapchainSize, DepthTargetFormat,
-                window.LogicalDevice, memoryPool, executor, allowSampling: true);
-            shadowTarget = DeviceTexture.CreateDepthTarget(
-                (ShadowTargetSize, ShadowTargetSize), ShadowTargetFormat,
-                window.LogicalDevice, memoryPool, executor, allowSampling: true);
+            shadowTarget = new DeviceSampler(window.LogicalDevice, DeviceTexture.CreateDepthTarget(
+                (ShadowTargetSize, ShadowTargetSize),
+                ShadowTargetFormat,
+                window.LogicalDevice,
+                memoryPool,
+                executor));
 
-            //Create geometry framebuffer
-            geometryFrameBuffer = geometryRenderpass.CreateFramebuffer(new FramebufferCreateInfo(
-                attachments: new [] 
-                {
-                    colorTarget.View, normalTarget.View, attributeTarget.View, depthTarget.View 
-                },
-                width: swapchainSize.X, height: swapchainSize.Y));
+            shadowRenderer.BindGlobalInputs(new IShaderInput[] {
+                shadowCameraBuffer,
+                sceneDataBuffer });
 
-            //Create shadow framebuffer
-            shadowFrameBuffer = shadowRenderpass.CreateFramebuffer(new FramebufferCreateInfo(
-                attachments: new [] { shadowTarget.View },
-                width: ShadowTargetSize, height: ShadowTargetSize));
+            shadowRenderer.BindTargets(new [] {
+                shadowTarget.Texture });
 
-            //Create present framebuffers (need to create 1 for each swapchain image)
-            presentFrameBuffers = new Framebuffer[swapchainTargets.Length];
-            for (int i = 0; i < presentFrameBuffers.Length; i++)
-                presentFrameBuffers[i] = compositionRenderpass.CreateFramebuffer(new FramebufferCreateInfo(
-                    attachments: new [] { swapchainTargets[i].View },
-                    width: swapchainSize.X,
-                    height: swapchainSize.Y));
+            shadowRenderer.CreateResources();
 
-            //Give the rendertargets to the post-effects so they can use them as inputs
-            for (int i = 0; i < postEffects.Count; i++)
-                postEffects[i].BindSceneTargets(
-                    colorTarget, normalTarget, attributeTarget, depthTarget, shadowTarget);
+            //Setup composition resources
+            compositionRenderer.SetOutputCount(swapchainTargets.Length);
+            for (int i = 0; i < swapchainTargets.Length; i++)
+                compositionRenderer.BindTargets(new [] { swapchainTargets[i] }, outputIndex: i);
 
-            //All added / removed objects have been taking into account so we can unset the dirty flag
-            dirty = false;
+            compositionRenderer.BindGlobalInputs(new IShaderInput[] {
+                cameraBuffer, shadowCameraBuffer, sceneDataBuffer,
+                colorTarget, normalTarget, attributeTarget, depthTarget, shadowTarget });
+
+            compositionRenderer.CreateResources();
         }
 
         internal void Record(CommandBuffer commandbuffer, int swapchainImageIndex)
         {
             ThrowIfDisposed();
 
-            //Sort the objects based on render-order
-            renderObjects.Sort(CompareRenderOrder);
-
-            //Render the g-buffers
-            RecordGeometryRenderPass(commandbuffer);
-            //Render the shadow buffer
-            RecordShadowRenderPass(commandbuffer);
+            gBufferRenderer.Record(commandbuffer);
+            shadowRenderer.Record(commandbuffer);
 
             //Insert barrier to wait for the geometry rendering to be complete before we start
             //the composition pass
@@ -236,7 +229,10 @@ namespace HT.Engine.Rendering
                 srcStageMask: PipelineStages.BottomOfPipe,
                 dstStageMask: PipelineStages.FragmentShader);
 
-            RecordCompositionRenderPass(commandbuffer, swapchainImageIndex);
+            compositionRenderer.Record(commandbuffer, swapchainImageIndex);
+
+            //All added / removed objects have been taking into account so we can unset the dirty flag
+            dirty = false;
         }
 
         internal void PreDraw(FrameTracker tracker)
@@ -305,283 +301,6 @@ namespace HT.Engine.Rendering
                     Camera.FAR_CLIP_DISTANCE)));
             //Transform the ndc box to worldspace and then to light space
             return shadowNDC.Transform(worldToLightMat * ndcToWorldMat);
-        }
-
-        private void RecordGeometryRenderPass(CommandBuffer commandbuffer)
-        {
-            SetViewport(commandbuffer, swapchainSize);
-
-            Float4 normClearColor = clearColor == null ? (0f, 0f, 0f, 1f) : clearColor.Value.Normalized;
-            commandbuffer.CmdBeginRenderPass(new RenderPassBeginInfo(
-                renderPass: geometryRenderpass,
-                framebuffer: geometryFrameBuffer,
-                renderArea: new Rect2D(x: 0, y: 0, width: swapchainSize.X, height: swapchainSize.Y),
-                clearValues: new []
-                {
-                    //Color target
-                    new ClearValue(new ClearColorValue(new ColorF4(
-                        normClearColor.R, normClearColor.G, normClearColor.B, normClearColor.A))),
-                    //Normal target
-                    new ClearValue(new ClearColorValue(ColorF4.Zero)),
-                    //Attribute target
-                    new ClearValue(new ClearColorValue(ColorF4.Zero)),
-                    //Depth target
-                    new ClearValue(new ClearDepthStencilValue(depth: 1f, stencil: 0))
-                }));
-
-            //Record all individual objects
-            for (int i = 0; i < renderObjects.Count; i++)
-                renderObjects[i].Record(commandbuffer, shadowPass: false);
-
-            commandbuffer.CmdEndRenderPass();
-        }
-
-        private void RecordShadowRenderPass(CommandBuffer commandbuffer)
-        {
-            SetViewport(commandbuffer, (ShadowTargetSize, ShadowTargetSize));
-
-            commandbuffer.CmdBeginRenderPass(new RenderPassBeginInfo(
-                renderPass: shadowRenderpass,
-                framebuffer: shadowFrameBuffer,
-                renderArea: new Rect2D(0, 0, ShadowTargetSize, ShadowTargetSize),
-                clearValues: new []
-                {
-                    //Depth target
-                    new ClearValue(new ClearDepthStencilValue(depth: 1f, stencil: 0))
-                }));
-
-            //Record all individual objects
-            for (int i = 0; i < renderObjects.Count; i++)
-                renderObjects[i].Record(commandbuffer, shadowPass: true);
-
-            commandbuffer.CmdEndRenderPass();
-        }
-
-        private void RecordCompositionRenderPass(CommandBuffer commandbuffer, int swapchainImageIndex)
-        {
-            SetViewport(commandbuffer, swapchainSize);
-
-            commandbuffer.CmdBeginRenderPass(new RenderPassBeginInfo(
-                renderPass: compositionRenderpass,
-                framebuffer: presentFrameBuffers[swapchainImageIndex],
-                renderArea: new Rect2D(x: 0, y: 0, width: swapchainSize.X, height: swapchainSize.Y),
-                clearValues: new [] { new ClearValue() }));
-
-            for (int i = 0; i < postEffects.Count; i++)
-                postEffects[i].Record(commandbuffer);
-            
-            commandbuffer.CmdEndRenderPass();
-        }
-
-        private static RenderPass CreateGeometryRenderPass(Device logicalDevice, Byte4? clearColor)
-        {
-            //Description of our color target (output)
-            var colorAttachment = new AttachmentDescription(
-                flags: AttachmentDescriptions.MayAlias,
-                format: ColorTargetFormat,
-                samples: SampleCounts.Count1,
-                loadOp: clearColor == null ? AttachmentLoadOp.DontCare : AttachmentLoadOp.Clear,
-                storeOp: AttachmentStoreOp.Store,
-                stencilLoadOp: AttachmentLoadOp.DontCare,
-                stencilStoreOp: AttachmentStoreOp.DontCare,
-                initialLayout: ImageLayout.Undefined,
-                finalLayout: ImageLayout.ShaderReadOnlyOptimal
-            );
-            //Description of our normal target (output)
-            var normalAttachment = new AttachmentDescription(
-                flags: AttachmentDescriptions.MayAlias,
-                format: NormalTargetFormat,
-                samples: SampleCounts.Count1,
-                loadOp: AttachmentLoadOp.Clear,
-                storeOp: AttachmentStoreOp.Store,
-                stencilLoadOp: AttachmentLoadOp.DontCare,
-                stencilStoreOp: AttachmentStoreOp.DontCare,
-                initialLayout: ImageLayout.Undefined,
-                finalLayout: ImageLayout.ShaderReadOnlyOptimal
-            );
-            //Description of our attribute target (output)
-            var attributeAttachment = new AttachmentDescription(
-                flags: AttachmentDescriptions.MayAlias,
-                format: AttributeTargetFormat,
-                samples: SampleCounts.Count1,
-                loadOp: AttachmentLoadOp.Clear,
-                storeOp: AttachmentStoreOp.Store,
-                stencilLoadOp: AttachmentLoadOp.DontCare,
-                stencilStoreOp: AttachmentStoreOp.DontCare,
-                initialLayout: ImageLayout.Undefined,
-                finalLayout: ImageLayout.ShaderReadOnlyOptimal
-            );
-            //Description of our depth target (output)
-            var depthAttachment = new AttachmentDescription(
-                flags: AttachmentDescriptions.MayAlias,
-                format: DepthTargetFormat,
-                samples: SampleCounts.Count1,
-                loadOp: AttachmentLoadOp.Clear,
-                storeOp: AttachmentStoreOp.Store,
-                stencilLoadOp: AttachmentLoadOp.DontCare,
-                stencilStoreOp: AttachmentStoreOp.DontCare,
-                initialLayout: ImageLayout.Undefined,
-                finalLayout: ImageLayout.ShaderReadOnlyOptimal
-            );
-            //Dependency at the beginning to transition the attachments to the proper layout
-            var beginTransitionDependency = new SubpassDependency(
-                srcSubpass: Constant.SubpassExternal, 
-                dstSubpass: 0, //Our subpass
-                srcStageMask: PipelineStages.BottomOfPipe,
-                srcAccessMask: Accesses.MemoryRead,
-                dstStageMask: PipelineStages.ColorAttachmentOutput,
-                dstAccessMask: Accesses.ColorAttachmentWrite,
-                dependencyFlags: Dependencies.ByRegion
-            );
-            //Dependency at the end to transition the attachments to the final layout
-            var endTransitionDependency = new SubpassDependency(
-                srcSubpass: 0, //Our subpass
-                dstSubpass: Constant.SubpassExternal, 
-                srcStageMask: PipelineStages.ColorAttachmentOutput,
-                srcAccessMask: Accesses.ColorAttachmentWrite,
-                dstStageMask: PipelineStages.BottomOfPipe,
-                dstAccessMask: Accesses.MemoryRead,
-                dependencyFlags: Dependencies.ByRegion
-            );
-            return logicalDevice.CreateRenderPass(new RenderPassCreateInfo(
-                subpasses: new [] 
-                {
-                    new SubpassDescription
-                    (
-                        flags: SubpassDescriptionFlags.None,
-                        colorAttachments: new []
-                        {
-                            //Color attachment
-                            new AttachmentReference(0, ImageLayout.ColorAttachmentOptimal),
-                            new AttachmentReference(1, ImageLayout.ColorAttachmentOptimal),
-                            new AttachmentReference(2, ImageLayout.ColorAttachmentOptimal)
-                        },
-                        //Depth attachment
-                        depthStencilAttachment:
-                            new AttachmentReference(3, ImageLayout.DepthStencilAttachmentOptimal)
-                    )
-                },
-                attachments: new [] { colorAttachment, normalAttachment, attributeAttachment, depthAttachment },
-                dependencies: new [] { beginTransitionDependency, endTransitionDependency } 
-            ));
-        }
-
-        private static RenderPass CreateShadowRenderPass(Device logicalDevice)
-        {
-            //Description of our shadow depth target (output)
-            var depthAttachment = new AttachmentDescription(
-                flags: AttachmentDescriptions.MayAlias,
-                format: ShadowTargetFormat,
-                samples: SampleCounts.Count1,
-                loadOp: AttachmentLoadOp.Clear,
-                storeOp: AttachmentStoreOp.Store,
-                stencilLoadOp: AttachmentLoadOp.DontCare,
-                stencilStoreOp: AttachmentStoreOp.DontCare,
-                initialLayout: ImageLayout.Undefined,
-                finalLayout: ImageLayout.ShaderReadOnlyOptimal
-            );
-            //Dependency at the beginning to transition the attachments to the proper layout
-            var beginTransitionDependency = new SubpassDependency(
-                srcSubpass: Constant.SubpassExternal, 
-                dstSubpass: 0, //Our subpass
-                srcStageMask: PipelineStages.BottomOfPipe,
-                srcAccessMask: Accesses.MemoryRead,
-                dstStageMask: PipelineStages.ColorAttachmentOutput,
-                dstAccessMask: Accesses.ColorAttachmentWrite,
-                dependencyFlags: Dependencies.ByRegion
-            );
-            //Dependency at the end to transition the attachments to the final layout
-            var endTransitionDependency = new SubpassDependency(
-                srcSubpass: 0, //Our subpass
-                dstSubpass: Constant.SubpassExternal, 
-                srcStageMask: PipelineStages.ColorAttachmentOutput,
-                srcAccessMask: Accesses.ColorAttachmentWrite,
-                dstStageMask: PipelineStages.BottomOfPipe,
-                dstAccessMask: Accesses.MemoryRead,
-                dependencyFlags: Dependencies.ByRegion
-            );
-            return logicalDevice.CreateRenderPass(new RenderPassCreateInfo(
-                subpasses: new [] 
-                {
-                    new SubpassDescription
-                    (
-                        flags: SubpassDescriptionFlags.None,
-                        colorAttachments: new AttachmentReference[0],
-                        //Depth attachment
-                        depthStencilAttachment:
-                            new AttachmentReference(0, ImageLayout.DepthStencilAttachmentOptimal)
-                    )
-                },
-                attachments: new [] { depthAttachment },
-                dependencies: new [] { beginTransitionDependency, endTransitionDependency } 
-            ));
-        }
-
-        private static RenderPass CreateCompositionRenderpass(Device logicalDevice, Format surfaceFormat)
-        {
-            //Description of our frame-buffer attachment
-            var frameBufferAttachment = new AttachmentDescription(
-                flags: AttachmentDescriptions.MayAlias,
-                format: surfaceFormat,
-                samples: SampleCounts.Count1,
-                loadOp: AttachmentLoadOp.DontCare,
-                storeOp: AttachmentStoreOp.Store,
-                stencilLoadOp: AttachmentLoadOp.DontCare,
-                stencilStoreOp: AttachmentStoreOp.DontCare,
-                initialLayout: ImageLayout.Undefined,
-                finalLayout: ImageLayout.PresentSrcKhr
-            );
-            //Dependency at the beginning to transition the attachments to the proper layout
-            var beginTransitionDependency = new SubpassDependency(
-                srcSubpass: Constant.SubpassExternal, 
-                dstSubpass: 0, //Our subpass
-                srcStageMask: PipelineStages.BottomOfPipe,
-                srcAccessMask: Accesses.MemoryRead,
-                dstStageMask: PipelineStages.ColorAttachmentOutput,
-                dstAccessMask: Accesses.ColorAttachmentWrite,
-                dependencyFlags: Dependencies.ByRegion
-            );
-            //Dependency at the end to transition the attachments to the final layout
-            var endTransitionDependency = new SubpassDependency(
-                srcSubpass: 0, //Our subpass
-                dstSubpass: Constant.SubpassExternal, 
-                srcStageMask: PipelineStages.ColorAttachmentOutput,
-                srcAccessMask: Accesses.ColorAttachmentWrite,
-                dstStageMask: PipelineStages.BottomOfPipe,
-                dstAccessMask: Accesses.MemoryRead,
-                dependencyFlags: Dependencies.ByRegion
-            );
-            return logicalDevice.CreateRenderPass(new RenderPassCreateInfo(
-                subpasses: new [] 
-                {
-                    new SubpassDescription
-                    (
-                        flags: SubpassDescriptionFlags.None,
-                        colorAttachments: new []
-                        {
-                            //Frame-buffer attachment
-                            new AttachmentReference(0, ImageLayout.ColorAttachmentOptimal)
-                        }
-                    ),
-                },
-                attachments: new [] { frameBufferAttachment },
-                dependencies: new [] { beginTransitionDependency, endTransitionDependency }
-            ));
-        }
-
-        private static int CompareRenderOrder(IInternalRenderObject a, IInternalRenderObject b)
-            => a.RenderOrder.CompareTo(b.RenderOrder);
-
-        private static void SetViewport(CommandBuffer commandbuffer, Int2 size)
-        {
-            //Set viewport and scissor-rect dynamically to avoid the pipelines depending on
-            //swapchain size (and thus having to be recreated on resize)
-            commandbuffer.CmdSetViewport(
-                new Viewport(
-                    x: 0f, y: 0f, width: size.X, height: size.Y,
-                    minDepth: 0f, maxDepth: 1f));
-            commandbuffer.CmdSetScissor(
-                new Rect2D(x: 0, y: 0, width: size.X, height: size.Y));
         }
 
         private void ThrowIfDisposed()

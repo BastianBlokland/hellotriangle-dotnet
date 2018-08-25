@@ -22,7 +22,7 @@ namespace HT.Main
             using (var host = new Host(nativeApp, appName: "Test", appVersion: 1, logger: logger))
             using (var window = host.CreateWindow(windowSize: (1280, 720), deviceRequirements))
             {
-                RenderScene scene = new RenderScene(window, clearColor: null,
+                RenderScene scene = new RenderScene(window,
                     reflectionTexture: new TextureInfo(LoadTex("textures/skybox.cube")),
                     compositionVertProg: LoadProg("shaders/bin/post_fullscreen.vert.spv"),
                     compositionFragProg: LoadProg("shaders/bin/post_baselighting.frag.spv"), logger);
@@ -197,7 +197,7 @@ namespace HT.Main
             bool drawShadows, string shadowFragShaderPath)
         {
             var loader = Load(app, taskRunner, ArrayUtils.Build<string>(
-                textureSources.Morph(a => a.path),
+                textureSources.MorphArray(a => a.path),
                 vertShaderPath,
                 fragShaderPath,
                 shadowFragShaderPath));
@@ -209,12 +209,13 @@ namespace HT.Main
                     textureSources[i].useMipMaps,
                     textureSources[i].repeat);
 
-            InstancedObject renderObject = new InstancedObject(
-                scene, renderOrder, model, textures,
+            InstancedObject renderObject = new InstancedObject(scene, model, textures);
+            scene.AddObject(
+                renderOrder,
+                renderObject,
                 loader.GetResult<ShaderProgram>(vertShaderPath),
                 loader.GetResult<ShaderProgram>(fragShaderPath),
                 drawShadows ? loader.GetResult<ShaderProgram>(shadowFragShaderPath) : null);
-            scene.AddObject(renderObject);
             return renderObject;
         }
 
@@ -231,7 +232,7 @@ namespace HT.Main
         {
             var loader = Load(app, taskRunner, ArrayUtils.Build<string>(
                 modelSource.path,
-                textureSources.Morph(a => a.path),
+                textureSources.MorphArray(a => a.path),
                 vertShaderPath,
                 fragShaderPath,
                 shadowFragShaderPath));
@@ -246,12 +247,13 @@ namespace HT.Main
                     textureSources[i].useMipMaps,
                     textureSources[i].repeat);
 
-            InstancedObject renderObject = new InstancedObject(
-                scene, renderOrder, mesh, textures,
+            InstancedObject renderObject = new InstancedObject(scene, mesh, textures);
+            scene.AddObject(
+                renderOrder,
+                renderObject,
                 loader.GetResult<ShaderProgram>(vertShaderPath),
                 loader.GetResult<ShaderProgram>(fragShaderPath),
                 loader.GetResult<ShaderProgram>(shadowFragShaderPath));
-            scene.AddObject(renderObject);
             return renderObject;
         }
 
@@ -267,7 +269,7 @@ namespace HT.Main
             string shadowFragShaderPath)
         {
             var loader = Load(app, taskRunner, ArrayUtils.Build<string>(
-                textureSources.Morph(a => a.path),
+                textureSources.MorphArray(a => a.path),
                 vertShaderPath,
                 fragShaderPath,
                 shadowFragShaderPath));
@@ -279,12 +281,13 @@ namespace HT.Main
                     textureSources[i].useMipMaps,
                     textureSources[i].repeat);
 
-            AttributelessObject renderObject = new AttributelessObject(
-                scene, renderOrder, vertexCount, textures,
+            AttributelessObject renderObject = new AttributelessObject(scene, vertexCount, textures);
+            scene.AddObject(
+                renderOrder,
+                renderObject,
                 loader.GetResult<ShaderProgram>(vertShaderPath),
                 loader.GetResult<ShaderProgram>(fragShaderPath),
                 loader.GetResult<ShaderProgram>(shadowFragShaderPath));
-            scene.AddObject(renderObject);
             return renderObject;
         }
 

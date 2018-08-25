@@ -1,14 +1,16 @@
 using System;
 using System.Runtime.CompilerServices;
-
+using System.Runtime.InteropServices;
 using HT.Engine.Utils;
+
 using VulkanCore;
 
 namespace HT.Engine.Rendering.Memory
 {
-    internal sealed class HostBuffer : IBuffer, IDisposable
+    internal sealed class HostBuffer : IBuffer, IShaderInput, IDisposable
     {
         //Properties
+        public DescriptorType DescriptorType => DescriptorType.UniformBuffer;
         public VulkanCore.Buffer VulkanBuffer => buffer;
         public long Size => size;
 
@@ -42,6 +44,15 @@ namespace HT.Engine.Rendering.Memory
             memory = memoryPool.AllocateAndBind(buffer, Chunk.Location.Host);
         }
 
+        public WriteDescriptorSet CreateDescriptorWrite(DescriptorSet set, int binding)
+            => new WriteDescriptorSet(
+                dstSet: set,
+                dstBinding: binding,
+                dstArrayElement: 0,
+                descriptorCount: 1,
+                descriptorType: DescriptorType,
+                bufferInfo: new [] { new DescriptorBufferInfo(buffer, offset: 0, range: size) });
+
         public void Dispose()
         {
             ThrowIfDisposed();
@@ -51,7 +62,7 @@ namespace HT.Engine.Rendering.Memory
             disposed = true;
         }
 
-        public int Write<T>(T data, long offset = 0)
+        internal int Write<T>(T data, long offset = 0)
             where T : struct
         {
             ThrowIfDisposed();
@@ -77,10 +88,10 @@ namespace HT.Engine.Rendering.Memory
             return dataSize;
         }
 
-        public int Write<T>(T[] data, long offset = 0) where T : struct => 
-            Write((Span<T>)data, offset);
+        internal int Write<T>(T[] data, long offset = 0) where T : struct => 
+            Write((ReadOnlySpan<T>)data, offset);
         
-        public int Write<T>(Span<T> data, long offset = 0)
+        internal unsafe int Write<T>(ReadOnlySpan<T> data, long offset = 0)
             where T : struct
         {
             ThrowIfDisposed();
@@ -96,19 +107,15 @@ namespace HT.Engine.Rendering.Memory
                 throw new ArgumentException(
                     $"[{nameof(HostBuffer)}] Data ({offset + dataSize}) does not fit in memory region", nameof(data));
 
-            //Copy the data into the buffer
-            unsafe
-            {
-                //Map the memory to a cpu pointer
-                void* stagingPointer = memory.Map(offset).ToPointer();
-                
-                //Copy the data over
-                void* dataPointer = Unsafe.AsPointer(ref data[0]);
-                System.Buffer.MemoryCopy(dataPointer, stagingPointer, dataSize, dataSize);
+            //Map the memory to a cpu pointer
+            void* stagingPointer = memory.Map(offset).ToPointer();
+            
+            //Copy the data over
+            void* dataPointer = Unsafe.AsPointer(ref MemoryMarshal.GetReference(data));
+            System.Buffer.MemoryCopy(dataPointer, stagingPointer, dataSize, dataSize);
 
-                //Release the cpu memory
-                memory.Unmap();
-            }
+            //Release the cpu memory
+            memory.Unmap();
             return dataSize;
         }
 

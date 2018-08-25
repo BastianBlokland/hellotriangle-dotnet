@@ -1,9 +1,17 @@
+using System;
+
 using VulkanCore;
 
 namespace HT.Engine.Rendering
 {
     internal interface IInternalRenderObject : IRenderObject
     {
-         void Record(CommandBuffer commandbuffer, bool shadowPass);
+        ReadOnlySpan<IShaderInput> Inputs { get; }
+
+        FrontFace GetFrontFace();
+        PipelineInputAssemblyStateCreateInfo GetInputAssemblyStateInfo();
+        PipelineVertexInputStateCreateInfo GetVertexInputState();
+
+        void Record(CommandBuffer commandbuffer);
     }
 }

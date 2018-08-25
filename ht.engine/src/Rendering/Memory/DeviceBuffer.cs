@@ -4,9 +4,10 @@ using VulkanCore;
 
 namespace HT.Engine.Rendering.Memory
 {
-    internal sealed class DeviceBuffer : IBuffer, IDisposable
+    internal sealed class DeviceBuffer : IBuffer, IShaderInput, IDisposable
     {
         //Properties
+        public DescriptorType DescriptorType => DescriptorType.UniformBuffer;
         public VulkanCore.Buffer VulkanBuffer => buffer;
         public long Size => size;
 
@@ -40,6 +41,15 @@ namespace HT.Engine.Rendering.Memory
             //Bind memory from our pool to this buffer
             memory = memoryPool.AllocateAndBind(buffer, Chunk.Location.Device);
         }
+
+        public WriteDescriptorSet CreateDescriptorWrite(DescriptorSet set, int binding)
+            => new WriteDescriptorSet(
+                dstSet: set,
+                dstBinding: binding,
+                dstArrayElement: 0,
+                descriptorCount: 1,
+                descriptorType: DescriptorType,
+                bufferInfo: new [] { new DescriptorBufferInfo(buffer, offset: 0, range: size) });
 
         public void Dispose()
         {

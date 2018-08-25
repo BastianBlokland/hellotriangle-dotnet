@@ -15,12 +15,16 @@ namespace HT.Engine.Rendering
     {
         //Properties
         internal Int2 Size => size;
+        internal Format Format => format;
+        internal ImageLayout DesiredLayout => desiredLayout;
+        internal bool DepthTexture => aspects.HasFlag(ImageAspects.Depth);
         internal ImageView View => view;
         internal int MipLevels => mipLevels;
 
         //Data
         private readonly Int2 size;
         private readonly Format format;
+        private readonly ImageLayout desiredLayout;
         private readonly int mipLevels;
         private readonly ImageAspects aspects;
         private readonly Image image;
@@ -122,7 +126,14 @@ namespace HT.Engine.Rendering
             var view = CreateView(
                 image, texture.Format, mipLevels, aspects, cubeMap: texture.IsCubeMap);
             return new DeviceTexture(
-                texture.Size, texture.Format, mipLevels, aspects, image, memory, view);
+                texture.Size,
+                texture.Format,
+                ImageLayout.ShaderReadOnlyOptimal, //Used for shader reading,
+                mipLevels,
+                aspects,
+                image,
+                memory,
+                view);
         }
 
         internal static DeviceTexture CreateDepthTarget(
@@ -131,7 +142,7 @@ namespace HT.Engine.Rendering
             Device logicalDevice,
             Memory.Pool memoryPool,
             TransientExecutor executor,
-            bool allowSampling = false)
+            bool allowSampling = true)
         {
             if (logicalDevice == null)
                 throw new ArgumentNullException(nameof(logicalDevice));
@@ -164,7 +175,15 @@ namespace HT.Engine.Rendering
                 executor: executor);
 
             var view = CreateView(image, format, mipLevels: 1, aspects, cubeMap: false);
-            return new DeviceTexture(size, format, mipLevels: 1, aspects, image, memory, view);
+            return new DeviceTexture(
+                size,
+                format,
+                ImageLayout.ShaderReadOnlyOptimal, //Used for shader reading
+                mipLevels: 1,
+                aspects,
+                image,
+                memory,
+                view);
         }
 
         internal static DeviceTexture CreateColorTarget(
@@ -173,7 +192,7 @@ namespace HT.Engine.Rendering
             Device logicalDevice,
             Memory.Pool memoryPool,
             TransientExecutor executor,
-            bool allowSampling = false)
+            bool allowSampling = true)
         {
             if (logicalDevice == null)
                 throw new ArgumentNullException(nameof(logicalDevice));
@@ -206,7 +225,15 @@ namespace HT.Engine.Rendering
                 executor: executor);
 
             var view = CreateView(image, format, mipLevels: 1, aspects, cubeMap: false);
-            return new DeviceTexture(size, format, mipLevels: 1, aspects, image, memory, view);
+            return new DeviceTexture(
+                size,
+                format,
+                ImageLayout.ShaderReadOnlyOptimal, //Used for shader reading
+                mipLevels: 1,
+                aspects,
+                image,
+                memory,
+                view);
         }
 
         internal static DeviceTexture CreateSwapchainTarget(Int2 size, Format format, Image image)
@@ -215,7 +242,8 @@ namespace HT.Engine.Rendering
             var view = CreateView(image, format, mipLevels: 1, aspects, cubeMap: false);
             return new DeviceTexture(
                 size, 
-                format, 
+                format,
+                desiredLayout: ImageLayout.PresentSrcKhr, //Used for presenting
                 mipLevels: 1,
                 aspects,
                 image,
@@ -239,6 +267,7 @@ namespace HT.Engine.Rendering
         private DeviceTexture(
             Int2 size,
             Format format,
+            ImageLayout desiredLayout,
             int mipLevels,
             ImageAspects aspects,
             Image image,
@@ -248,6 +277,7 @@ namespace HT.Engine.Rendering
         {
             this.size = size;
             this.format = format;
+            this.desiredLayout = desiredLayout;
             this.mipLevels = mipLevels;
             this.aspects = aspects;
             this.image = image;
