@@ -106,7 +106,7 @@ namespace HT.Engine.Rendering.Techniques
             renderer.BindTargets(new [] { colorTarget, normalTarget, attributeTarget, depthTarget });
 
             //Tell the renderer to allocate its resources based on the data we've provided
-            renderer.CreateResources();
+            renderer.CreateResources(specialization: null);
         }
 
         internal void Record(CommandBuffer commandbuffer)

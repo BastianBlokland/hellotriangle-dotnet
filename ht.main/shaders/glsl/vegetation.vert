@@ -7,6 +7,9 @@
 #include "include_math.glsl"
 #include "include_game.glsl"
 
+//Specialization
+layout(constant_id = 0) const bool isShadowPass = false;
+
 //Uniforms
 layout(binding = 0) uniform SceneData sceneData;
 layout(binding = 1) uniform CameraData cameraData;
@@ -20,21 +23,21 @@ out gl_PerVertex
     vec4 gl_Position;
 };
 layout(location = 0) out vec2 outUv;
-layout(location = 1) out vec4 outColorTint;
+layout(location = 1) out vec3 outColorTint;
 layout(location = 2) out vec3 outWorldPosition;
 layout(location = 3) out vec3 outWorldNormal;
 
-vec4 getTint()
+vec3 getTint()
 {
-    const vec4 tints[] = vec4[]
+    const vec3 tints[] = vec3[]
     (
-        vec4(1.0, 1.0, 1.0, 0.98),
-        vec4(1.0, 0.9, 0.9, 0.92),
-        vec4(1.0, 0.8, 1.0, 0.97),
-        vec4(1.0, 1.0, 0.8, 0.91),
-        vec4(0.9, 0.9, 0.9, 0.96),
-        vec4(0.9, 1.0, 0.9, 0.94),
-        vec4(1.0, 1.0, 0.8, 0.92)
+        vec3(1.0, 1.0, 1.0),
+        vec3(1.0, 0.9, 0.9),
+        vec3(1.0, 0.8, 1.0),
+        vec3(1.0, 1.0, 0.8),
+        vec3(0.9, 0.9, 0.9),
+        vec3(0.9, 1.0, 0.9),
+        vec3(1.0, 1.0, 0.8)
     );
     return tints[gl_InstanceIndex % tints.length()];
 }

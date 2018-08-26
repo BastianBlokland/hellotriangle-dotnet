@@ -1,4 +1,7 @@
 using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
 using HT.Engine.Math;
 using HT.Engine.Resources;
 using HT.Engine.Utils;
@@ -7,8 +10,22 @@ using VulkanCore;
 
 namespace HT.Engine.Rendering.Techniques
 {
-    internal sealed class ShadowTechnique : IDisposable
+    internal sealed class ShadowTechnique : ISpecializationProvider, IDisposable
     {
+        [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
+        private readonly struct SpecializationData
+        {
+            public const int SIZE = sizeof(bool);
+            
+            //Data
+            public readonly bool IsShadowPass;
+
+            public SpecializationData(bool isShadowPass)
+            {
+                IsShadowPass = isShadowPass;
+            }
+        }
+
         private readonly static int targetSize = 2048;
         private readonly static Format depthFormat = Format.D16UNorm;
 
@@ -30,6 +47,9 @@ namespace HT.Engine.Rendering.Techniques
 
         //Sampler for sampling shadow data
         private DeviceSampler depthSampler;
+
+        //Data for the specialization constants
+        private SpecializationData specializationData = new SpecializationData(isShadowPass: true);
 
         private bool disposed;
 
@@ -84,7 +104,7 @@ namespace HT.Engine.Rendering.Techniques
             renderer.BindTargets(new [] { depthTarget });
 
             //Tell the renderer to allocate its resources based on the data we've provided
-            renderer.CreateResources();
+            renderer.CreateResources(specialization: this);
 
             //Store the aspect of the swapchain, we need it later to calculate the shadow frustum
             swapchainAspect = (float)swapchainSize.X / swapchainSize.Y;
@@ -193,6 +213,19 @@ namespace HT.Engine.Rendering.Techniques
             float squareDiag2 = (points[2] - points[4]).SquareMagnitude;
             float radius = FloatUtils.SquareRoot(FloatUtils.Max(squareDiag1, squareDiag2)) * .5f;
             return new FloatSphere(center, radius);
+        }
+
+        SpecializationInfo ISpecializationProvider.GetSpecialization()
+        {
+            unsafe
+            {
+                return new SpecializationInfo(new [] { new SpecializationMapEntry(
+                    constantId: 0,
+                    offset: 0,
+                    size: new Size(sizeof(bool))) },
+                    new Size(SpecializationData.SIZE),
+                    data: new IntPtr(Unsafe.AsPointer(ref specializationData)));
+            }
         }
 
         private void ThrowIfDisposed()

@@ -751,7 +751,7 @@ namespace VulkanCore
         /// <summary>
         /// The byte size of the specialization constant value within the supplied data buffer.
         /// </summary>
-        public int Size;
+        public Size Size;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SpecializationMapEntry"/> structure.
@@ -763,7 +763,7 @@ namespace VulkanCore
         /// <param name="size">
         /// The byte size of the specialization constant value within the supplied data buffer.
         /// </param>
-        public SpecializationMapEntry(int constantId, int offset, int size)
+        public SpecializationMapEntry(int constantId, int offset, Size size)
         {
             ConstantId = constantId;
             Offset = offset;

@@ -71,7 +71,7 @@ namespace HT.Engine.Rendering.Techniques
                 shadowTechnique.ShadowInput });
 
             //Tell the renderer to allocate its resources based on the data we've provided
-            renderer.CreateResources();
+            renderer.CreateResources(specialization: null);
         }
 
         internal void Record(CommandBuffer commandbuffer, int swapchainIndex)

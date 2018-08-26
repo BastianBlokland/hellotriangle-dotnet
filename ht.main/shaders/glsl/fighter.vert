@@ -6,6 +6,9 @@
 #include "include_instanceinput.glsl"
 #include "include_math.glsl"
 
+//Specialization
+layout(constant_id = 0) const bool isShadowPass = false;
+
 //Uniforms
 layout(binding = 0) uniform SceneData sceneData;
 layout(binding = 1) uniform CameraData cameraData;
@@ -36,16 +39,24 @@ void main()
     vec3 adjustedPos = wobbleMatrix * vertPosition;
     vec3 adjustedNorm = wobbleMatrix * vertNormal;
 
-    //Exhaust effect
-    //red channel contains mask for exhaust vertices
-    //green channel of vert color contains exhaust intensity
-    #define minExhaustScale 1.5
-    #define maxExhaustScale 3.5
-    #define frequency 20.0
-    outExhaustIntensity = vertColor.g *
-        abs(sin((adjustedPos.x + adjustedPos.y + sceneData.time + (gl_InstanceIndex * 0.5312)) * frequency));
-    adjustedPos.z -= vertColor.g * mix(minExhaustScale, maxExhaustScale, outExhaustIntensity);
-    outExhaustMask = vertColor.r;
+    //Exhaust effect (offset the vertices of the exausted based on mask in vertext colors)
+    //red channel contains mask, green channel contains intensity
+    //Note: Don't apply effect during the shadow pass as flames are not supposed to cast shadows :)
+    if (!isShadowPass)
+    {
+        #define minExhaustScale 1.5
+        #define maxExhaustScale 3.5
+        #define frequency 20.0
+        outExhaustIntensity = vertColor.g *
+            abs(sin((adjustedPos.x + adjustedPos.y + sceneData.time + (gl_InstanceIndex * 0.5312)) * frequency));
+        adjustedPos.z -= vertColor.g * mix(minExhaustScale, maxExhaustScale, outExhaustIntensity);
+        outExhaustMask = vertColor.r;
+    }
+    else
+    {
+        outExhaustIntensity = 0.0;
+        outExhaustMask = 0.0;
+    }
 
     outUv = vertUv1;
     outWorldPosition = (instanceModelMatrix * vec4(adjustedPos, 1.0)).xyz;

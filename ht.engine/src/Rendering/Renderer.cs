@@ -50,6 +50,7 @@ namespace HT.Engine.Rendering
                 Device logicalDevice,
                 ShaderInputManager shaderInputManager,
                 RenderPass renderPass,
+                ISpecializationProvider specialization,
                 ReadOnlySpan<DeviceTexture> targets,
                 ReadOnlySpan<IShaderInput> globalInputs)
             {
@@ -74,6 +75,7 @@ namespace HT.Engine.Rendering
                         pipelineLayout,
                         vertModule,
                         fragModule,
+                        specialization,
                         depthClamp,
                         depthBias,
                         targets,
@@ -247,7 +249,7 @@ namespace HT.Engine.Rendering
             globalInputs = inputs.ToArray();
         }
 
-        internal void CreateResources()
+        internal void CreateResources(ISpecializationProvider specialization = null)
         {
             ThrowIfDisposed();
 
@@ -260,6 +262,7 @@ namespace HT.Engine.Rendering
                     logicalDevice,
                     shaderInputManager,
                     renderPass,
+                    specialization,
                     outputs[0].Targets,
                     globalInputs);
         }

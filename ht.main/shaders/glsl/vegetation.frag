@@ -14,7 +14,7 @@ layout(binding = 4) uniform sampler2D terrainSampler;
 
 //Input
 layout(location = 0) in vec2 inUv;
-layout(location = 1) in vec4 inColorTint;
+layout(location = 1) in vec3 inColorTint;
 layout(location = 2) in vec3 inWorldPosition;
 layout(location = 3) in vec3 inWorldNormal;
 
@@ -25,16 +25,17 @@ layout(location = 2) out vec4 outAttributes;
 
 void main()
 {
-    outColor = texture(colorSampler, inUv) * inColorTint;
-    if (outColor.a < discardAlpha)
+    vec4 colorSample = texture(colorSampler, inUv);
+    if (colorSample.a < discardAlpha)
     {
         discard;
     }
-
+    
     vec4 normalSample = texture(normalSampler, inUv);
     float specularIntensity = normalSample.a; //Store spec intensity in the normalmap alpha
     vec3 tangentNormal = normalSample.xyz * 2.0 - 1.0;
 
+    outColor = vec4(colorSample.rgb * inColorTint, 1.0);
     outNormal.xyz = perturbNormal(tangentNormal, inWorldNormal, inWorldPosition, inUv);
     outAttributes.x = specularIntensity; //Specularity
     outAttributes.y = 0.0; //Emmisiveness

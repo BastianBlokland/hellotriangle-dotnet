@@ -13,6 +13,7 @@ namespace HT.Engine.Rendering
             PipelineLayout layout,
             ShaderModule vertModule,
             ShaderModule fragModule,
+            ISpecializationProvider specialization,
             bool depthClamp,
             bool depthBias,
             ReadOnlySpan<DeviceTexture> targets,
@@ -26,10 +27,12 @@ namespace HT.Engine.Rendering
             var shaderStages = new []
             {
                 new PipelineShaderStageCreateInfo(
-                    stage: ShaderStages.Vertex, module: vertModule, name: "main"),
+                    stage: ShaderStages.Vertex, module: vertModule, name: "main",
+                    specializationInfo: specialization?.GetSpecialization()),
                 new PipelineShaderStageCreateInfo(
                     stage: ShaderStages.Fragment,
-                    module: fragModule, name: "main")
+                    module: fragModule, name: "main",
+                    specializationInfo: specialization?.GetSpecialization())
             };
             var depthTest = new PipelineDepthStencilStateCreateInfo {
                 DepthTestEnable = true,
