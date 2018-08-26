@@ -20,6 +20,7 @@
     //White-listed words for the 'Code spell checker' plugin
     "cSpell.words": [
         "Anisotropy",
+        "Blit",
         "Cdecl",
         "Deinitialize",
         "Deinitializing",
@@ -34,16 +35,16 @@
         "Rasterizer",
         "Rect",
         "Spir",
+        "Structs",
         "Texcoord",
         "Texcoords",
+        "Texel",
         "Unmap",
         "Unnormalized",
         "Vulkan",
         "Vulkancore",
-        "Blit",
         "bgra",
-        "rgba",
-        "Structs",
-        "Texel"
+        "gbuffer",
+        "rgba"
     ]
 }

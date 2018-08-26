@@ -6,8 +6,8 @@
 #include "include_instanceinput.glsl"
 
 //Uniforms
-layout(binding = 0) uniform CameraData cameraData;
-layout(binding = 1) uniform SceneData sceneData;
+layout(binding = 0) uniform SceneData sceneData;
+layout(binding = 1) uniform CameraData cameraData;
 
 //Output
 out gl_PerVertex

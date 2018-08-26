@@ -7,9 +7,9 @@
 #include "include_game.glsl"
 
 //Uniforms
-layout(binding = 0) uniform CameraData cameraData;
-layout(binding = 1) uniform ShadowData shadowData;
-layout(binding = 2) uniform SceneData sceneData;
+layout(binding = 0) uniform SceneData sceneData;
+layout(binding = 1) uniform CameraData cameraData;
+layout(binding = 2) uniform ShadowData shadowData;
 layout(binding = 3) uniform sampler2D sceneColorSampler;
 layout(binding = 4) uniform sampler2D sceneNormalSampler;
 layout(binding = 5) uniform sampler2D sceneAttributeSampler;
