@@ -93,6 +93,10 @@ namespace HT.Engine.Math
 
         public static FloatBox CreateFromPoints(in ReadOnlySpan<Float3> points)
         {
+            if (points.Length == 0)
+                throw new ArgumentException(
+                    $"[{nameof(FloatBox)}] Requires at least one point", nameof(points));
+
             Float3 min = Float3.Max;
             Float3 max = Float3.Min;
             for (int i = 0; i < points.Length; i++)

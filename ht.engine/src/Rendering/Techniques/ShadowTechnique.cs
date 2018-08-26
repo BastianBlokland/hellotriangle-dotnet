@@ -18,6 +18,7 @@ namespace HT.Engine.Rendering.Techniques
 
         //Data
         private readonly RenderScene scene;
+        private readonly Logger logger;
         private readonly Renderer renderer;
 
         //Buffer for storing the camera transformations
@@ -39,6 +40,7 @@ namespace HT.Engine.Rendering.Techniques
             if (scene == null)
                 throw new NullReferenceException(nameof(scene));
             this.scene = scene;
+            this.logger = logger;
 
             //Create buffer for storing camera transformations
             cameraBuffer = new Memory.HostBuffer(
@@ -103,23 +105,26 @@ namespace HT.Engine.Rendering.Techniques
             //Rotation from world to 'sun' direction
             Float4x4 rotationMatrix = Float4x4.CreateRotationFromAxis(sunDirection, Float3.Forward);
 
-            //Calculate a frustum in 'lightspace' based on the frustum from the 'normal' camera
-            FloatBox shadowFrustum = GetShadowFrustum(
+            //Calculate a sphere in 'lightspace' that fits the frustum of the camera
+            //using a sphere so that the size stays constant when the camera rotates, this avoids
+            //the shimmering when the shadow map is resized all the time
+            FloatSphere shadowSphere = GetShadowSphere(
                 sceneCameraData.InverseViewProjectionMatrix,
                 rotationMatrix.Invert(),
                 shadowDistance);
 
-            //Derive the projection values from the shadow-frustum
-            Float3 shadowCenter = shadowFrustum.Center;
-            Float2 shadowSize = shadowFrustum.Size.XY;
-            float shadowNearClip = -shadowFrustum.HalfSize.Z;
-            float shadowFarClip = shadowFrustum.HalfSize.Z;
+            //Derive the projection values from the sphere
+            Float3 shadowCenter = shadowSphere.Center;
+            float radius = shadowSphere.Radius.Round();
+            float shadowSize = radius * 2f;
+            float shadowNearClip = -radius;
+            float shadowFarClip = radius;
 
             //Calculate the matrices for the shadow projection
             Float4x4 cameraMatrix = rotationMatrix * Float4x4.CreateTranslation(shadowCenter);
             Float4x4 viewMatrix = cameraMatrix.Invert();
             Float4x4 projectionMatrix = Float4x4.CreateOrthographicProjection(
-                shadowSize, shadowNearClip, shadowFarClip);
+                shadowSize.XX(), shadowNearClip, shadowFarClip);
             Float4x4 viewProjectionMatrix = projectionMatrix * viewMatrix;
 
             //Calculate a rounding matrix to fix shadow 'shimmering' as objects constantly 'switch'
@@ -156,7 +161,7 @@ namespace HT.Engine.Rendering.Techniques
             disposed = true;
         }
 
-        private static FloatBox GetShadowFrustum(
+        private static FloatSphere GetShadowSphere(
             Float4x4 ndcToWorldMat,
             Float4x4 worldToLightMat,
             float shadowDistance)
@@ -169,8 +174,25 @@ namespace HT.Engine.Rendering.Techniques
                     shadowDistance, 
                     Camera.NEAR_CLIP_DISTANCE, 
                     Camera.FAR_CLIP_DISTANCE)));
-            //Transform the ndc box to worldspace and then to light space
-            return shadowNDC.Transform(worldToLightMat * ndcToWorldMat);
+
+            //Gather points of the frustum
+            Span<Float3> points = stackalloc Float3[8];
+            shadowNDC.GetPoints(points);
+            
+            //Transform all the points to lightspace (ndc -> world -> lightspace)
+            Float3 center = Float3.Zero;
+            for (int i = 0; i < points.Length; i++)
+            {
+                points[i] = (worldToLightMat * ndcToWorldMat).TransformPoint(points[i]);
+                center = i == 0 ? points[i] : (center + points[i]);
+            }
+            center /= points.Length;
+
+            //The the longest diagonal of the frustum and base our sphere on that
+            float squareDiag1 = (points[0] - points[6]).SquareMagnitude;
+            float squareDiag2 = (points[2] - points[4]).SquareMagnitude;
+            float radius = FloatUtils.SquareRoot(FloatUtils.Max(squareDiag1, squareDiag2)) * .5f;
+            return new FloatSphere(center, radius);
         }
 
         private void ThrowIfDisposed()

@@ -39,6 +39,7 @@
         "Texcoord",
         "Texcoords",
         "Texel",
+        "Unlerp",
         "Unmap",
         "Unnormalized",
         "Vulkan",

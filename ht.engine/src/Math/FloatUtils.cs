@@ -1,3 +1,4 @@
+using System;
 using HT.Engine.Math;
 
 using static System.MathF;
@@ -25,8 +26,26 @@ namespace HT.Engine.Math
 
         public static float Lerp(float a, float b, float t) => a + (b - a) * t;
 
-        public static float UnLerp(float value, float a, float b)
+        public static float Unlerp(float value, float a, float b)
             => (a == b) ? 0f : (value - a) / (b - a);
+
+        public static float Min(float a, float b) => a < b ? a : b;
+
+        public static float Min(float a, float b, float c)
+        {
+            float x = (a >= b) ? b : a;
+            return (x >= c) ? c : x;
+        }
+
+        public static float Max(float a, float b) => a > b ? a : b;
+
+        public static float Max(float a, float b, float c)
+        {
+            float x = (a <= b) ? b : a;
+            return (x <= c) ? c : x;
+        }
+
+        public static float SquareRoot(float val) => Sqrt(val);
 
         public static float CubeRoot(float val) => Pow(val, 1f / 3f);
 

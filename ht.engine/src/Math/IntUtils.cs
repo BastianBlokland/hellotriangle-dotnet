@@ -6,8 +6,9 @@ namespace HT.Engine.Math
 {
     public static class IntUtils
     {
-        public static int Min(this int a, int b) => a < b ? a : b;
-        public static int Max(this int a, int b) => a > b ? a : b;
+        public static int Min(int a, int b) => a < b ? a : b;
+        
+        public static int Max(int a, int b) => a > b ? a : b;
 
         public static int PerfectCubeRoot(int val)
         {

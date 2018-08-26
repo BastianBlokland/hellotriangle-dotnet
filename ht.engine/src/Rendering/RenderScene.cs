@@ -12,7 +12,7 @@ namespace HT.Engine.Rendering
     public sealed class RenderScene : IDisposable
     {
         private readonly static Float3 sunDirection = Float3.Normalize(new Float3(-1f, -.3f, -.1f));
-        private readonly static float shadowDistance = 85f;
+        private readonly static float shadowDistance = 95f;
 
         //Public properties
         public Camera Camera => camera;
