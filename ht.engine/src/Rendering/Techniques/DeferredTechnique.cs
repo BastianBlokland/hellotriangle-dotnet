@@ -10,6 +10,7 @@ namespace HT.Engine.Rendering.Techniques
     internal sealed class DeferredTechnique : IDisposable
     {
         private readonly GBufferTechnique gbufferTechnique;
+        private readonly BloomTechnique bloomTechnique;
         private readonly ShadowTechnique shadowTechnique;
         private readonly RenderScene scene;
         private readonly Renderer renderer;
@@ -20,6 +21,7 @@ namespace HT.Engine.Rendering.Techniques
 
         internal DeferredTechnique(
             GBufferTechnique gbufferTechnique,
+            BloomTechnique bloomTechnique,
             ShadowTechnique shadowTechnique,
             TextureInfo reflectionTexture,
             ShaderProgram compositionVertProg, ShaderProgram compositionFragProg,
@@ -28,6 +30,8 @@ namespace HT.Engine.Rendering.Techniques
         {
             if (gbufferTechnique == null)
                 throw new NullReferenceException(nameof(gbufferTechnique));
+            if (bloomTechnique == null)
+                throw new NullReferenceException(nameof(bloomTechnique));
             if (shadowTechnique == null)
                 throw new NullReferenceException(nameof(shadowTechnique));
             if (reflectionTexture.Texture == null)
@@ -40,6 +44,7 @@ namespace HT.Engine.Rendering.Techniques
                 throw new NullReferenceException(nameof(scene));
 
             this.gbufferTechnique = gbufferTechnique;
+            this.bloomTechnique = bloomTechnique;
             this.shadowTechnique = shadowTechnique;
             this.scene = scene;
 
@@ -68,6 +73,7 @@ namespace HT.Engine.Rendering.Techniques
                 gbufferTechnique.NormalInput,
                 gbufferTechnique.AttributeInput,
                 gbufferTechnique.DepthInput,
+                bloomTechnique.BloomInput,
                 shadowTechnique.ShadowInput });
 
             //Tell the renderer to allocate its resources based on the data we've provided

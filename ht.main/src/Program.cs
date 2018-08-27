@@ -24,7 +24,8 @@ namespace HT.Main
             {
                 RenderScene scene = new RenderScene(window,
                     reflectionTexture: new TextureInfo(LoadTex("textures/skybox.cube")),
-                    compositionVertProg: LoadProg("shaders/bin/post_fullscreen.vert.spv"),
+                    postVertProg: LoadProg("shaders/bin/post_fullscreen.vert.spv"),
+                    bloomFragProg: LoadProg("shaders/bin/post_bloom.frag.spv"),
                     compositionFragProg: LoadProg("shaders/bin/post_baselighting.frag.spv"), logger);
                 window.AttachScene(scene);
 

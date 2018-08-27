@@ -1,6 +1,7 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_GOOGLE_include_directive : enable
+#include "include_math.glsl"
 #include "include_sceneinput.glsl"
 
 //Uniforms
@@ -20,6 +21,7 @@ layout(location = 2) out vec4 outAttributes;
 void main() 
 {
     outColor.rgb = texture(skyboxTexture, inSkyboxDirection).rgb;
+    outColor.a = smoothstep(0.5, 1.0, luma(outColor.rgb)); //Bloom factor
     outNormal.xyz = normalize(inWorldNormal);
     outAttributes.x = 0.0; //Specularity
     outAttributes.y = 1.0; //Emissiveness (1 because skybox is prelit)

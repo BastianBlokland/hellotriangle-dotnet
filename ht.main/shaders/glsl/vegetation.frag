@@ -35,7 +35,8 @@ void main()
     float specularIntensity = normalSample.a; //Store spec intensity in the normalmap alpha
     vec3 tangentNormal = normalSample.xyz * 2.0 - 1.0;
 
-    outColor = vec4(colorSample.rgb * inColorTint, 1.0);
+    outColor.rgb = colorSample.rgb * inColorTint;
+    outColor.a = 0.0; //Bloom factor
     outNormal.xyz = perturbNormal(tangentNormal, inWorldNormal, inWorldPosition, inUv);
     outAttributes.x = specularIntensity; //Specularity
     outAttributes.y = 0.0; //Emmisiveness

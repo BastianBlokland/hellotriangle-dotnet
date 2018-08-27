@@ -20,6 +20,7 @@ layout(location = 2) out vec4 outAttributes;
 void main() 
 {
     outColor.rgb = inColor.rgb; //Color
+    outColor.a = 0.0; //Bloom factor
     outNormal.xyz = inWorldNormal; //Normal
     outAttributes.x = 0.0; //Specularity
     outAttributes.y = 1.0; //Emisiveness

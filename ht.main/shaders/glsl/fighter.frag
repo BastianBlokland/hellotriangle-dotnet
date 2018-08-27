@@ -28,9 +28,10 @@ void main()
     #define coldExhaustColor vec3(0.2, 0.2, 2.0)
 
     vec4 colorAndSpec = texture(colorSampler, inUv);
-    vec3 exhaustColor = mix(coldExhaustColor, hotExhaustColor, inExhaustIntensity) * inExhaustMask;
+    vec3 exhaustColor = mix(hotExhaustColor, coldExhaustColor, inExhaustIntensity) * inExhaustMask;
 
     outColor.rgb = colorAndSpec.rgb + exhaustColor;
+    outColor.a = inExhaustMask * (1.0 - inExhaustIntensity); //Bloom factor
     outNormal.xyz = applyNormalTex(normalSampler, inWorldNormal, inWorldPosition, inUv);
     outAttributes.x = colorAndSpec.a; //Specular
     outAttributes.y = inExhaustMask; //Emissiveness

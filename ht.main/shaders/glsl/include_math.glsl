@@ -42,3 +42,11 @@ vec3 blendNormals(vec3 normal1, vec3 normal2)
     vec3 result = vec3(normal1.xy + normal2.xy, normal1.z * normal2.z);
     return normalize(result);
 }
+
+//Convert a color to a luminance ('brightness') value, uses constansts to weight the different
+//channels to compensate for human eye sensitivity
+//https://en.wikipedia.org/wiki/Luma_(video)
+float luma(vec3 color)
+{
+    return dot(vec3(0.2126, 0.7152, 0.0722), color);
+}

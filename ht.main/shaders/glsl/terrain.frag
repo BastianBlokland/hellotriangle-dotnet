@@ -37,6 +37,7 @@ void main()
     vec3 detail2Normal = applyNormalTex(detail2NormalSampler, inWorldNormal, inWorldPosition, detail2Uv);
 
     outColor.rgb = colorAndSpec.rgb;
+    outColor.a = 0.0; //Bloom factor
     outNormal.xyz = blendNormals(detail1Normal, detail2Normal);
     outAttributes.x = colorAndSpec.a; //Specularity
     outAttributes.y = 0.0; //Emissiveness

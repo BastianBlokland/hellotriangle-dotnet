@@ -14,12 +14,12 @@ layout(binding = 3) uniform sampler2D sceneColorSampler;
 layout(binding = 4) uniform sampler2D sceneNormalSampler;
 layout(binding = 5) uniform sampler2D sceneAttributeSampler;
 layout(binding = 6) uniform sampler2D sceneDepthSampler;
-layout(binding = 7) uniform sampler2D sceneShadowSampler;
-layout(binding = 8) uniform samplerCube reflectionSampler;
+layout(binding = 7) uniform sampler2D sceneBloomSampler;
+layout(binding = 8) uniform sampler2D sceneShadowSampler;
+layout(binding = 9) uniform samplerCube reflectionSampler;
 
 //Input
 layout(location = 0) in vec2 inUv;
-layout(location = 1) in vec3 inWorldViewDirection;
 
 //Output
 layout(location = 0) out vec4 outColor;
@@ -45,11 +45,15 @@ float getShadow(vec3 worldPos)
 
 void main()
 {
-    vec3 viewDir = normalize(inWorldViewDirection);
+    vec3 clipPos = vec3(inUv * 2.0 - 1.0, 1.0);
+    vec3 viewDir = normalize((cameraData.inverseViewProjectionMatrix * vec4(clipPos, 0.0)).xyz);
     vec3 camPos = cameraData.cameraMatrix[3].xyz;
 
     //Sample data from the scene
-    vec3 color = texture(sceneColorSampler, inUv).rgb;
+    vec4 colorAndBloom = texture(sceneColorSampler, inUv);
+    //Darken the color when bloomed because the bloom is applied additivly and we want to keep the
+    //color consistent and not overbrightening them (alternativly we could use a hdr color target)
+    vec3 color = colorAndBloom.rgb * (1.0 - colorAndBloom.a);
     vec3 normal = texture(sceneNormalSampler, inUv).xyz;
     vec4 attributes = texture(sceneAttributeSampler, inUv);
     float depth = texture(sceneDepthSampler, inUv).r;
@@ -93,4 +97,8 @@ void main()
     float fogHeightBlend = smoothstep(1000.0, 3.0, worldPos.y * worldPos.y);
     float fogDistanceBlend = clamp(linearDepth / 100, 0.01, 0.7);
     outColor = mix(outColor, vec4(sunColor, 1), fogHeightBlend * fogDistanceBlend);
+
+    vec4 bloomSample = texture(sceneBloomSampler, inUv);
+    //outColor += vec4(bloomSample.rgb * bloomSample.a, 0.0);
+    outColor = vec4(bloomSample.rgb * bloomSample.a, 0.0);
 }
