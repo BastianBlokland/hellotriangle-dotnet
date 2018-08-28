@@ -16,6 +16,10 @@ layout(location = 0) out vec4 outColor;
 
 void main()
 {
+    const float inputGain = 1.75;
+
     vec4 sceneColor = texture(sceneColorSampler, inUv);
-    outColor = sceneColor;
+    //Bloom amount is stored in the alpha chnnel, 
+    //multiply the color by bloom amount to get the bloom color
+    outColor = vec4(sceneColor.rgb * sceneColor.a * inputGain, 1.0);
 }

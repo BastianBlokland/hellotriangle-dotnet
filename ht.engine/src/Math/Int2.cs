@@ -75,6 +75,9 @@ namespace HT.Engine.Math
         public static Int2 operator *(Int2 left, int right)
             => new Int2(left.X * right, left.Y * right);
 
+        public static Float2 operator *(Int2 left, float right)
+            => new Float2(left.X * right, left.Y * right);
+
         public static Int2 operator *(int left, Int2 right)
             => new Int2(left * right.X, left * right.Y);
 

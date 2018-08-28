@@ -62,7 +62,9 @@ namespace HT.Engine.Math
             y = Y;
         }
 
-        public Float2 Round() => new Float2(MathF.Round(X), MathF.Round(Y));
+        public Float2 Round() => new Float2(X.Round(), Y.Round());
+
+        public Int2 RoundToInt() => new Int2(X.RoundToInt(), Y.RoundToInt());
 
         //Arithmetic methods
         public static Float2 GetMax(Float2 left, Float2 right)

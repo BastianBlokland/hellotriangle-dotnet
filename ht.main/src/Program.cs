@@ -26,6 +26,7 @@ namespace HT.Main
                     reflectionTexture: new TextureInfo(LoadTex("textures/skybox.cube")),
                     postVertProg: LoadProg("shaders/bin/post_fullscreen.vert.spv"),
                     bloomFragProg: LoadProg("shaders/bin/post_bloom.frag.spv"),
+                    blurFragProg: LoadProg("shaders/bin/post_blur.frag.spv"),
                     compositionFragProg: LoadProg("shaders/bin/post_baselighting.frag.spv"), logger);
                 window.AttachScene(scene);
 

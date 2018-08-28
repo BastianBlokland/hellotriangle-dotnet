@@ -50,10 +50,7 @@ void main()
     vec3 camPos = cameraData.cameraMatrix[3].xyz;
 
     //Sample data from the scene
-    vec4 colorAndBloom = texture(sceneColorSampler, inUv);
-    //Darken the color when bloomed because the bloom is applied additivly and we want to keep the
-    //color consistent and not overbrightening them (alternativly we could use a hdr color target)
-    vec3 color = colorAndBloom.rgb * (1.0 - colorAndBloom.a);
+    vec3 color = texture(sceneColorSampler, inUv).rgb;
     vec3 normal = texture(sceneNormalSampler, inUv).xyz;
     vec4 attributes = texture(sceneAttributeSampler, inUv);
     float depth = texture(sceneDepthSampler, inUv).r;
@@ -98,7 +95,6 @@ void main()
     float fogDistanceBlend = clamp(linearDepth / 100, 0.01, 0.7);
     outColor = mix(outColor, vec4(sunColor, 1), fogHeightBlend * fogDistanceBlend);
 
-    vec4 bloomSample = texture(sceneBloomSampler, inUv);
-    //outColor += vec4(bloomSample.rgb * bloomSample.a, 0.0);
-    outColor = vec4(bloomSample.rgb * bloomSample.a, 0.0);
+    //Apply bloom
+    outColor.rgb += texture(sceneBloomSampler, inUv).rgb;
 }

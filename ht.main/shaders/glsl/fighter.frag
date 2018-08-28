@@ -24,14 +24,15 @@ layout(location = 2) out vec4 outAttributes;
 
 void main() 
 {
-    #define hotExhaustColor vec3(0.9, 0.9, 2.0)
-    #define coldExhaustColor vec3(0.2, 0.2, 2.0)
+
+    #define hotExhaustColor vec3(0.6, 0.5, 0.8)
+    #define coldExhaustColor vec3(0.6, 0.3, 0.8)
 
     vec4 colorAndSpec = texture(colorSampler, inUv);
     vec3 exhaustColor = mix(hotExhaustColor, coldExhaustColor, inExhaustIntensity) * inExhaustMask;
 
     outColor.rgb = colorAndSpec.rgb + exhaustColor;
-    outColor.a = inExhaustMask * (1.0 - inExhaustIntensity); //Bloom factor
+    outColor.a = inExhaustMask * mix(0.75, 1.0, inExhaustIntensity); //Bloom factor
     outNormal.xyz = applyNormalTex(normalSampler, inWorldNormal, inWorldPosition, inUv);
     outAttributes.x = colorAndSpec.a; //Specular
     outAttributes.y = inExhaustMask; //Emissiveness

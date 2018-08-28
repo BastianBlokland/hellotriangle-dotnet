@@ -8,6 +8,8 @@ namespace HT.Engine.Math
 
         public static float Round(this float val) => MathF.Round(val);
 
+        public static int RoundToInt(this float val) => (int)MathF.Round(val);
+
         public static bool Approx(this float val, float other, float maxDifference = .0001f)
             => FloatUtils.Approx(val, other, maxDifference);
 

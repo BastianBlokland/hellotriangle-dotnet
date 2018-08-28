@@ -36,8 +36,8 @@ namespace HT.Engine.Rendering
         private readonly ShaderInputManager inputManager;
         
         private readonly GBufferTechnique gbufferTechnique;
-        private readonly BloomTechnique bloomTechnique;
         private readonly ShadowTechnique shadowTechnique;
+        private readonly BloomTechnique bloomTechnique;
         private readonly DeferredTechnique deferredTechnique;
         
         private readonly List<IInternalRenderObject> objects = new List<IInternalRenderObject>();
@@ -48,7 +48,7 @@ namespace HT.Engine.Rendering
         public RenderScene(Window window,
             TextureInfo reflectionTexture,
             ShaderProgram postVertProg,
-            ShaderProgram bloomFragProg, ShaderProgram compositionFragProg,
+            ShaderProgram bloomFragProg, ShaderProgram blurFragProg, ShaderProgram compositionFragProg,
             Logger logger = null)
         {
             if (window == null)
@@ -59,6 +59,8 @@ namespace HT.Engine.Rendering
                 throw new ArgumentNullException(nameof(postVertProg));
             if (bloomFragProg == null)
                 throw new ArgumentNullException(nameof(bloomFragProg));
+            if (blurFragProg == null)
+                throw new ArgumentNullException(nameof(blurFragProg));
             if (compositionFragProg == null)
                 throw new ArgumentNullException(nameof(compositionFragProg));
 
@@ -80,12 +82,9 @@ namespace HT.Engine.Rendering
 
             //Create techniques
             gbufferTechnique = new GBufferTechnique(this, logger);
-
-            bloomTechnique = new BloomTechnique(
-                gbufferTechnique, postVertProg, bloomFragProg, this, logger);
-
             shadowTechnique = new ShadowTechnique(this, logger);
-
+            bloomTechnique = new BloomTechnique(
+                gbufferTechnique, postVertProg, bloomFragProg, blurFragProg, this, logger);
             deferredTechnique = new DeferredTechnique(
                 gbufferTechnique, bloomTechnique, shadowTechnique,
                 reflectionTexture, postVertProg, compositionFragProg,
@@ -138,11 +137,8 @@ namespace HT.Engine.Rendering
             ThrowIfDisposed();
 
             gbufferTechnique.CreateResources(swapchainSize, sceneDataBuffer);
-
-            bloomTechnique.CreateResources(swapchainSize);
-
             shadowTechnique.CreateResources(swapchainSize, sceneDataBuffer);
-
+            bloomTechnique.CreateResources(swapchainSize);
             deferredTechnique.CreateResources(swapchainTargets, sceneDataBuffer);
         }
 
@@ -152,10 +148,16 @@ namespace HT.Engine.Rendering
 
             //First render the gbuffer and shadow targets
             gbufferTechnique.Record(commandbuffer);
-            bloomTechnique.Record(commandbuffer);
             shadowTechnique.Record(commandbuffer);
 
             //Insert barrier to wait for the gbuffer and shadow rendering to be complete
+            commandbuffer.CmdPipelineBarrier(
+                srcStageMask: PipelineStages.BottomOfPipe,
+                dstStageMask: PipelineStages.FragmentShader);
+
+            bloomTechnique.Record(commandbuffer);
+
+            //Insert barrier to wait for the bloom rendering to be complete
             commandbuffer.CmdPipelineBarrier(
                 srcStageMask: PipelineStages.BottomOfPipe,
                 dstStageMask: PipelineStages.FragmentShader);

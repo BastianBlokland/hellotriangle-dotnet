@@ -21,7 +21,7 @@ layout(location = 2) out vec4 outAttributes;
 void main() 
 {
     outColor.rgb = texture(skyboxTexture, inSkyboxDirection).rgb;
-    outColor.a = smoothstep(0.5, 1.0, luma(outColor.rgb)); //Bloom factor
+    outColor.a = luma(outColor.rgb) * 0.1; //Bloom factor
     outNormal.xyz = normalize(inWorldNormal);
     outAttributes.x = 0.0; //Specularity
     outAttributes.y = 1.0; //Emissiveness (1 because skybox is prelit)

@@ -15,11 +15,11 @@ namespace HT.Engine.Rendering.Techniques
         private readonly static Format depthFormat = Format.D16UNorm;
 
         //Properties
-        internal IShaderInput CameraInput => cameraBuffer;
-        internal IShaderInput ColorInput => colorSampler;
-        internal IShaderInput NormalInput => normalSampler;
-        internal IShaderInput AttributeInput => attributeSampler;
-        internal IShaderInput DepthInput => depthSampler;
+        internal IShaderInput CameraOutput => cameraBuffer;
+        internal IShaderInput ColorOutput => colorSampler;
+        internal IShaderInput NormalOutput => normalSampler;
+        internal IShaderInput AttributeOutput => attributeSampler;
+        internal IShaderInput DepthOutput => depthSampler;
 
         //Data
         private readonly RenderScene scene;

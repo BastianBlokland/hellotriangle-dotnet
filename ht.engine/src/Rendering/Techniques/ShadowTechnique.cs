@@ -12,26 +12,12 @@ namespace HT.Engine.Rendering.Techniques
 {
     internal sealed class ShadowTechnique : ISpecializationProvider, IDisposable
     {
-        [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
-        private readonly struct SpecializationData
-        {
-            public const int SIZE = sizeof(bool);
-            
-            //Data
-            public readonly bool IsShadowPass;
-
-            public SpecializationData(bool isShadowPass)
-            {
-                IsShadowPass = isShadowPass;
-            }
-        }
-
         private readonly static int targetSize = 2048;
         private readonly static Format depthFormat = Format.D16UNorm;
 
         //Properties
-        internal IShaderInput CameraInput => cameraBuffer;
-        internal IShaderInput ShadowInput => depthSampler;
+        internal IShaderInput CameraOutput => cameraBuffer;
+        internal IShaderInput ShadowOutput => depthSampler;
 
         //Data
         private readonly RenderScene scene;
@@ -47,9 +33,6 @@ namespace HT.Engine.Rendering.Techniques
 
         //Sampler for sampling shadow data
         private DeviceSampler depthSampler;
-
-        //Data for the specialization constants
-        private SpecializationData specializationData = new SpecializationData(isShadowPass: true);
 
         private bool disposed;
 
@@ -219,12 +202,13 @@ namespace HT.Engine.Rendering.Techniques
         {
             unsafe
             {
+                bool isShadowPass = true;
                 return new SpecializationInfo(new [] { new SpecializationMapEntry(
                     constantId: 0,
                     offset: 0,
                     size: new Size(sizeof(bool))) },
-                    new Size(SpecializationData.SIZE),
-                    data: new IntPtr(Unsafe.AsPointer(ref specializationData)));
+                    new Size(sizeof(bool)),
+                    data: new IntPtr(Unsafe.AsPointer(ref isShadowPass)));
             }
         }
 

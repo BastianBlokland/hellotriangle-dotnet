@@ -68,13 +68,13 @@ namespace HT.Engine.Rendering.Techniques
 
             //Bind all the inputs
             renderer.BindGlobalInputs(new IShaderInput[] {
-                sceneData, gbufferTechnique.CameraInput, shadowTechnique.CameraInput,
-                gbufferTechnique.ColorInput,
-                gbufferTechnique.NormalInput,
-                gbufferTechnique.AttributeInput,
-                gbufferTechnique.DepthInput,
-                bloomTechnique.BloomInput,
-                shadowTechnique.ShadowInput });
+                sceneData, gbufferTechnique.CameraOutput, shadowTechnique.CameraOutput,
+                gbufferTechnique.ColorOutput,
+                gbufferTechnique.NormalOutput,
+                gbufferTechnique.AttributeOutput,
+                gbufferTechnique.DepthOutput,
+                bloomTechnique.BloomOutput,
+                shadowTechnique.ShadowOutput });
 
             //Tell the renderer to allocate its resources based on the data we've provided
             renderer.CreateResources(specialization: null);
