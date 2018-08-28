@@ -11,7 +11,7 @@ namespace HT.Engine.Rendering.Techniques
     {
         private readonly static Format bloomFormat = Format.R8G8B8A8UNorm;
         private readonly static int blurIterations = 2;
-        private readonly static float blurStepScale = 1.8f;
+        private readonly static float blurStepScale = 1.5f;
 
         //Properties
         internal IShaderInput BloomOutput => bloomSampler;

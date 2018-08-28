@@ -32,7 +32,7 @@ void main()
     vec3 exhaustColor = mix(hotExhaustColor, coldExhaustColor, inExhaustIntensity) * inExhaustMask;
 
     outColor.rgb = colorAndSpec.rgb + exhaustColor;
-    outColor.a = inExhaustMask * mix(0.75, 1.0, inExhaustIntensity); //Bloom factor
+    outColor.a = inExhaustMask; //Bloom factor
     outNormal.xyz = applyNormalTex(normalSampler, inWorldNormal, inWorldPosition, inUv);
     outAttributes.x = colorAndSpec.a; //Specular
     outAttributes.y = inExhaustMask; //Emissiveness
