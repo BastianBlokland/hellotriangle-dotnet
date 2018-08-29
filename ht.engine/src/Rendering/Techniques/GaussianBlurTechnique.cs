@@ -9,7 +9,7 @@ using VulkanCore;
 
 namespace HT.Engine.Rendering.Techniques
 {
-    internal sealed class BlurTechnique : IDisposable
+    internal sealed class GaussianBlurTechnique : IDisposable
     {
         private class SpecializationProvider : ISpecializationProvider
         {
@@ -20,19 +20,19 @@ namespace HT.Engine.Rendering.Techniques
                 
                 //Data
                 public readonly bool IsHorizontal;
-                public readonly float StepScale;
+                public readonly float SampleScale;
 
-                public Data(bool isHorizontal, float stepScale)
+                public Data(bool isHorizontal, float sampleScale)
                 {
                     IsHorizontal = isHorizontal;
-                    StepScale = stepScale;
+                    SampleScale = sampleScale;
                 }
             }
 
             private Data data;
 
-            public SpecializationProvider(bool isHorizontal, float stepScale)
-                => this.data = new Data(isHorizontal, stepScale);
+            public SpecializationProvider(bool isHorizontal, float sampleScale)
+                => this.data = new Data(isHorizontal, sampleScale);
 
             SpecializationInfo ISpecializationProvider.GetSpecialization()
             {
@@ -74,9 +74,9 @@ namespace HT.Engine.Rendering.Techniques
 
         private bool disposed;
 
-        internal BlurTechnique(
+        internal GaussianBlurTechnique(
             ShaderProgram postVertProg, ShaderProgram blurFragProg,
-            int iterations, float stepScale, RenderScene scene, Logger logger = null)
+            int iterations, float sampleScale, RenderScene scene, Logger logger = null)
         {
             if (postVertProg == null)
                 throw new ArgumentNullException(nameof(postVertProg));
@@ -88,8 +88,8 @@ namespace HT.Engine.Rendering.Techniques
             this.iterations = iterations;
             this.scene = scene;
 
-            horizontalSpecialization = new SpecializationProvider(isHorizontal: true, stepScale);
-            verticalSpecialization = new SpecializationProvider(isHorizontal: false, stepScale);
+            horizontalSpecialization = new SpecializationProvider(isHorizontal: true, sampleScale);
+            verticalSpecialization = new SpecializationProvider(isHorizontal: false, sampleScale);
 
             //Create renderers (2 so we can ping-pong between two targets)
             rendererA = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
@@ -174,7 +174,7 @@ namespace HT.Engine.Rendering.Techniques
         private void ThrowIfDisposed()
         {
             if (disposed)
-                throw new Exception($"[{nameof(BlurTechnique)}] Allready disposed");
+                throw new Exception($"[{nameof(GaussianBlurTechnique)}] Allready disposed");
         }
     }
 }

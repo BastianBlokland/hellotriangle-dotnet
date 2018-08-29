@@ -26,7 +26,7 @@ namespace HT.Main
                     reflectionTexture: new TextureInfo(LoadTex("textures/skybox.cube")),
                     postVertProg: LoadProg("shaders/bin/post_fullscreen.vert.spv"),
                     bloomFragProg: LoadProg("shaders/bin/post_bloom.frag.spv"),
-                    blurFragProg: LoadProg("shaders/bin/post_blur.frag.spv"),
+                    blurFragProg: LoadProg("shaders/bin/post_blur_gaussian.frag.spv"),
                     compositionFragProg: LoadProg("shaders/bin/post_baselighting.frag.spv"), logger);
                 window.AttachScene(scene);
 
@@ -91,7 +91,7 @@ namespace HT.Main
                         center: Float3.Lerp((0f, 10f, 0f), (75f, 5f, 0f), 0f),//(float)frameTracker.ElapsedTime * .03f),
                         offset: (-3f, 1f, 0f), //-100f, 25f, 0f
                         axis: Float3.Up,
-                        angle: (float)frameTracker.ElapsedTime * .25f);
+                        angle: -.7f);//(float)frameTracker.ElapsedTime * .25f);
 
                     //Call the os update loop to get os events about our windows
                     //Like input, resize, or close

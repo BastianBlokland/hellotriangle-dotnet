@@ -11,7 +11,7 @@ namespace HT.Engine.Rendering.Techniques
     {
         private readonly static Format bloomFormat = Format.R8G8B8A8UNorm;
         private readonly static int blurIterations = 2;
-        private readonly static float blurStepScale = 1.5f;
+        private readonly static float blurSampleScale = 1.5f;
 
         //Properties
         internal IShaderInput BloomOutput => bloomSampler;
@@ -22,7 +22,7 @@ namespace HT.Engine.Rendering.Techniques
         private readonly Renderer renderer;
 
         private readonly AttributelessObject renderObject;
-        private readonly BlurTechnique blurTechnique;
+        private readonly GaussianBlurTechnique blurTechnique;
 
         //Target to render into
         private DeviceTexture bloomTarget;
@@ -60,11 +60,11 @@ namespace HT.Engine.Rendering.Techniques
             renderer.AddObject(renderObject, postVertProg, bloomFragProg);
 
             //Create a BlurTechnique for blurring the bloom texture
-            blurTechnique = new BlurTechnique(
+            blurTechnique = new GaussianBlurTechnique(
                 postVertProg,
                 blurFragProg,
                 blurIterations,
-                blurStepScale,
+                blurSampleScale,
                 scene,
                 logger);
         }

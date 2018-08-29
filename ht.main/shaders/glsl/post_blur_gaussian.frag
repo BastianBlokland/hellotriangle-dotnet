@@ -7,7 +7,7 @@
 
 //Specialization
 layout(constant_id = 0) const bool isHorizontal = true;
-layout(constant_id = 1) const float scale = 1.0;
+layout(constant_id = 1) const float sampleScale = 1.0;
 
 //Uniforms
 layout(binding = 0) uniform sampler2D inputSampler;
@@ -30,20 +30,20 @@ void main()
         0.016216
     );
 
-    vec2 offset = 1.0 / textureSize(inputSampler, 0) * scale; //Size of single texel
-    vec3 result = texture(inputSampler, inUv).rgb * weights[0]; //Current fragment's contribution
+    vec2 sampleSize = 1.0 / textureSize(inputSampler, 0) * sampleScale; //Size of single texel
+    vec4 result = texture(inputSampler, inUv) * weights[0]; //Current fragment's contribution
     for(int i = 1; i < 5; ++i)
     {
         if (isHorizontal)
         {
-            result += texture(inputSampler, inUv + vec2(offset.x * i, 0.0)).rgb * weights[i];
-            result += texture(inputSampler, inUv - vec2(offset.x * i, 0.0)).rgb * weights[i];
+            result += texture(inputSampler, inUv + vec2(sampleSize.x * i, 0.0)) * weights[i];
+            result += texture(inputSampler, inUv - vec2(sampleSize.x * i, 0.0)) * weights[i];
         }
         else //Vertical
         {
-            result += texture(inputSampler, inUv + vec2(0.0, offset.y * i)).rgb * weights[i];
-            result += texture(inputSampler, inUv - vec2(0.0, offset.y * i)).rgb * weights[i];
+            result += texture(inputSampler, inUv + vec2(0.0, sampleSize.y * i)) * weights[i];
+            result += texture(inputSampler, inUv - vec2(0.0, sampleSize.y * i)) * weights[i];
         }
     }
-    outColor = vec4(result, 1.0);
+    outColor = result;
 }
