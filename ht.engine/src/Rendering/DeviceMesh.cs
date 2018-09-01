@@ -23,30 +23,19 @@ namespace HT.Engine.Rendering
         private readonly Memory.DeviceBuffer indexBuffer;
         private bool disposed;
 
-        internal DeviceMesh(
-            Mesh mesh,
-            Device logicalDevice,
-            Memory.Pool memoryPool,
-            Memory.HostBuffer stagingBuffer,
-            TransientExecutor executor)
+        internal DeviceMesh(Mesh mesh, RenderScene scene)
         {
             if (mesh == null)
                 throw new ArgumentNullException(nameof(mesh));
-            if (logicalDevice == null)
-                throw new ArgumentNullException(nameof(logicalDevice));
-            if (memoryPool == null)
-                throw new ArgumentNullException(nameof(memoryPool));
-            if (stagingBuffer == null)
-                throw new ArgumentNullException(nameof(stagingBuffer));
-            if (executor == null)
-                throw new ArgumentNullException(nameof(stagingBuffer));
+            if (scene == null)
+                throw new ArgumentNullException(nameof(scene));
 
             topology = mesh.Topology;
             allowRestart = mesh.AllowRestart;
             vertexCount = mesh.VertexCount;
             indexCount = mesh.IndexCount;
-            vertexBuffer = mesh.UploadVertices(logicalDevice, memoryPool, stagingBuffer, executor);
-            indexBuffer = mesh.UploadIndices(logicalDevice, memoryPool, stagingBuffer, executor);
+            vertexBuffer = mesh.UploadVertices(scene);
+            indexBuffer = mesh.UploadIndices(scene);
         }
 
         public void Dispose()

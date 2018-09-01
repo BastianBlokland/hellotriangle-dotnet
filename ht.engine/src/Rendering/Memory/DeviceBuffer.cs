@@ -42,6 +42,45 @@ namespace HT.Engine.Rendering.Memory
             memory = memoryPool.AllocateAndBind(buffer, Chunk.Location.Device);
         }
 
+        internal static DeviceBuffer UploadData<T>(
+            ReadOnlySpan<T> data,
+            RenderScene scene,
+            BufferUsages usages) where T : struct
+        {
+            return UploadData<T>(
+                data,
+                scene.LogicalDevice,
+                scene.MemoryPool,
+                usages,
+                scene.StagingBuffer,
+                scene.Executor);
+        }
+
+        internal static DeviceBuffer UploadData<T>(
+            ReadOnlySpan<T> data,
+            Device logicalDevice,
+            Pool memoryPool,
+            BufferUsages usages,
+            HostBuffer stagingBuffer,
+            TransientExecutor executor) where T : struct
+        {
+            //First write the data to the staging buffer
+            int size = stagingBuffer.Write<T>(data, offset: 0);
+
+            //Then create a device buffer with that size
+            DeviceBuffer targetBuffer = new DeviceBuffer(logicalDevice, memoryPool, usages, size);
+
+            //Then copy the data from the staging buffer to the devicebuffer
+            executor.ExecuteBlocking(commandBuffer =>
+            {
+                commandBuffer.CmdCopyBuffer(
+                    srcBuffer: stagingBuffer.VulkanBuffer,
+                    dstBuffer: targetBuffer.VulkanBuffer,
+                    new BufferCopy(size: size, srcOffset: 0, dstOffset: 0));
+            });
+            return targetBuffer;
+        }
+
         public WriteDescriptorSet CreateDescriptorWrite(DescriptorSet set, int binding)
             => new WriteDescriptorSet(
                 dstSet: set,

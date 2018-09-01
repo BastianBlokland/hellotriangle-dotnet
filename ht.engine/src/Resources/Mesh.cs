@@ -77,74 +77,18 @@ namespace HT.Engine.Resources
                     uv2: vertices[i].Uv2);
         }
 
-        internal DeviceBuffer UploadVertices(
-            Device logicalDevice,
-            Pool memoryPool,
-            HostBuffer stagingBuffer,
-            TransientExecutor executor)
+        internal DeviceBuffer UploadVertices(RenderScene scene)
         {
-            if (logicalDevice == null)
-                throw new ArgumentNullException(nameof(logicalDevice));
-            if (memoryPool == null)
-                throw new ArgumentNullException(nameof(memoryPool));
-            if (stagingBuffer == null)
-                throw new ArgumentNullException(nameof(stagingBuffer));
-            if (executor == null)
-                throw new ArgumentNullException(nameof(executor));
-
-            DeviceBuffer vertexBuffer = new DeviceBuffer(
-                logicalDevice: logicalDevice,
-                memoryPool: memoryPool,
-                size: vertices.GetSize(),
-                usages: BufferUsages.VertexBuffer);
-
-            //Write the data to the staging buffer
-            int stagingSize = stagingBuffer.Write(vertices);
-
-            //Copy the staging buffer to a device buffer
-            executor.ExecuteBlocking(commandBuffer =>
-            {
-                commandBuffer.CmdCopyBuffer(
-                    srcBuffer: stagingBuffer.VulkanBuffer,
-                    dstBuffer: vertexBuffer.VulkanBuffer,
-                    new BufferCopy(size: stagingSize, srcOffset: 0, dstOffset: 0));
-            });
-            return vertexBuffer;
+            if (scene == null)
+                throw new ArgumentNullException(nameof(scene));
+           return DeviceBuffer.UploadData<Vertex>(vertices, scene, BufferUsages.VertexBuffer);
         }
 
-        internal DeviceBuffer UploadIndices(
-            Device logicalDevice,
-            Pool memoryPool,
-            HostBuffer stagingBuffer,
-            TransientExecutor executor)
+        internal DeviceBuffer UploadIndices(RenderScene scene)
         {
-            if (logicalDevice == null)
-                throw new ArgumentNullException(nameof(logicalDevice));
-            if (memoryPool == null)
-                throw new ArgumentNullException(nameof(memoryPool));
-            if (stagingBuffer == null)
-                throw new ArgumentNullException(nameof(stagingBuffer));
-            if (executor == null)
-                throw new ArgumentNullException(nameof(executor));
-
-            DeviceBuffer indexBuffer = new DeviceBuffer(
-                logicalDevice: logicalDevice,
-                memoryPool: memoryPool,
-                size: indices.GetSize(),
-                usages: BufferUsages.IndexBuffer);
-            
-             //Write the data to the staging buffer
-            int stagingSize = stagingBuffer.Write(indices);
-
-            //Copy the staging buffer to a device buffer
-            executor.ExecuteBlocking(commandBuffer =>
-            {
-                commandBuffer.CmdCopyBuffer(
-                    srcBuffer: stagingBuffer.VulkanBuffer,
-                    dstBuffer: indexBuffer.VulkanBuffer,
-                    new BufferCopy(size: stagingSize, srcOffset: 0, dstOffset: 0));
-            });
-            return indexBuffer;
+            if (scene == null)
+                throw new ArgumentNullException(nameof(scene));
+            return DeviceBuffer.UploadData<UInt16>(indices, scene, BufferUsages.IndexBuffer);
         }
     }
 }

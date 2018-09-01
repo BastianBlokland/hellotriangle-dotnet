@@ -24,6 +24,7 @@ namespace HT.Engine.Rendering
             DeviceTexture texture,
             bool disposeTexture = true,
             bool repeat = false,
+            bool pointFilter = false,
             float maxAnisotropy = -1f)
         {
             if (logicalDevice == null)
@@ -32,8 +33,8 @@ namespace HT.Engine.Rendering
             this.texture = texture;
             this.disposeTexture = disposeTexture;
             sampler = logicalDevice.CreateSampler(new SamplerCreateInfo {
-                MagFilter = Filter.Linear,
-                MinFilter = Filter.Linear,
+                MagFilter = pointFilter ? Filter.Nearest : Filter.Linear,
+                MinFilter = pointFilter ? Filter.Nearest : Filter.Linear,
                 AddressModeU = repeat ? SamplerAddressMode.Repeat : SamplerAddressMode.ClampToEdge,
                 AddressModeV = repeat ? SamplerAddressMode.Repeat : SamplerAddressMode.ClampToEdge,
                 AddressModeW = repeat ? SamplerAddressMode.Repeat : SamplerAddressMode.ClampToEdge,

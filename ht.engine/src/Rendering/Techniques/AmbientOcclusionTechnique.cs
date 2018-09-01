@@ -2,15 +2,18 @@ using System;
 using System.Runtime.CompilerServices;
 
 using HT.Engine.Math;
+using HT.Engine.Rendering.Memory;
 using HT.Engine.Resources;
 using HT.Engine.Utils;
 using VulkanCore;
 
 namespace HT.Engine.Rendering.Techniques
 {
-    internal sealed class AmbientOcclusionTechnique : IPushDataProvider, IDisposable
+    internal sealed class AmbientOcclusionTechnique
+        : ISpecializationProvider, IPushDataProvider, IDisposable
     {
         private readonly static Format aoFormat = Format.R8UNorm;
+        private readonly static int sampleKernelSize = 32;
         private readonly static int noiseSize = 4;
         //We want to blur out the noise, but blur goes in both directions so we need to take half
         private readonly static int blurSampleRange = noiseSize / 2; 
@@ -30,6 +33,7 @@ namespace HT.Engine.Rendering.Techniques
 
         //Target to render into
         private DeviceTexture aoTarget;
+        private DeviceBuffer sampleKernelBuffer;
 
         private bool disposed;
 
@@ -60,12 +64,19 @@ namespace HT.Engine.Rendering.Techniques
             //Create random for generating the kernel and noise (using a arbitrary fixed seed)
             IRandom random = new ShiftRandom(seed: 1234); 
 
+            //Create the sample kernel
+            Span<Float4> sampleKernel = stackalloc Float4[sampleKernelSize];
+            GenerateSampleKernel(random, sampleKernel);
+            sampleKernelBuffer = DeviceBuffer.UploadData<Float4>(
+                sampleKernel, scene, BufferUsages.UniformBuffer);
+
             //Create the rotation noise texture
             FloatTexture rotationNoiseTexture = TextureUtils.CreateRandomFloatTexture(
                 random, min: (-1f, -1f, 0f, 0f), max: (1f, 1f, 0f, 0f), size: (noiseSize, noiseSize));
             rotationNoiseSampler = new DeviceSampler(scene.LogicalDevice, 
                 texture: DeviceTexture.UploadTexture(rotationNoiseTexture, scene),
-                repeat: true);
+                repeat: true,
+                pointFilter: true);
 
             //Add full-screen object for drawing the composition
             renderObject = new AttributelessObject(scene, vertexCount: 3, new TextureInfo[0]);
@@ -95,6 +106,7 @@ namespace HT.Engine.Rendering.Techniques
             renderer.BindGlobalInputs(new IShaderInput[] { 
                 gbufferTechnique.DepthOutput,
                 gbufferTechnique.NormalOutput,
+                sampleKernelBuffer,
                 rotationNoiseSampler });
 
             //Bind the targets to the renderer
@@ -130,8 +142,40 @@ namespace HT.Engine.Rendering.Techniques
             renderObject.Dispose();
             rotationNoiseSampler.Dispose();
             aoTarget?.Dispose();
+            sampleKernelBuffer.Dispose();
 
             disposed = true;
+        }
+
+        private static void GenerateSampleKernel(IRandom random, Span<Float4> kernel)
+        {
+            //Generate points in the hemisphere with higher density near the center
+            for (int i = 0; i < kernel.Length; i++)
+            {
+                Float3 dir = Float3.FastNormalize(
+                    random.GetBetween(minValue: (-1f, -1f, 0f), maxValue: (1f, 1f, 1f)));
+
+                float scale = (float)i / kernel.Length;
+                Float3 point = dir * FloatUtils.Lerp(.1f, 1f, scale * scale);
+                kernel[i] = point.XYZ0;
+            }
+        }
+
+        SpecializationInfo ISpecializationProvider.GetSpecialization()
+        {
+            unsafe
+            {
+                int kernelSize = sampleKernelSize;
+                return new SpecializationInfo(new [] 
+                    {
+                        new SpecializationMapEntry(
+                            constantId: 0,
+                            offset: 0,
+                            size: new Size(sizeof(int)))
+                    },
+                    new Size(sizeof(int)),
+                    data: new IntPtr(Unsafe.AsPointer(ref kernelSize)));
+            } 
         }
 
         PushConstantRange[] IPushDataProvider.GetDataRanges()

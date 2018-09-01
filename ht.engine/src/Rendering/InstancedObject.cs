@@ -46,12 +46,7 @@ namespace HT.Engine.Rendering
             }
 
             //Upload our mesh to the gpu
-            deviceMesh = new DeviceMesh(
-                mesh, 
-                scene.LogicalDevice,
-                scene.MemoryPool,
-                scene.StagingBuffer,
-                scene.Executor);
+            deviceMesh = new DeviceMesh(mesh, scene);
 
             //Allocate a buffers for the instance data and indirect args
             instanceDataBuffer = new Memory.HostBuffer(
