@@ -7,6 +7,7 @@
 
 //Specialization
 layout(constant_id = 0) const int sampleKernelSize = 32;
+layout(constant_id = 1) const float sampleRadius = 0.5;
 
 //Uniforms
 layout(binding = 0) uniform sampler2D sceneDepthSampler;

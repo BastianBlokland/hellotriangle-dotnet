@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 using HT.Engine.Math;
 using HT.Engine.Rendering.Memory;
@@ -12,8 +13,24 @@ namespace HT.Engine.Rendering.Techniques
     internal sealed class AmbientOcclusionTechnique
         : ISpecializationProvider, IPushDataProvider, IDisposable
     {
+        [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
+        private readonly struct SpecializationData
+        {
+            public const int SIZE = sizeof(int) + sizeof(float);
+            
+            public readonly int SampleKernelSize;
+            public readonly float SampleRadius;
+
+            public SpecializationData(int sampleKernelSize, float sampleRadius)
+            {
+                SampleKernelSize = sampleKernelSize;
+                SampleRadius = sampleRadius;
+            }
+        }
+
         private readonly static Format aoFormat = Format.R8UNorm;
         private readonly static int sampleKernelSize = 32;
+        private readonly static float sampleRadius = .5f;
         private readonly static int noiseSize = 4;
         //We want to blur out the noise, but blur goes in both directions so we need to take half
         private readonly static int blurSampleRange = noiseSize / 2; 
@@ -30,6 +47,8 @@ namespace HT.Engine.Rendering.Techniques
         private readonly DeviceSampler rotationNoiseSampler;
         private readonly AttributelessObject renderObject;
         private readonly BoxBlurTechnique blurTechnique;
+
+        private SpecializationData specializationData;
 
         //Target to render into
         private DeviceTexture aoTarget;
@@ -57,6 +76,8 @@ namespace HT.Engine.Rendering.Techniques
             this.gbufferTechnique = gbufferTechnique;
             this.scene = scene;
             this.logger = logger;
+            
+            specializationData = new SpecializationData(sampleKernelSize, sampleRadius);
 
             //Create renderer for rendering the ao texture
             renderer = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
@@ -165,17 +186,20 @@ namespace HT.Engine.Rendering.Techniques
         {
             unsafe
             {
-                int kernelSize = sampleKernelSize;
                 return new SpecializationInfo(new [] 
                     {
                         new SpecializationMapEntry(
                             constantId: 0,
                             offset: 0,
-                            size: new Size(sizeof(int)))
+                            size: new Size(sizeof(int))),
+                        new SpecializationMapEntry(
+                            constantId: 1,
+                            offset: sizeof(int),
+                            size: new Size(sizeof(float)))
                     },
-                    new Size(sizeof(int)),
-                    data: new IntPtr(Unsafe.AsPointer(ref kernelSize)));
-            } 
+                    new Size(SpecializationData.SIZE),
+                    data: new IntPtr(Unsafe.AsPointer(ref specializationData)));
+            }
         }
 
         PushConstantRange[] IPushDataProvider.GetDataRanges()

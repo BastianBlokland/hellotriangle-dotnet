@@ -9,49 +9,21 @@ using VulkanCore;
 
 namespace HT.Engine.Rendering.Techniques
 {
-    internal sealed class BoxBlurTechnique : IDisposable
+    internal sealed class BoxBlurTechnique : ISpecializationProvider, IDisposable
     {
-        private class SpecializationProvider : ISpecializationProvider
+        [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
+        private readonly struct SpecializationData
         {
-            [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
-            private readonly struct Data
+            public const int SIZE = sizeof(int) + sizeof(float);
+            
+            //Data
+            public readonly int SampleRange;
+            public readonly float SampleScale;
+
+            public SpecializationData(int sampleRange, float sampleScale)
             {
-                public const int SIZE = sizeof(int) + sizeof(float);
-                
-                //Data
-                public readonly int SampleRange;
-                public readonly float SampleScale;
-
-                public Data(int sampleRange, float sampleScale)
-                {
-                    SampleRange = sampleRange;
-                    SampleScale = sampleScale;
-                }
-            }
-
-            private Data data;
-
-            public SpecializationProvider(int sampleRange, float sampleScale)
-                => this.data = new Data(sampleRange, sampleScale);
-
-            SpecializationInfo ISpecializationProvider.GetSpecialization()
-            {
-                unsafe
-                {
-                    return new SpecializationInfo(new [] 
-                        {
-                            new SpecializationMapEntry(
-                                constantId: 0,
-                                offset: 0,
-                                size: new Size(sizeof(int))),
-                            new SpecializationMapEntry(
-                                constantId: 1,
-                                offset: sizeof(int),
-                                size: new Size(sizeof(float)))
-                        },
-                        new Size(Data.SIZE),
-                        data: new IntPtr(Unsafe.AsPointer(ref data)));
-                }
+                SampleRange = sampleRange;
+                SampleScale = sampleScale;
             }
         }
 
@@ -60,10 +32,11 @@ namespace HT.Engine.Rendering.Techniques
 
         //Data
         private readonly RenderScene scene;
-        private readonly SpecializationProvider specialization;
         private readonly Renderer renderer;
 
         private readonly AttributelessObject renderObject;
+
+        private SpecializationData specializationData;
 
         //Target and sampler used during the blur pass
         private DeviceTexture outputTarget;
@@ -85,7 +58,7 @@ namespace HT.Engine.Rendering.Techniques
 
             this.scene = scene;
 
-            specialization = new SpecializationProvider(sampleRange, sampleScale);
+            specializationData = new SpecializationData(sampleRange, sampleScale);
 
             //Setup renderer
             renderer = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
@@ -118,7 +91,7 @@ namespace HT.Engine.Rendering.Techniques
             renderer.BindTargets(new [] { outputTarget });
 
             //Tell the renderer to allocate its resources based on the data we've provided
-            renderer.CreateResources(specialization);
+            renderer.CreateResources(specialization: this);
         }
 
         internal void Record(CommandBuffer commandbuffer)
@@ -145,6 +118,26 @@ namespace HT.Engine.Rendering.Techniques
         {
             if (disposed)
                 throw new Exception($"[{nameof(BoxBlurTechnique)}] Allready disposed");
+        }
+
+        SpecializationInfo ISpecializationProvider.GetSpecialization()
+        {
+            unsafe
+            {
+                return new SpecializationInfo(new [] 
+                    {
+                        new SpecializationMapEntry(
+                            constantId: 0,
+                            offset: 0,
+                            size: new Size(sizeof(int))),
+                        new SpecializationMapEntry(
+                            constantId: 1,
+                            offset: sizeof(int),
+                            size: new Size(sizeof(float)))
+                    },
+                    new Size(SpecializationData.SIZE),
+                    data: new IntPtr(Unsafe.AsPointer(ref specializationData)));
+            }
         }
     }
 }
