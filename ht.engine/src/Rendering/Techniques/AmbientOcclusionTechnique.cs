@@ -1,13 +1,14 @@
 using System;
+using System.Runtime.CompilerServices;
+
 using HT.Engine.Math;
 using HT.Engine.Resources;
 using HT.Engine.Utils;
-
 using VulkanCore;
 
 namespace HT.Engine.Rendering.Techniques
 {
-    internal sealed class AmbientOcclusionTechnique : IDisposable
+    internal sealed class AmbientOcclusionTechnique : IPushDataProvider, IDisposable
     {
         private readonly static Format aoFormat = Format.R8UNorm;
         private readonly static int noiseSize = 4;
@@ -21,6 +22,7 @@ namespace HT.Engine.Rendering.Techniques
         private readonly GBufferTechnique gbufferTechnique;
         private readonly RenderScene scene;
         private readonly Renderer renderer;
+        private readonly Logger logger;
 
         private readonly DeviceSampler rotationNoiseSampler;
         private readonly AttributelessObject renderObject;
@@ -50,6 +52,7 @@ namespace HT.Engine.Rendering.Techniques
 
             this.gbufferTechnique = gbufferTechnique;
             this.scene = scene;
+            this.logger = logger;
 
             //Create renderer for rendering the ao texture
             renderer = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
@@ -66,7 +69,7 @@ namespace HT.Engine.Rendering.Techniques
 
             //Add full-screen object for drawing the composition
             renderObject = new AttributelessObject(scene, vertexCount: 3, new TextureInfo[0]);
-            renderer.AddObject(renderObject, postVertProg, aoFragProg);
+            renderer.AddObject(renderObject, postVertProg, aoFragProg, pushDataProvider: this);
 
             //Create a BlurTechnique for blurring the ao texture (to hide the ao sample pattern)
             blurTechnique = new BoxBlurTechnique(
@@ -129,6 +132,24 @@ namespace HT.Engine.Rendering.Techniques
             aoTarget?.Dispose();
 
             disposed = true;
+        }
+
+        PushConstantRange[] IPushDataProvider.GetDataRanges()
+            => new [] { new PushConstantRange(ShaderStages.Fragment, offset: 0, size: Int2.SIZE) };
+
+        void IPushDataProvider.PushData(CommandBuffer commandBuffer, PipelineLayout pipelineLayout)
+        {
+            //Send the target size as a push-constant to the ambient occlusion shader
+            unsafe
+            {
+                Int2 size = aoTarget.Size;
+                commandBuffer.CmdPushConstants(
+                    pipelineLayout,
+                    ShaderStages.Fragment,
+                    offset: 0,
+                    size: Int2.SIZE,
+                    values: new IntPtr(Unsafe.AsPointer(ref size)));
+            }
         }
 
         private void ThrowIfDisposed()

@@ -24,8 +24,7 @@ layout(location = 0) out vec4 outColor;
 
 void main()
 {
-    //pushconstants.targetSize
-    vec2 noiseScale = vec2(1280, 720) / textureSize(rotationNoiseSampler, 0);
+    vec2 noiseScale = pushconstants.targetSize / textureSize(rotationNoiseSampler, 0);
     vec3 randRotation = texture(rotationNoiseSampler, inUv * noiseScale).xyz;
     float sceneDepth = texture(sceneDepthSampler, inUv).r;
     

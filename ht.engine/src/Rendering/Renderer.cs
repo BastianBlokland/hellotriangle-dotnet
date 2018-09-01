@@ -21,6 +21,7 @@ namespace HT.Engine.Rendering
             private readonly bool depthClamp;
             private readonly bool depthBias;
             private readonly IInternalRenderObject renderObject;
+            private readonly IPushDataProvider pushDataProvider;
             private readonly ShaderModule vertModule;
             private readonly ShaderModule fragModule;
 
@@ -33,12 +34,14 @@ namespace HT.Engine.Rendering
                 bool depthClamp,
                 bool depthBias,
                 IInternalRenderObject renderObject,
+                IPushDataProvider pushDataProvider,
                 ShaderProgram vertProg,
                 ShaderProgram fragProg,
                 Device logicalDevice)
             {
                 this.order = order;
                 this.renderObject = renderObject;
+                this.pushDataProvider = pushDataProvider;
                 this.depthClamp = depthClamp;
                 this.depthBias = depthBias;
 
@@ -65,7 +68,8 @@ namespace HT.Engine.Rendering
                 //Create a pipeline layout if we don't have one allready
                 if (pipelineLayout == null)
                     pipelineLayout = logicalDevice.CreatePipelineLayout(new PipelineLayoutCreateInfo(
-                        setLayouts: new [] { inputBlock.Value.Layout }));
+                        setLayouts: new [] { inputBlock.Value.Layout },
+                        pushConstantRanges: pushDataProvider?.GetDataRanges()));
 
                 //Create a pipeline if we don't have one allready
                 if (pipeline == null)
@@ -82,20 +86,23 @@ namespace HT.Engine.Rendering
                         renderObject);
             }
 
-            public void Record(CommandBuffer commandbuffer)
+            public void Record(CommandBuffer commandBuffer)
             {
                 if (inputBlock == null || pipeline == null)
                     throw new Exception($"[{nameof(Renderer)}] Resources have not been created yet");
 
+                //Bind the pushdata (if there is any provider)
+                pushDataProvider?.PushData(commandBuffer, pipelineLayout);
+
                 //Bind the inputs
-                commandbuffer.CmdBindDescriptorSet(
+                commandBuffer.CmdBindDescriptorSet(
                     PipelineBindPoint.Graphics, pipelineLayout, inputBlock.Value.Set);
 
                 //Bind the pipeline
-                commandbuffer.CmdBindPipeline(PipelineBindPoint.Graphics, pipeline);
+                commandBuffer.CmdBindPipeline(PipelineBindPoint.Graphics, pipeline);
                 
                 //Record the object
-                renderObject.Record(commandbuffer);
+                renderObject.Record(commandBuffer);
             }
 
             public void Dispose()
@@ -167,6 +174,7 @@ namespace HT.Engine.Rendering
             ShaderProgram vertProg,
             ShaderProgram fragProg,
             int order = 0,
+            IPushDataProvider pushDataProvider = null,
             bool depthClamp = false,
             bool depthBias = false)
         {
@@ -177,6 +185,7 @@ namespace HT.Engine.Rendering
                 depthClamp,
                 depthBias,
                 renderObject,
+                pushDataProvider,
                 vertProg,
                 fragProg,
                 logicalDevice));
