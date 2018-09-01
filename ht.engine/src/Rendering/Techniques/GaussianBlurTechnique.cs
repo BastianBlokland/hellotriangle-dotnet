@@ -112,8 +112,7 @@ namespace HT.Engine.Rendering.Techniques
 
             //Create a temp target (same format and size as the blur-target) so we can ping-point
             //between the original target and this temp target for each blur step
-            targetB = DeviceTexture.CreateColorTarget(blurTarget.Size, blurTarget.Format,
-                scene.LogicalDevice, scene.MemoryPool, scene.Executor);
+            targetB = DeviceTexture.CreateColorTarget(blurTarget.Size, blurTarget.Format, scene);
             
             //Create samplers
             samplerA = new DeviceSampler(scene.LogicalDevice, blurTarget, disposeTexture: false);

@@ -84,14 +84,10 @@ namespace HT.Engine.Rendering.Techniques
             depthSampler?.Dispose();
 
             //Create the new render targets
-            colorTarget = DeviceTexture.CreateColorTarget(
-                swapchainSize, colorFormat, scene.LogicalDevice, scene.MemoryPool, scene.Executor);
-            normalTarget = DeviceTexture.CreateColorTarget(
-                swapchainSize, normalFormat, scene.LogicalDevice, scene.MemoryPool, scene.Executor);
-            attributeTarget = DeviceTexture.CreateColorTarget(
-                swapchainSize, attributeFormat, scene.LogicalDevice, scene.MemoryPool, scene.Executor);
-            depthTarget = DeviceTexture.CreateDepthTarget(
-                swapchainSize, depthFormat, scene.LogicalDevice, scene.MemoryPool, scene.Executor);
+            colorTarget = DeviceTexture.CreateColorTarget(swapchainSize, colorFormat, scene);
+            normalTarget = DeviceTexture.CreateColorTarget(swapchainSize, normalFormat, scene);
+            attributeTarget = DeviceTexture.CreateColorTarget(swapchainSize, attributeFormat, scene);
+            depthTarget = DeviceTexture.CreateDepthTarget(swapchainSize, depthFormat, scene);
 
             //Create samplers for the targets
             colorSampler = new DeviceSampler(scene.LogicalDevice, colorTarget, disposeTexture: false);

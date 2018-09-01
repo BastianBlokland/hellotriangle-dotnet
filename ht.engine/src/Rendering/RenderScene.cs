@@ -38,6 +38,7 @@ namespace HT.Engine.Rendering
         private readonly GBufferTechnique gbufferTechnique;
         private readonly ShadowTechnique shadowTechnique;
         private readonly BloomTechnique bloomTechnique;
+        private readonly AmbientOcclusionTechnique aoTechnique;
         private readonly DeferredTechnique deferredTechnique;
         
         private readonly List<IInternalRenderObject> objects = new List<IInternalRenderObject>();
@@ -48,7 +49,11 @@ namespace HT.Engine.Rendering
         public RenderScene(Window window,
             TextureInfo reflectionTexture,
             ShaderProgram postVertProg,
-            ShaderProgram bloomFragProg, ShaderProgram blurFragProg, ShaderProgram compositionFragProg,
+            ShaderProgram bloomFragProg,
+            ShaderProgram aoFragProg,
+            ShaderProgram gaussBlurFragProg,
+            ShaderProgram boxBlurFragProg,
+            ShaderProgram compositionFragProg,
             Logger logger = null)
         {
             if (window == null)
@@ -59,8 +64,12 @@ namespace HT.Engine.Rendering
                 throw new ArgumentNullException(nameof(postVertProg));
             if (bloomFragProg == null)
                 throw new ArgumentNullException(nameof(bloomFragProg));
-            if (blurFragProg == null)
-                throw new ArgumentNullException(nameof(blurFragProg));
+            if (aoFragProg == null)
+                throw new ArgumentNullException(nameof(aoFragProg));
+            if (gaussBlurFragProg == null)
+                throw new ArgumentNullException(nameof(gaussBlurFragProg));
+            if (boxBlurFragProg == null)
+                throw new ArgumentNullException(nameof(boxBlurFragProg));
             if (compositionFragProg == null)
                 throw new ArgumentNullException(nameof(compositionFragProg));
 
@@ -84,9 +93,11 @@ namespace HT.Engine.Rendering
             gbufferTechnique = new GBufferTechnique(this, logger);
             shadowTechnique = new ShadowTechnique(this, logger);
             bloomTechnique = new BloomTechnique(
-                gbufferTechnique, postVertProg, bloomFragProg, blurFragProg, this, logger);
+                gbufferTechnique, postVertProg, bloomFragProg, gaussBlurFragProg, this, logger);
+            aoTechnique = new AmbientOcclusionTechnique(
+                gbufferTechnique, postVertProg, aoFragProg, boxBlurFragProg, this, logger);
             deferredTechnique = new DeferredTechnique(
-                gbufferTechnique, bloomTechnique, shadowTechnique,
+                gbufferTechnique, shadowTechnique, bloomTechnique, aoTechnique,
                 reflectionTexture, postVertProg, compositionFragProg,
                 this, logger);
         }
@@ -122,6 +133,7 @@ namespace HT.Engine.Rendering
             deferredTechnique.Dispose();
             shadowTechnique.Dispose();
             bloomTechnique.Dispose();
+            aoTechnique.Dispose();
             gbufferTechnique.Dispose();
             
             inputManager.Dispose();
@@ -139,6 +151,7 @@ namespace HT.Engine.Rendering
             gbufferTechnique.CreateResources(swapchainSize, sceneDataBuffer);
             shadowTechnique.CreateResources(swapchainSize, sceneDataBuffer);
             bloomTechnique.CreateResources(swapchainSize);
+            aoTechnique.CreateResources(swapchainSize);
             deferredTechnique.CreateResources(swapchainTargets, sceneDataBuffer);
         }
 
@@ -156,6 +169,7 @@ namespace HT.Engine.Rendering
                 dstStageMask: PipelineStages.FragmentShader);
 
             bloomTechnique.Record(commandbuffer);
+            aoTechnique.Record(commandbuffer);
 
             //Insert barrier to wait for the bloom rendering to be complete
             commandbuffer.CmdPipelineBarrier(

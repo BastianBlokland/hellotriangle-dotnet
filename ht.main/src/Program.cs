@@ -26,7 +26,9 @@ namespace HT.Main
                     reflectionTexture: new TextureInfo(LoadTex("textures/skybox.cube")),
                     postVertProg: LoadProg("shaders/bin/post_fullscreen.vert.spv"),
                     bloomFragProg: LoadProg("shaders/bin/post_bloom.frag.spv"),
-                    blurFragProg: LoadProg("shaders/bin/post_blur_gaussian.frag.spv"),
+                    aoFragProg: LoadProg("shaders/bin/post_ambientocclusion.frag.spv"),
+                    gaussBlurFragProg: LoadProg("shaders/bin/post_blur_gaussian.frag.spv"),
+                    boxBlurFragProg: LoadProg("shaders/bin/post_blur_box.frag.spv"),
                     compositionFragProg: LoadProg("shaders/bin/post_baselighting.frag.spv"), logger);
                 window.AttachScene(scene);
 
@@ -77,8 +79,8 @@ namespace HT.Main
                     fragShaderPath: "shaders/bin/fighter.frag.spv",
                     shadowFragShaderPath: "shaders/bin/shadow.frag.spv");
                 InstanceData[] fighterInstances = new InstanceData[16 * 16];
-                for (int x = 0; x < 16; x++)
                 for (int y = 0; y < 16; y++)
+                for (int x = 0; x < 16; x++)
                     fighterInstances[y * 16 + x] = new InstanceData(
                         Float4x4.CreateTranslation(((x - 8) * 5f, 7.5f, (y - 8) * 5f)), age: 1f);
                 fighter.UpdateInstances(fighterInstances);
@@ -133,8 +135,8 @@ namespace HT.Main
             const float PATCH_OFFSET = (PATCH_COUNT - 1) / 2f;
 
             InstanceData[] instances = new InstanceData[PATCH_COUNT * PATCH_COUNT];
-            for (int x = 0; x < PATCH_COUNT; x++)
             for (int y = 0; y < PATCH_COUNT; y++)
+            for (int x = 0; x < PATCH_COUNT; x++)
                 instances[y * PATCH_COUNT + x] = new InstanceData(
                     Float4x4.CreateTranslation(new Float3(
                             x: (x - PATCH_OFFSET) * PATCH_SIZE,

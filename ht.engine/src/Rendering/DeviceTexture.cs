@@ -34,12 +34,24 @@ namespace HT.Engine.Rendering
         private bool disposed;
 
         internal static DeviceTexture UploadTexture(
+            IInternalTexture texture, RenderScene scene, bool generateMipMaps = false)
+        {
+            return UploadTexture(
+                texture,
+                scene.LogicalDevice,
+                scene.MemoryPool,
+                scene.StagingBuffer,
+                scene.Executor,
+                generateMipMaps);
+        }
+
+        internal static DeviceTexture UploadTexture(
             IInternalTexture texture,
-            bool generateMipMaps,
             Device logicalDevice,
             Memory.Pool memoryPool,
             Memory.HostBuffer stagingBuffer,
-            TransientExecutor executor)
+            TransientExecutor executor,
+            bool generateMipMaps = false)
         {
             if (texture == null)
                 throw new ArgumentNullException(nameof(texture));
@@ -139,6 +151,21 @@ namespace HT.Engine.Rendering
         internal static DeviceTexture CreateDepthTarget(
             Int2 size,
             Format format,
+            RenderScene scene,
+            bool allowSampling = true)
+        {
+            return CreateDepthTarget(
+                size,
+                format,
+                scene.LogicalDevice,
+                scene.MemoryPool,
+                scene.Executor,
+                allowSampling);
+        }
+
+        internal static DeviceTexture CreateDepthTarget(
+            Int2 size,
+            Format format,
             Device logicalDevice,
             Memory.Pool memoryPool,
             TransientExecutor executor,
@@ -184,6 +211,21 @@ namespace HT.Engine.Rendering
                 image,
                 memory,
                 view);
+        }
+
+        internal static DeviceTexture CreateColorTarget(
+            Int2 size,
+            Format format,
+            RenderScene scene,
+            bool allowSampling = true)
+        {
+            return CreateColorTarget(
+                size,
+                format,
+                scene.LogicalDevice,
+                scene.MemoryPool,
+                scene.Executor,
+                allowSampling);
         }
 
         internal static DeviceTexture CreateColorTarget(

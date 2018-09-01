@@ -14,9 +14,10 @@ layout(binding = 3) uniform sampler2D sceneColorSampler;
 layout(binding = 4) uniform sampler2D sceneNormalSampler;
 layout(binding = 5) uniform sampler2D sceneAttributeSampler;
 layout(binding = 6) uniform sampler2D sceneDepthSampler;
-layout(binding = 7) uniform sampler2D sceneBloomSampler;
-layout(binding = 8) uniform sampler2D sceneShadowSampler;
-layout(binding = 9) uniform samplerCube reflectionSampler;
+layout(binding = 7) uniform sampler2D sceneShadowSampler;
+layout(binding = 8) uniform sampler2D sceneBloomSampler;
+layout(binding = 9) uniform sampler2D sceneAOSampler;
+layout(binding = 10) uniform samplerCube reflectionSampler;
 
 //Input
 layout(location = 0) in vec2 inUv;
@@ -97,4 +98,6 @@ void main()
 
     //Apply bloom
     outColor.rgb += texture(sceneBloomSampler, inUv).rgb;
+
+outColor = vec4(texture(sceneAOSampler, inUv).r);
 }

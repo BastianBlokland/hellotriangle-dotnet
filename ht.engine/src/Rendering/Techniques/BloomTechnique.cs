@@ -34,7 +34,7 @@ namespace HT.Engine.Rendering.Techniques
 
         internal BloomTechnique(
             GBufferTechnique gbufferTechnique,
-            ShaderProgram postVertProg, ShaderProgram bloomFragProg, ShaderProgram blurFragProg,
+            ShaderProgram postVertProg, ShaderProgram bloomFragProg, ShaderProgram gaussBlurFragProg,
             RenderScene scene,
             Logger logger = null)
         {
@@ -44,8 +44,8 @@ namespace HT.Engine.Rendering.Techniques
                 throw new ArgumentNullException(nameof(postVertProg));
             if (bloomFragProg == null)
                 throw new ArgumentNullException(nameof(bloomFragProg));
-            if (blurFragProg == null)
-                throw new ArgumentNullException(nameof(blurFragProg));
+            if (gaussBlurFragProg == null)
+                throw new ArgumentNullException(nameof(gaussBlurFragProg));
             if (scene == null)
                 throw new NullReferenceException(nameof(scene));
 
@@ -62,7 +62,7 @@ namespace HT.Engine.Rendering.Techniques
             //Create a BlurTechnique for blurring the bloom texture
             blurTechnique = new GaussianBlurTechnique(
                 postVertProg,
-                blurFragProg,
+                gaussBlurFragProg,
                 blurIterations,
                 blurSampleScale,
                 scene,
@@ -80,8 +80,8 @@ namespace HT.Engine.Rendering.Techniques
             bloomSampler?.Dispose();
 
             //Create the new render target
-            bloomTarget = DeviceTexture.CreateColorTarget(swapchainSize, bloomFormat,
-                scene.LogicalDevice, scene.MemoryPool, scene.Executor);
+            bloomTarget = DeviceTexture.CreateColorTarget(swapchainSize, bloomFormat, scene);
+            
             //Create sampler
             bloomSampler = new DeviceSampler(scene.LogicalDevice, bloomTarget, disposeTexture: false);
 

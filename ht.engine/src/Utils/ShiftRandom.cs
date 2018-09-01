@@ -1,14 +1,11 @@
 using System;
-using System.Collections.Generic;
-
-using HT.Engine.Math;
 
 namespace HT.Engine.Utils
 {
     /// <summary>
     /// Fast random, can be used for anything where distribution isn't crucially important.
     /// </summary>
-    public sealed class ShiftRandom
+    public sealed class ShiftRandom : IRandom
     {
         private readonly object lockObject;
         private UInt16 lfsr;
@@ -43,31 +40,5 @@ namespace HT.Engine.Utils
             }
             return result;
         }
-
-        public float GetNextAngle() => GetNext() * FloatUtils.DOUBLE_PI;
-
-        public float GetBetween(float minValue, float maxValue)
-            => minValue + (maxValue - minValue) * GetNext();
-
-        //NOTE: minValue is inclusive and maxValue is exclusive
-        public int GetBetween(int minValue, int maxValue)
-            => IntUtils.Min((int)GetBetween((float)minValue, (float)maxValue), maxValue - 1);
-
-        //Fisher–Yates shuffle: https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
-        public void Shuffle<T>(IList<T> list)
-        {
-            int n = list.Count;
-            while (n > 1)
-            {
-                n--;
-                int k = GetBetween(0, n + 1);
-                T value = list[k];
-                list[k] = list[n];
-                list[n] = value;
-            }
-        }
-
-        public T PickRandom<T>(IList<T> list)
-            => list.Count == 0 ? default(T) : list[GetBetween(0, list.Count)];
     }
 }

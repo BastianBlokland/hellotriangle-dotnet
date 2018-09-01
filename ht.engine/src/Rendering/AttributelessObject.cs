@@ -32,8 +32,7 @@ namespace HT.Engine.Rendering
             {
                 DeviceTexture texture = DeviceTexture.UploadTexture(
                     texture: textureInfos[i].Texture as IInternalTexture,
-                    generateMipMaps: textureInfos[i].UseMipMaps,
-                    scene.LogicalDevice, scene.MemoryPool, scene.StagingBuffer, scene.Executor);
+                    scene, generateMipMaps: textureInfos[i].UseMipMaps);
                 inputs[i] = new DeviceSampler(
                     scene.LogicalDevice,
                     texture,

@@ -10,8 +10,9 @@ namespace HT.Engine.Rendering.Techniques
     internal sealed class DeferredTechnique : IDisposable
     {
         private readonly GBufferTechnique gbufferTechnique;
-        private readonly BloomTechnique bloomTechnique;
         private readonly ShadowTechnique shadowTechnique;
+        private readonly BloomTechnique bloomTechnique;
+        private readonly AmbientOcclusionTechnique aoTechnique;
         private readonly RenderScene scene;
         private readonly Renderer renderer;
 
@@ -21,8 +22,9 @@ namespace HT.Engine.Rendering.Techniques
 
         internal DeferredTechnique(
             GBufferTechnique gbufferTechnique,
-            BloomTechnique bloomTechnique,
             ShadowTechnique shadowTechnique,
+            BloomTechnique bloomTechnique,
+            AmbientOcclusionTechnique aoTechnique,
             TextureInfo reflectionTexture,
             ShaderProgram compositionVertProg, ShaderProgram compositionFragProg,
             RenderScene scene,
@@ -30,10 +32,12 @@ namespace HT.Engine.Rendering.Techniques
         {
             if (gbufferTechnique == null)
                 throw new NullReferenceException(nameof(gbufferTechnique));
-            if (bloomTechnique == null)
-                throw new NullReferenceException(nameof(bloomTechnique));
             if (shadowTechnique == null)
                 throw new NullReferenceException(nameof(shadowTechnique));
+            if (bloomTechnique == null)
+                throw new NullReferenceException(nameof(bloomTechnique));
+            if (aoTechnique == null)
+                throw new NullReferenceException(nameof(aoTechnique));
             if (reflectionTexture.Texture == null)
                 throw new ArgumentNullException(nameof(reflectionTexture));
             if (compositionVertProg == null)
@@ -44,8 +48,9 @@ namespace HT.Engine.Rendering.Techniques
                 throw new NullReferenceException(nameof(scene));
 
             this.gbufferTechnique = gbufferTechnique;
-            this.bloomTechnique = bloomTechnique;
             this.shadowTechnique = shadowTechnique;
+            this.bloomTechnique = bloomTechnique;
+            this.aoTechnique = aoTechnique;
             this.scene = scene;
 
             //Create renderer for rendering the composition effects
@@ -73,8 +78,9 @@ namespace HT.Engine.Rendering.Techniques
                 gbufferTechnique.NormalOutput,
                 gbufferTechnique.AttributeOutput,
                 gbufferTechnique.DepthOutput,
+                shadowTechnique.ShadowOutput,
                 bloomTechnique.BloomOutput,
-                shadowTechnique.ShadowOutput });
+                aoTechnique.AOOutput });
 
             //Tell the renderer to allocate its resources based on the data we've provided
             renderer.CreateResources(specialization: null);

@@ -20,13 +20,15 @@ layout(location = 0) out vec4 outColor;
 
 void main()
 {
-    vec2 sampleSize = 1.0 / textureSize(inputSampler, 0) * sampleScale; //Size of single texel
-    vec4 result = vec4(0.0);
-    for (int x = -sampleRange; x < sampleRange; x++) 
-	for (int y = -sampleRange; y < sampleRange; y++) 
-    {
-        result += texture(inputSampler, inUv + vec2(float(x), float(y)) * sampleSize);
-    }
-    int sampleCount = (sampleRange * 2) * (sampleRange * 2);
-    outColor = result / sampleCount;
+    // vec2 sampleSize = 1.0 / textureSize(inputSampler, 0) * sampleScale; //Size of single texel
+    // vec4 result = vec4(0.0);
+    // for (int x = -sampleRange; x < sampleRange; x++) 
+	// for (int y = -sampleRange; y < sampleRange; y++) 
+    // {
+    //     result += texture(inputSampler, inUv + vec2(float(x), float(y)) * sampleSize);
+    // }
+    // int sampleCount = (sampleRange * 2) * (sampleRange * 2);
+    // outColor = result / sampleCount;
+
+    outColor = texture(inputSampler, inUv);
 }

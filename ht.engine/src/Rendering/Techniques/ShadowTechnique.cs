@@ -74,9 +74,7 @@ namespace HT.Engine.Rendering.Techniques
             depthSampler?.Dispose();
 
             //Create the new render target
-            depthTarget = DeviceTexture.CreateDepthTarget(
-                size: new Int2(targetSize, targetSize),
-                depthFormat, scene.LogicalDevice, scene.MemoryPool, scene.Executor);
+            depthTarget = DeviceTexture.CreateDepthTarget((targetSize, targetSize), depthFormat, scene);
             //Create sampler
             depthSampler = new DeviceSampler(scene.LogicalDevice, depthTarget, disposeTexture: false);
 

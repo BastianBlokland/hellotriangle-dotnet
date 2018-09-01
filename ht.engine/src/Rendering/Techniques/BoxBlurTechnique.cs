@@ -105,8 +105,7 @@ namespace HT.Engine.Rendering.Techniques
             outputSampler?.Dispose();
 
             //Create a output target (same format and size as the blur-target)
-            outputTarget = DeviceTexture.CreateColorTarget(blurTarget.Size, blurTarget.Format,
-                scene.LogicalDevice, scene.MemoryPool, scene.Executor);
+            outputTarget = DeviceTexture.CreateColorTarget(blurTarget.Size, blurTarget.Format, scene);
             
             //Create samplers
             inputSampler = new DeviceSampler(scene.LogicalDevice, blurTarget, disposeTexture: false);
