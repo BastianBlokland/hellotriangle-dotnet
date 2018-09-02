@@ -39,6 +39,8 @@ namespace HT.Engine.Rendering.Memory
         private readonly DeviceMemory memory;
 
         private bool currentlyMapped;
+        private long currentMapOffset;
+        private long currentMapSize;
         private bool disposed;
 
         internal Chunk(
@@ -83,7 +85,20 @@ namespace HT.Engine.Rendering.Memory
             if (offset >= block.Size)
                 throw new Exception($"[{nameof(Chunk)}] Given offset leaves no space to be mapped");
             currentlyMapped = true;
-            return memory.Map(block.Offset + offset, block.Size);
+            currentMapOffset = block.Offset + offset;
+            currentMapSize = block.Size - offset; 
+            return memory.Map(currentMapOffset, currentMapSize);
+        }
+
+        internal void Flush(Block block)
+        {
+            if (block.Container != this)
+                throw new ArgumentException(
+                    $"[{nameof(Chunk)}] Given block does not belong to this chunk");
+            if (!currentlyMapped)
+                throw new Exception($"[{nameof(Chunk)}] Memory must be mapped");
+            logicalDevice.FlushMappedMemoryRange(
+                new MappedMemoryRange(memory, offset: currentMapOffset, size: -1));
         }
 
         internal void Unmap()
@@ -94,17 +109,8 @@ namespace HT.Engine.Rendering.Memory
                 throw new Exception($"[{nameof(Chunk)}] Memory is not currently mapped");
             memory.Unmap();
             currentlyMapped = false;
-        }
-
-        internal void Flush(Block block)
-        {
-            if (block.Container != this)
-                throw new ArgumentException(
-                    $"[{nameof(Chunk)}] Given block does not belong to this chunk");
-            if (location != Chunk.Location.Host)
-                throw new Exception($"[{nameof(Chunk)}] Only host memory can be flushed");
-            logicalDevice.FlushMappedMemoryRange(
-                new MappedMemoryRange(memory, block.Offset, block.Size));
+            currentMapOffset = -1;
+            currentMapSize = -1;
         }
 
         internal bool IsSupported(MemoryRequirements requirements)

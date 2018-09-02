@@ -82,11 +82,11 @@ namespace HT.Engine.Rendering.Memory
                 void* dataPointer = Unsafe.AsPointer(ref data);
                 System.Buffer.MemoryCopy(dataPointer, stagingPointer, dataSize, dataSize);
 
-                //Release the cpu memory
-                memory.Unmap();
-
                 //Flush the data (so its visible to the gpu)
                 memory.Flush();
+
+                //Release the cpu memory
+                memory.Unmap();
             }
             return dataSize;
         }
@@ -117,11 +117,11 @@ namespace HT.Engine.Rendering.Memory
             void* dataPointer = Unsafe.AsPointer(ref MemoryMarshal.GetReference(data));
             System.Buffer.MemoryCopy(dataPointer, stagingPointer, dataSize, dataSize);
 
-            //Release the cpu memory
-            memory.Unmap();
-
             //Flush the data (so its visible to the gpu)
             memory.Flush();
+
+            //Release the cpu memory
+            memory.Unmap();
             return dataSize;
         }
 

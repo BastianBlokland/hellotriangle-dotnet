@@ -20,10 +20,10 @@ namespace HT.Engine.Rendering.Memory
         }
         
         internal IntPtr Map(long offset = 0) => Container.Map(this, offset);
+        
+        internal void Flush() => Container.Flush(this);
 
         internal void Unmap() => Container.Unmap();
-
-        internal void Flush() => Container.Flush(this);
 
         internal void Free() => Container.Free(this);
     }
