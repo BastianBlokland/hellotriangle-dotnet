@@ -318,7 +318,7 @@ namespace HT.Engine.Rendering
                 dstAccessMask: Accesses.ShaderRead | Accesses.UniformRead);
 
             commandbuffer.CmdPipelineBarrier(
-                srcStageMask: PipelineStages.ColorAttachmentOutput,
+                srcStageMask: PipelineStages.ColorAttachmentOutput | PipelineStages.LateFragmentTests,
                 dstStageMask: PipelineStages.FragmentShader,
                 memoryBarriers: new [] { barrier });
         }
