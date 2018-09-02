@@ -104,10 +104,8 @@ namespace HT.Engine.Rendering.Techniques
 
             renderer.Record(commandbuffer);
 
-            //Insert barrier to wait for rendering of bloom-target to be done before starting the blurring
-            commandbuffer.CmdPipelineBarrier(
-                srcStageMask: PipelineStages.BottomOfPipe,
-                dstStageMask: PipelineStages.FragmentShader);
+            //Insert barrier because bloom rendering needs to be done before we can blur it
+            Renderer.InsertOutputReadBarrier(commandbuffer);
 
             blurTechnique.Record(commandbuffer);
         }

@@ -307,6 +307,22 @@ namespace HT.Engine.Rendering
             commandbuffer.CmdEndRenderPass();
         }
 
+        /// <summary>
+        /// Insert this barrier if you want to sample from a output that was rendered before this
+        /// barrier. NOTE: Assumes you only want to sample the output in a fragment stage atm
+        /// </summary>
+        internal static void InsertOutputReadBarrier(CommandBuffer commandbuffer)
+        {
+            MemoryBarrier barrier = new MemoryBarrier(
+                srcAccessMask: Accesses.ColorAttachmentWrite | Accesses.DepthStencilAttachmentWrite,
+                dstAccessMask: Accesses.ShaderRead | Accesses.UniformRead);
+
+            commandbuffer.CmdPipelineBarrier(
+                srcStageMask: PipelineStages.ColorAttachmentOutput,
+                dstStageMask: PipelineStages.FragmentShader,
+                memoryBarriers: new [] { barrier });
+        }
+
         private static void SetViewport(CommandBuffer commandbuffer, Int2 size)
         {
             //Set viewport and scissor-rect dynamically to avoid the pipelines depending on
@@ -360,7 +376,7 @@ namespace HT.Engine.Rendering
                 srcAccessMask: Accesses.MemoryRead,
                 dstStageMask: PipelineStages.ColorAttachmentOutput,
                 dstAccessMask: Accesses.ColorAttachmentWrite,
-                dependencyFlags: Dependencies.ByRegion
+                dependencyFlags: Dependencies.None
             );
             //Dependency at the end to transition the attachments to the final layout
             var endTransitionDependency = new SubpassDependency(
@@ -370,7 +386,7 @@ namespace HT.Engine.Rendering
                 srcAccessMask: Accesses.ColorAttachmentWrite,
                 dstStageMask: PipelineStages.BottomOfPipe,
                 dstAccessMask: Accesses.MemoryRead,
-                dependencyFlags: Dependencies.ByRegion
+                dependencyFlags: Dependencies.None
             );
             return logicalDevice.CreateRenderPass(new RenderPassCreateInfo(
                 subpasses: new [] 

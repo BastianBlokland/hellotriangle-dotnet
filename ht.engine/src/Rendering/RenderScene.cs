@@ -163,18 +163,14 @@ namespace HT.Engine.Rendering
             gbufferTechnique.Record(commandbuffer);
             shadowTechnique.Record(commandbuffer);
 
-            //Insert barrier to wait for the gbuffer and shadow rendering to be complete
-            commandbuffer.CmdPipelineBarrier(
-                srcStageMask: PipelineStages.BottomOfPipe,
-                dstStageMask: PipelineStages.FragmentShader);
+            //Insert barrier because bloom and ao depend on gbuffer output
+            Renderer.InsertOutputReadBarrier(commandbuffer);
 
             bloomTechnique.Record(commandbuffer);
             aoTechnique.Record(commandbuffer);
 
-            //Insert barrier to wait for the bloom rendering to be complete
-            commandbuffer.CmdPipelineBarrier(
-                srcStageMask: PipelineStages.BottomOfPipe,
-                dstStageMask: PipelineStages.FragmentShader);
+            //Insert barrier because deferred pass depends on all other outputs
+            Renderer.InsertOutputReadBarrier(commandbuffer);
 
             deferredTechnique.Record(commandbuffer, swapchainImageIndex);
 

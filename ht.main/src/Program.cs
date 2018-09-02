@@ -93,7 +93,7 @@ namespace HT.Main
                         center: Float3.Lerp((0f, 10f, 0f), (75f, 5f, 0f), 0f),//(float)frameTracker.ElapsedTime * .03f),
                         offset: (-3f, 1f, 0f), //-100f, 25f, 0f
                         axis: Float3.Up,
-                        angle: -.7f);//(float)frameTracker.ElapsedTime * .25f);
+                        angle: (float)frameTracker.ElapsedTime * .25f);
 
                     //Call the os update loop to get os events about our windows
                     //Like input, resize, or close

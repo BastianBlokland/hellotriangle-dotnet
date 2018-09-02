@@ -16,7 +16,7 @@ namespace HT.Engine.Rendering.Techniques
         [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
         private readonly struct SpecializationData
         {
-            public const int SIZE = sizeof(int) + sizeof(float) + sizeof(float);
+            public const int SIZE = sizeof(int) + sizeof(float) * 3;
             
             public readonly int SampleKernelSize;
             public readonly float SampleRadius;
@@ -159,9 +159,7 @@ namespace HT.Engine.Rendering.Techniques
             renderer.Record(commandbuffer);
 
             //Insert barrier to wait for rendering of ao-target to be done before starting the blurring
-            commandbuffer.CmdPipelineBarrier(
-                srcStageMask: PipelineStages.BottomOfPipe,
-                dstStageMask: PipelineStages.FragmentShader);
+            Renderer.InsertOutputReadBarrier(commandbuffer);
 
             blurTechnique.Record(commandbuffer);
         }

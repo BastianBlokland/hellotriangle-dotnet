@@ -140,17 +140,13 @@ namespace HT.Engine.Rendering.Techniques
                 if (i != 0)
                 {
                     //Insert barrier to wait for last blur 'step' to be done
-                    commandbuffer.CmdPipelineBarrier(
-                        srcStageMask: PipelineStages.BottomOfPipe,
-                        dstStageMask: PipelineStages.FragmentShader);
+                    Renderer.InsertOutputReadBarrier(commandbuffer);
                 }
 
                 rendererA.Record(commandbuffer);
 
                 //Insert barrier to wait for rendererA is done before starting rendererB
-                commandbuffer.CmdPipelineBarrier(
-                    srcStageMask: PipelineStages.BottomOfPipe,
-                    dstStageMask: PipelineStages.FragmentShader);
+                Renderer.InsertOutputReadBarrier(commandbuffer);
 
                 rendererB.Record(commandbuffer);
             }
