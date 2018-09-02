@@ -23,6 +23,8 @@ namespace HT.Engine.Rendering.Memory
 
         internal void Unmap() => Container.Unmap();
 
+        internal void Flush() => Container.Flush(this);
+
         internal void Free() => Container.Free(this);
     }
 }

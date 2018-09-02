@@ -84,6 +84,9 @@ namespace HT.Engine.Rendering.Memory
 
                 //Release the cpu memory
                 memory.Unmap();
+
+                //Flush the data (so its visible to the gpu)
+                memory.Flush();
             }
             return dataSize;
         }
@@ -116,6 +119,9 @@ namespace HT.Engine.Rendering.Memory
 
             //Release the cpu memory
             memory.Unmap();
+
+            //Flush the data (so its visible to the gpu)
+            memory.Flush();
             return dataSize;
         }
 

@@ -31,6 +31,7 @@ namespace HT.Engine.Rendering.Memory
         }
 
         //Data
+        private readonly Device logicalDevice;
         private readonly long totalSize;
         private readonly ResizeArray<Block> freeBlocks = new ResizeArray<Block>(initialCapacity: 100);
         private readonly Location location;
@@ -51,6 +52,7 @@ namespace HT.Engine.Rendering.Memory
                 throw new ArgumentNullException(nameof(logicalDevice));
             if (hostDevice == null)
                 throw new ArgumentNullException(nameof(hostDevice));
+            this.logicalDevice = logicalDevice;
             this.location = location;
             totalSize = size;
 
@@ -61,7 +63,7 @@ namespace HT.Engine.Rendering.Memory
             memoryTypeIndex = hostDevice.GetMemoryType(
                 properties: location == Location.Device ? 
                     MemoryProperties.DeviceLocal :
-                    MemoryProperties.HostVisible | MemoryProperties.HostCoherent,
+                    MemoryProperties.HostVisible,
                 supportedTypesFilter: supportedMemoryTypesFilter);
             //Allocate the memory
             memory = logicalDevice.AllocateMemory(new MemoryAllocateInfo(
@@ -92,6 +94,17 @@ namespace HT.Engine.Rendering.Memory
                 throw new Exception($"[{nameof(Chunk)}] Memory is not currently mapped");
             memory.Unmap();
             currentlyMapped = false;
+        }
+
+        internal void Flush(Block block)
+        {
+            if (block.Container != this)
+                throw new ArgumentException(
+                    $"[{nameof(Chunk)}] Given block does not belong to this chunk");
+            if (location != Chunk.Location.Host)
+                throw new Exception($"[{nameof(Chunk)}] Only host memory can be flushed");
+            logicalDevice.FlushMappedMemoryRange(
+                new MappedMemoryRange(memory, block.Offset, block.Size));
         }
 
         internal bool IsSupported(MemoryRequirements requirements)
