@@ -52,7 +52,7 @@ void main()
 
     //Sample data from the scene
     vec3 color = texture(sceneColorSampler, inUv).rgb;
-    vec3 normal = texture(sceneNormalSampler, inUv).xyz;
+    vec3 worldNormal = texture(sceneNormalSampler, inUv).xyz;
     vec4 attributes = texture(sceneAttributeSampler, inUv);
     float depth = texture(sceneDepthSampler, inUv).r;
     float specIntensity = attributes.x * specMultiplier;
@@ -62,29 +62,31 @@ void main()
     float linearDepth = linearizeDepth(depth, cameraData.nearClipDistance, cameraData.farClipDistance);
     vec3 worldPos = worldPosFromDepth(depth, inUv, cameraData.inverseViewProjectionMatrix);
     vec3 sunDirection = mat3(shadowData.cameraMatrix) * vec3(0.0, 0.0, 1.0);
+    float ambientOcclusion = texture(sceneAOSampler, inUv).r;
     
     //Calculate shadow
     #define MIN_SHADOW_DIST 70.0
     #define MAX_SHADOW_DIST 85.0
     float depthBlend = smoothstep(MAX_SHADOW_DIST, MIN_SHADOW_DIST, linearDepth);
-    float shadow = getShadow(worldPos) * depthBlend * shadowReceive;
+    //In the distance use ambientOcclusion to fake some sort of shadows
+    float shadow = mix(1.0 - ambientOcclusion, getShadow(worldPos), depthBlend) * shadowReceive;
 
     //Calculate reflection color
     vec3 toSurfaceDir = normalize(worldPos - camPos);
-    vec3 reflectNormal = reflect(toSurfaceDir, normal);
+    vec3 reflectNormal = reflect(toSurfaceDir, worldNormal);
     vec3 reflectColor = texture(reflectionSampler, reflectNormal).rgb;
     color = mix(color, (color * 0.3) + reflectColor * 1.5, reflectivity);
 
     //Calculate lighting
-    vec3 litResult = color * ambientColor; //Start with the ambient
+    vec3 litResult = color * mix(minAmbientColor, maxAmbientColor, ambientOcclusion); //Start with the ambient
 
     //Add the sun intensity to the result
-    float sunIntensity = max(dot(normal, sunDirection), 0.0) * (1.0 - shadow);
+    float sunIntensity = max(dot(worldNormal, sunDirection), 0.0) * (1.0 - shadow);
     litResult += sunColor * color * sunIntensity;
 
     //Add the sun specular to the result
     vec3 halfDir = normalize(sunDirection - viewDir);
-    float specAngle = max(dot(normal, halfDir), 0.0);
+    float specAngle = max(dot(worldNormal, halfDir), 0.0);
     float specular = pow(specAngle, sunSpecPower) * specIntensity;
     litResult += sunColor * specular * sunIntensity;
 
@@ -98,6 +100,4 @@ void main()
 
     //Apply bloom
     outColor.rgb += texture(sceneBloomSampler, inUv).rgb;
-
-outColor = vec4(texture(sceneAOSampler, inUv).r);
 }

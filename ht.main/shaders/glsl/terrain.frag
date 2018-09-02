@@ -33,12 +33,15 @@ void main()
     vec4 colorAndSpec = vec4(inBaseColor.rgb, 1.0) * 
         texture(detail1ColorSampler, detail1Uv) *
         texture(detail2ColorSampler, detail2Uv);
-    vec3 detail1Normal = applyNormalTex(detail1NormalSampler, inWorldNormal, inWorldPosition, detail1Uv);
-    vec3 detail2Normal = applyNormalTex(detail2NormalSampler, inWorldNormal, inWorldPosition, detail2Uv);
+
+    vec3 detail1TangentNormal = texture(detail1NormalSampler, detail1Uv).xyz * 2.0 - 1.0;
+    vec3 detail2TangentNormal = texture(detail2NormalSampler, detail2Uv).xyz * 2.0 - 1.0;
+    vec3 tangentNormal = blendNormals(detail1TangentNormal, detail2TangentNormal);
+    vec3 worldNormal = perturbNormal(tangentNormal, inWorldNormal, inWorldPosition, inWorldUv);
 
     outColor.rgb = colorAndSpec.rgb;
     outColor.a = 0.0; //Bloom factor
-    outNormal.xyz = blendNormals(detail1Normal, detail2Normal);
+    outNormal.xyz = worldNormal;
     outAttributes.x = colorAndSpec.a; //Specularity
     outAttributes.y = 0.0; //Emissiveness
     outAttributes.z = 1.0; //Shadow receive amount

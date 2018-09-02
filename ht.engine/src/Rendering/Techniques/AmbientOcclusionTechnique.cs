@@ -16,21 +16,31 @@ namespace HT.Engine.Rendering.Techniques
         [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
         private readonly struct SpecializationData
         {
-            public const int SIZE = sizeof(int) + sizeof(float);
+            public const int SIZE = sizeof(int) + sizeof(float) + sizeof(float);
             
             public readonly int SampleKernelSize;
             public readonly float SampleRadius;
+            public readonly float SampleBias;
+            public readonly float OcclusionMultiplier;
 
-            public SpecializationData(int sampleKernelSize, float sampleRadius)
+            public SpecializationData(
+                int sampleKernelSize,
+                float sampleRadius,
+                float sampleBias,
+                float occlusionMultiplier)
             {
                 SampleKernelSize = sampleKernelSize;
                 SampleRadius = sampleRadius;
+                SampleBias = sampleBias;
+                OcclusionMultiplier = occlusionMultiplier;
             }
         }
 
         private readonly static Format aoFormat = Format.R8UNorm;
-        private readonly static int sampleKernelSize = 32;
-        private readonly static float sampleRadius = .5f;
+        private readonly static int sampleKernelSize = 16;
+        private readonly static float sampleRadius = 1.15f;
+        private readonly static float sampleBias = -.025f;
+        private readonly static float occlusionMultiplier = 3f;
         private readonly static int noiseSize = 4;
         //We want to blur out the noise, but blur goes in both directions so we need to take half
         private readonly static int blurSampleRange = noiseSize / 2; 
@@ -77,7 +87,8 @@ namespace HT.Engine.Rendering.Techniques
             this.scene = scene;
             this.logger = logger;
             
-            specializationData = new SpecializationData(sampleKernelSize, sampleRadius);
+            specializationData = new SpecializationData(
+                sampleKernelSize, sampleRadius, sampleBias, occlusionMultiplier);
 
             //Create renderer for rendering the ao texture
             renderer = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
@@ -124,7 +135,8 @@ namespace HT.Engine.Rendering.Techniques
             aoTarget = DeviceTexture.CreateColorTarget(swapchainSize, aoFormat, scene);
 
             //Bind inputs to the renderer
-            renderer.BindGlobalInputs(new IShaderInput[] { 
+            renderer.BindGlobalInputs(new IShaderInput[] {
+                gbufferTechnique.CameraOutput,
                 gbufferTechnique.DepthOutput,
                 gbufferTechnique.NormalOutput,
                 sampleKernelBuffer,
@@ -134,7 +146,7 @@ namespace HT.Engine.Rendering.Techniques
             renderer.BindTargets(new [] { aoTarget });
 
             //Tell the renderer to allocate its resources based on the data we've provided
-            renderer.CreateResources(specialization: null);
+            renderer.CreateResources(specialization: this);
 
             //Initialize the blurTechnique, point it to the ao-target
             blurTechnique.CreateResources(aoTarget);
@@ -195,6 +207,15 @@ namespace HT.Engine.Rendering.Techniques
                         new SpecializationMapEntry(
                             constantId: 1,
                             offset: sizeof(int),
+                            size: new Size(sizeof(float))),
+                        new SpecializationMapEntry(
+                            constantId: 2,
+                            offset: sizeof(int) + sizeof(float),
+                            size: new Size(sizeof(float))),
+                            
+                        new SpecializationMapEntry(
+                            constantId: 3,
+                            offset: sizeof(int) + sizeof(float) + sizeof(float),
                             size: new Size(sizeof(float)))
                     },
                     new Size(SpecializationData.SIZE),

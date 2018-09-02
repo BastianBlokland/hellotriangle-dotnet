@@ -12,6 +12,16 @@ namespace HT.Engine.Rendering.Techniques
 {
     internal sealed class ShadowTechnique : ISpecializationProvider, IDisposable
     {
+        [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
+        private readonly struct SpecializationData
+        {
+            public const int SIZE = sizeof(bool);
+            
+            public readonly bool IsShadowPass;
+
+            public SpecializationData(bool isShadowPass) => IsShadowPass = isShadowPass;
+        }
+
         private readonly static int targetSize = 2048;
         private readonly static Format depthFormat = Format.D16UNorm;
 
@@ -23,6 +33,8 @@ namespace HT.Engine.Rendering.Techniques
         private readonly RenderScene scene;
         private readonly Logger logger;
         private readonly Renderer renderer;
+
+        private SpecializationData specializationData;
 
         //Buffer for storing the camera transformations
         private readonly Memory.HostBuffer cameraBuffer;
@@ -44,6 +56,8 @@ namespace HT.Engine.Rendering.Techniques
                 throw new NullReferenceException(nameof(scene));
             this.scene = scene;
             this.logger = logger;
+
+            specializationData = new SpecializationData(isShadowPass: true);
 
             //Create buffer for storing camera transformations
             cameraBuffer = new Memory.HostBuffer(
@@ -200,13 +214,12 @@ namespace HT.Engine.Rendering.Techniques
         {
             unsafe
             {
-                bool isShadowPass = true;
                 return new SpecializationInfo(new [] { new SpecializationMapEntry(
                     constantId: 0,
                     offset: 0,
                     size: new Size(sizeof(bool))) },
-                    new Size(sizeof(bool)),
-                    data: new IntPtr(Unsafe.AsPointer(ref isShadowPass)));
+                    new Size(SpecializationData.SIZE),
+                    data: new IntPtr(Unsafe.AsPointer(ref specializationData)));
             }
         }
 
