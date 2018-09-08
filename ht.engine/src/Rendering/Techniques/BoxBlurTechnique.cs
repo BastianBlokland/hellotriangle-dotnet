@@ -80,7 +80,7 @@ namespace HT.Engine.Rendering.Techniques
         {
             ThrowIfDisposed();
 
-            scene.BeginDebugMarker(commandbuffer, "BoxBlur", ColorUtils.Teal);
+            scene.BeginDebugMarker(commandbuffer, "BoxBlur");
             {
                 renderer.Record(commandbuffer);
             }

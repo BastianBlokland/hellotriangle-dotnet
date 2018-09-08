@@ -101,7 +101,7 @@ namespace HT.Engine.Rendering.Techniques
         {
             ThrowIfDisposed();
 
-            scene.BeginDebugMarker(commandbuffer, "Shadow", ColorUtils.Blue);
+            scene.BeginDebugMarker(commandbuffer, "Shadow");
             {
                 renderer.SetPushData(swapchainIndexPushDataBinding, swapchainIndex);
                 renderer.Record(commandbuffer);

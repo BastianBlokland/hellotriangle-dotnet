@@ -91,7 +91,7 @@ namespace HT.Engine.Rendering.Techniques
         {
             ThrowIfDisposed();
 
-            scene.BeginDebugMarker(commandbuffer, "GaussianBlur", ColorUtils.Navy);
+            scene.BeginDebugMarker(commandbuffer, "GaussianBlur");
             {
                 for (int i = 0; i < iterations; i++)
                 {

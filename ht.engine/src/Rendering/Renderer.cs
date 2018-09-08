@@ -321,7 +321,7 @@ namespace HT.Engine.Rendering
                 //Record all individual items
                 for (int i = 0; i < items.Count; i++)
                 {
-                    scene.BeginDebugMarker(commandbuffer, items[i].DebugName ?? "unknown", ColorUtils.GetColor(i));
+                    scene.BeginDebugMarker(commandbuffer, items[i].DebugName ?? "unknown");
                     {
                         items[i].Record(commandbuffer);
                     }

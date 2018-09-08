@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 
 using HT.Engine.Math;
@@ -166,7 +167,7 @@ namespace HT.Engine.Rendering
         {
             ThrowIfDisposed();
 
-            BeginDebugMarker(commandbuffer, "RenderScene", ColorUtils.Olive);
+            BeginDebugMarker(commandbuffer, "RenderScene");
             {
                 //First render the gbuffer and shadow targets
                 gbufferTechnique.Record(commandbuffer, swapchainIndex);
@@ -202,25 +203,18 @@ namespace HT.Engine.Rendering
             shadowTechnique.PreDraw(swapchainIndex, sunDirection, shadowDistance);
         }
 
-        internal void BeginDebugMarker(CommandBuffer commandbuffer, string name, Byte4 color)
+        [Conditional("DEBUG")]
+        internal void BeginDebugMarker(CommandBuffer commandbuffer, string name)
         {
-            #if DEBUG
             if (window.DebugMarkerIsSupported)
-            {
-                Float4 normColor = color.Normalized;
-                commandbuffer.CmdDebugMarkerBeginExt(new DebugMarkerMarkerInfoExt(
-                    markerName: name,
-                    color: new ColorF4(normColor.R, normColor.G, normColor.B, normColor.A)));
-            }
-            #endif
+                commandbuffer.CmdDebugMarkerBeginExt(new DebugMarkerMarkerInfoExt(name));
         }
 
+        [Conditional("DEBUG")]
         internal void EndDebugMarker(CommandBuffer commandbuffer)
         {
-            #if DEBUG
              if (window.DebugMarkerIsSupported)
                 commandbuffer.CmdDebugMarkerEndExt();
-            #endif
         }
 
         private void ThrowIfDisposed()

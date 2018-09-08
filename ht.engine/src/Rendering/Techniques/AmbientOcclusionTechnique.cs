@@ -136,7 +136,7 @@ namespace HT.Engine.Rendering.Techniques
         {
             ThrowIfDisposed();
 
-            scene.BeginDebugMarker(commandbuffer, "AmbientOcclusion", ColorUtils.Fuchsia);
+            scene.BeginDebugMarker(commandbuffer, "AmbientOcclusion");
             {
                 renderer.SetPushData(swapchainIndexPushDataBinding, swapchainIndex);
                 renderer.SetPushData(targetSizePushBinding, aoTarget.Size);

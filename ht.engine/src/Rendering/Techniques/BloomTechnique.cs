@@ -102,7 +102,7 @@ namespace HT.Engine.Rendering.Techniques
         {
             ThrowIfDisposed();
 
-            scene.BeginDebugMarker(commandbuffer, "Bloom", ColorUtils.Yellow);
+            scene.BeginDebugMarker(commandbuffer, "Bloom");
             {
                 renderer.Record(commandbuffer);
 

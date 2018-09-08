@@ -116,7 +116,7 @@ namespace HT.Engine.Rendering.Techniques
         {
             ThrowIfDisposed();
 
-            scene.BeginDebugMarker(commandbuffer, "G-Buffer", ColorUtils.Red);
+            scene.BeginDebugMarker(commandbuffer, "G-Buffer");
             {
                 renderer.SetPushData(swapchainIndexPushDataBinding, swapchainIndex);
                 renderer.Record(commandbuffer);

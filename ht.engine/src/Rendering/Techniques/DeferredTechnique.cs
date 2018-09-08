@@ -97,7 +97,7 @@ namespace HT.Engine.Rendering.Techniques
         {
             ThrowIfDisposed();
 
-            scene.BeginDebugMarker(commandbuffer, "DeferredComposition", ColorUtils.Silver);
+            scene.BeginDebugMarker(commandbuffer, "DeferredComposition");
             {
                 renderer.SetPushData(swapchainIndexPushDataBinding, swapchainIndex);
                 renderer.Record(commandbuffer, outputIndex: swapchainIndex);
