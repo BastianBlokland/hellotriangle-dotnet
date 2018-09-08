@@ -8,9 +8,8 @@ namespace HT.Engine.Rendering
     [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
     internal readonly struct CameraData : IEquatable<CameraData>
     {
-        public const int SIZE = 
-            Float4x4.SIZE * 5 +
-            sizeof(float) * 2;
+        public const int PADDING = sizeof(float) * 2; //Add padding to align it to 16 bytes
+        public const int SIZE = Float4x4.SIZE * 5 + sizeof(float) * 2 + PADDING;
         
         //Data
         public readonly Float4x4 CameraMatrix; //Inverse of view-matrix

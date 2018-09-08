@@ -92,7 +92,7 @@ namespace HT.Engine.Rendering
                 size: ByteUtils.MegabyteToByte(16));
             sceneDataBuffer = new Memory.HostBuffer(
                 window.LogicalDevice, memoryPool, BufferUsages.UniformBuffer,
-                size: CameraData.SIZE * window.SwapchainCount);
+                size: SceneData.SIZE * window.SwapchainCount);
             inputManager = new ShaderInputManager(window.LogicalDevice, logger);
 
             //Create techniques

@@ -8,9 +8,8 @@ namespace HT.Engine.Rendering
     [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
     internal readonly struct SceneData : IEquatable<SceneData>
     {
-        public const int SIZE = 
-            sizeof(int) +
-            sizeof(float) * 2;
+        public const int PADDING = sizeof(float); //Add padding to align it to 16 bytes
+        public const int SIZE = sizeof(int) + sizeof(float) * 2 + PADDING;
         
         //Data
         public readonly int Frame;

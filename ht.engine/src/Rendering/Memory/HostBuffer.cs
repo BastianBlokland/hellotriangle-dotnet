@@ -76,9 +76,9 @@ namespace HT.Engine.Rendering.Memory
             unsafe
             {
                 //Map the memory to a cpu pointer
-                //NOTE: Memory map the whole range (offset = 0) and then offset into that manually, this
+                //NOTE: Memory map the whole range and then offset into that manually, this
                 //is because there are memory alignment rules on the memory mapping
-                void* stagingPointer = (byte*)memory.Map(offset = 0).ToPointer() + offset;
+                void* stagingPointer = (byte*)memory.Map().ToPointer() + offset;
                 
                 //Copy the data over
                 void* dataPointer = Unsafe.AsPointer(ref data);
@@ -113,9 +113,9 @@ namespace HT.Engine.Rendering.Memory
                     $"[{nameof(HostBuffer)}] Data ({offset + dataSize}) does not fit in memory region", nameof(data));
 
             //Map the memory to a cpu pointer
-            //NOTE: Memory map the whole range (offset = 0) and then offset into that manually, this
+            //NOTE: Memory map the whole range and then offset into that manually, this
             //is because there are memory alignment rules on the memory mapping
-            void* stagingPointer = (byte*)memory.Map(offset = 0).ToPointer() + offset;
+            void* stagingPointer = (byte*)memory.Map().ToPointer() + offset;
             
             //Copy the data over
             void* dataPointer = Unsafe.AsPointer(ref MemoryMarshal.GetReference(data));
