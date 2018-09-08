@@ -55,6 +55,7 @@ namespace HT.Engine.Rendering.Techniques
 
             //Create renderer for rendering the composition effects
             renderer = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
+            renderer.AddSpecialization(scene.SwapchainCount);
 
             //Add full-screen object for drawing the composition
             renderObject = new AttributelessObject(scene, 

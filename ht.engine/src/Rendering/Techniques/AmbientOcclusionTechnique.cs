@@ -64,6 +64,7 @@ namespace HT.Engine.Rendering.Techniques
             
             //Create renderer for rendering the ao texture
             renderer = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
+            renderer.AddSpecialization(scene.SwapchainCount);
             renderer.AddSpecialization(sampleKernelSize);
             renderer.AddSpecialization(sampleRadius);
             renderer.AddSpecialization(sampleBias);

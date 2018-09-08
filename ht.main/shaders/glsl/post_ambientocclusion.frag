@@ -6,10 +6,11 @@
 #include "include_math.glsl"
 
 //Specialization
-layout(constant_id = 0) const int sampleKernelSize = 32;
-layout(constant_id = 1) const float sampleRadius = 0.5;
-layout(constant_id = 2) const float sampleBias = -0.001;
-layout(constant_id = 3) const float occlusionMultiplier = 1.0;
+layout(constant_id = 0) const int swapchainCount = 1;
+layout(constant_id = 1) const int sampleKernelSize = 32;
+layout(constant_id = 2) const float sampleRadius = 0.5;
+layout(constant_id = 3) const float sampleBias = -0.001;
+layout(constant_id = 4) const float occlusionMultiplier = 1.0;
 
 //Uniforms
 layout(binding = 0) uniform CameraData cameraData;

@@ -17,6 +17,7 @@ namespace HT.Engine.Rendering
         public bool IsCloseRequested => isCloseRequested;
         public bool IsMinimized => nativeWindow.IsMinimized;
 
+        internal int SwapchainCount => swapchainCount;
         internal Device LogicalDevice => logicalDevice;
         internal HostDevice HostDevice => hostDevice;
         internal Format SurfaceFormat => surfaceFormat;

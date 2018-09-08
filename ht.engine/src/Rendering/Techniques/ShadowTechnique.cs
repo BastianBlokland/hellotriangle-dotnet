@@ -65,6 +65,7 @@ namespace HT.Engine.Rendering.Techniques
 
             //Create renderer for rendering into the g-buffer targets
             renderer = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
+            renderer.AddSpecialization(scene.SwapchainCount);
             renderer.AddSpecialization(true); //IsShadow
         }
 

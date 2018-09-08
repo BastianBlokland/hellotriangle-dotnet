@@ -18,6 +18,7 @@ namespace HT.Engine.Rendering
         public Camera Camera => camera;
 
         //Internal properties
+        internal int SwapchainCount => window.SwapchainCount;
         internal Device LogicalDevice => window.LogicalDevice;
         internal Memory.Pool MemoryPool => memoryPool;
         internal TransientExecutor Executor => executor;

@@ -6,6 +6,9 @@
 #include "include_math.glsl"
 #include "include_game.glsl"
 
+//Specialization
+layout(constant_id = 0) const int swapchainCount = 1;
+
 //Uniforms
 layout(binding = 0) uniform SceneData sceneData;
 layout(binding = 1) uniform CameraData cameraData;

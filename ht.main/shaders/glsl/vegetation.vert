@@ -8,7 +8,8 @@
 #include "include_game.glsl"
 
 //Specialization
-layout(constant_id = 0) const bool isShadowPass = false;
+layout(constant_id = 0) const int swapchainCount = 1;
+layout(constant_id = 1) const bool isShadowPass = false;
 
 //Uniforms
 layout(binding = 0) uniform SceneData sceneData;
