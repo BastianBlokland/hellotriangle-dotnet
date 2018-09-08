@@ -11,57 +11,11 @@ namespace HT.Engine.Rendering.Techniques
 {
     internal sealed class GaussianBlurTechnique : IDisposable
     {
-        private class SpecializationProvider : ISpecializationProvider
-        {
-            [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
-            private readonly struct Data
-            {
-                public const int SIZE = sizeof(bool) + sizeof(float);
-                
-                //Data
-                public readonly bool IsHorizontal;
-                public readonly float SampleScale;
-
-                public Data(bool isHorizontal, float sampleScale)
-                {
-                    IsHorizontal = isHorizontal;
-                    SampleScale = sampleScale;
-                }
-            }
-
-            private Data data;
-
-            public SpecializationProvider(bool isHorizontal, float sampleScale)
-                => this.data = new Data(isHorizontal, sampleScale);
-
-            SpecializationInfo ISpecializationProvider.GetSpecialization()
-            {
-                unsafe
-                {
-                    return new SpecializationInfo(new [] 
-                        {
-                            new SpecializationMapEntry(
-                                constantId: 0,
-                                offset: 0,
-                                size: new Size(sizeof(bool))),
-                            new SpecializationMapEntry(
-                                constantId: 1,
-                                offset: sizeof(bool),
-                                size: new Size(sizeof(float)))
-                        },
-                        new Size(Data.SIZE),
-                        data: new IntPtr(Unsafe.AsPointer(ref data)));
-                }
-            }
-        }
-
         //Data
         private readonly int iterations;
         private readonly RenderScene scene;
-        private readonly SpecializationProvider horizontalSpecialization;
-        private readonly SpecializationProvider verticalSpecialization;
-        private readonly Renderer rendererA;
-        private readonly Renderer rendererB;
+        private readonly Renderer rendererHor;
+        private readonly Renderer rendererVer;
 
         private readonly AttributelessObject renderObject;
 
@@ -69,8 +23,8 @@ namespace HT.Engine.Rendering.Techniques
         private DeviceTexture targetB;
 
         //Samplers used for the ping-ponging
-        private DeviceSampler samplerA;
-        private DeviceSampler samplerB;
+        private DeviceSampler samplerHor;
+        private DeviceSampler samplerVer;
 
         private bool disposed;
 
@@ -88,17 +42,19 @@ namespace HT.Engine.Rendering.Techniques
             this.iterations = iterations;
             this.scene = scene;
 
-            horizontalSpecialization = new SpecializationProvider(isHorizontal: true, sampleScale);
-            verticalSpecialization = new SpecializationProvider(isHorizontal: false, sampleScale);
-
             //Create renderers (2 so we can ping-pong between two targets)
-            rendererA = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
-            rendererB = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
+            rendererHor = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
+            rendererHor.AddSpecialization(true); //IsHorizontal
+            rendererHor.AddSpecialization(sampleScale);
+
+            rendererVer = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
+            rendererVer.AddSpecialization(false); //NOT IsHorizontal
+            rendererVer.AddSpecialization(sampleScale);
 
             //Add a full-screen object to both renderers
             renderObject = new AttributelessObject(scene, vertexCount: 3, new TextureInfo[0]);
-            rendererA.AddObject(renderObject, postVertProg, blurFragProg);
-            rendererB.AddObject(renderObject, postVertProg, blurFragProg);
+            rendererHor.AddObject(renderObject, postVertProg, blurFragProg);
+            rendererVer.AddObject(renderObject, postVertProg, blurFragProg);
         }
 
         internal void CreateResources(DeviceTexture blurTarget)
@@ -107,28 +63,28 @@ namespace HT.Engine.Rendering.Techniques
 
             //Dispose of the resources
             targetB?.Dispose();
-            samplerA?.Dispose();
-            samplerB?.Dispose();
+            samplerHor?.Dispose();
+            samplerVer?.Dispose();
 
             //Create a temp target (same format and size as the blur-target) so we can ping-point
             //between the original target and this temp target for each blur step
             targetB = DeviceTexture.CreateColorTarget(blurTarget.Size, blurTarget.Format, scene);
             
             //Create samplers
-            samplerA = new DeviceSampler(scene.LogicalDevice, blurTarget, disposeTexture: false);
-            samplerB = new DeviceSampler(scene.LogicalDevice, targetB, disposeTexture: false);
+            samplerHor = new DeviceSampler(scene.LogicalDevice, blurTarget, disposeTexture: false);
+            samplerVer = new DeviceSampler(scene.LogicalDevice, targetB, disposeTexture: false);
 
             //Bind the inputs
-            rendererA.BindGlobalInputs(new IShaderInput[] { samplerA });
-            rendererB.BindGlobalInputs(new IShaderInput[] { samplerB });
+            rendererHor.BindGlobalInputs(new IShaderInput[] { samplerHor });
+            rendererVer.BindGlobalInputs(new IShaderInput[] { samplerVer });
 
             //Bind the targets
-            rendererA.BindTargets(new [] { targetB });
-            rendererB.BindTargets(new [] { blurTarget });
+            rendererHor.BindTargets(new [] { targetB });
+            rendererVer.BindTargets(new [] { blurTarget });
 
             //Tell the renderers to allocate their resources based on the data we've provided
-            rendererA.CreateResources(specialization: horizontalSpecialization);
-            rendererB.CreateResources(specialization: verticalSpecialization);
+            rendererHor.CreateResources();
+            rendererVer.CreateResources();
         }
 
         internal void Record(CommandBuffer commandbuffer)
@@ -143,12 +99,12 @@ namespace HT.Engine.Rendering.Techniques
                     Renderer.InsertOutputReadBarrier(commandbuffer);
                 }
 
-                rendererA.Record(commandbuffer);
+                rendererHor.Record(commandbuffer);
 
                 //Insert barrier to wait for rendererA is done before starting rendererB
                 Renderer.InsertOutputReadBarrier(commandbuffer);
 
-                rendererB.Record(commandbuffer);
+                rendererVer.Record(commandbuffer);
             }
         }
 
@@ -156,11 +112,11 @@ namespace HT.Engine.Rendering.Techniques
         {
             ThrowIfDisposed();
 
-            rendererA.Dispose();
-            rendererB.Dispose();
+            rendererHor.Dispose();
+            rendererVer.Dispose();
             renderObject.Dispose();
-            samplerB?.Dispose();
-            samplerA?.Dispose();
+            samplerVer?.Dispose();
+            samplerHor?.Dispose();
             targetB?.Dispose();
 
             disposed = true;

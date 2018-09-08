@@ -92,7 +92,7 @@ namespace HT.Engine.Rendering.Techniques
             renderer.BindTargets(new [] { bloomTarget });
 
             //Tell the renderer to allocate its resources based on the data we've provided
-            renderer.CreateResources(specialization: null);
+            renderer.CreateResources();
 
             //Initialize the blurTechnique, point it to the bloom-target
             blurTechnique.CreateResources(bloomTarget);

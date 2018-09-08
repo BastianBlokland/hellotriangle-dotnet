@@ -83,7 +83,7 @@ namespace HT.Engine.Rendering.Techniques
                 aoTechnique.AOOutput });
 
             //Tell the renderer to allocate its resources based on the data we've provided
-            renderer.CreateResources(specialization: null);
+            renderer.CreateResources();
         }
 
         internal void Record(CommandBuffer commandbuffer, int swapchainIndex)

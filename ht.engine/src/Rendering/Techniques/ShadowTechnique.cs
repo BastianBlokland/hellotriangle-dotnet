@@ -10,7 +10,7 @@ using VulkanCore;
 
 namespace HT.Engine.Rendering.Techniques
 {
-    internal sealed class ShadowTechnique : ISpecializationProvider, IDisposable
+    internal sealed class ShadowTechnique : IDisposable
     {
         [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
         private readonly struct SpecializationData
@@ -65,6 +65,7 @@ namespace HT.Engine.Rendering.Techniques
 
             //Create renderer for rendering into the g-buffer targets
             renderer = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
+            renderer.AddSpecialization(true); //IsShadow
         }
 
         internal void AddObject(
@@ -99,7 +100,7 @@ namespace HT.Engine.Rendering.Techniques
             renderer.BindTargets(new [] { depthTarget });
 
             //Tell the renderer to allocate its resources based on the data we've provided
-            renderer.CreateResources(specialization: this);
+            renderer.CreateResources();
 
             //Store the aspect of the swapchain, we need it later to calculate the shadow frustum
             swapchainAspect = (float)swapchainSize.X / swapchainSize.Y;
@@ -208,19 +209,6 @@ namespace HT.Engine.Rendering.Techniques
             float squareDiag2 = (points[2] - points[4]).SquareMagnitude;
             float radius = FloatUtils.SquareRoot(FloatUtils.Max(squareDiag1, squareDiag2)) * .5f;
             return new FloatSphere(center, radius);
-        }
-
-        SpecializationInfo ISpecializationProvider.GetSpecialization()
-        {
-            unsafe
-            {
-                return new SpecializationInfo(new [] { new SpecializationMapEntry(
-                    constantId: 0,
-                    offset: 0,
-                    size: new Size(sizeof(bool))) },
-                    new Size(SpecializationData.SIZE),
-                    data: new IntPtr(Unsafe.AsPointer(ref specializationData)));
-            }
         }
 
         private void ThrowIfDisposed()

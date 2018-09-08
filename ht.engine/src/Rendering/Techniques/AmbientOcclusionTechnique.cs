@@ -10,32 +10,8 @@ using VulkanCore;
 
 namespace HT.Engine.Rendering.Techniques
 {
-    internal sealed class AmbientOcclusionTechnique
-        : ISpecializationProvider, IPushDataProvider, IDisposable
+    internal sealed class AmbientOcclusionTechnique : IPushDataProvider, IDisposable
     {
-        [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
-        private readonly struct SpecializationData
-        {
-            public const int SIZE = sizeof(int) + sizeof(float) * 3;
-            
-            public readonly int SampleKernelSize;
-            public readonly float SampleRadius;
-            public readonly float SampleBias;
-            public readonly float OcclusionMultiplier;
-
-            public SpecializationData(
-                int sampleKernelSize,
-                float sampleRadius,
-                float sampleBias,
-                float occlusionMultiplier)
-            {
-                SampleKernelSize = sampleKernelSize;
-                SampleRadius = sampleRadius;
-                SampleBias = sampleBias;
-                OcclusionMultiplier = occlusionMultiplier;
-            }
-        }
-
         private readonly static Format aoFormat = Format.R8UNorm;
         private readonly static int sampleKernelSize = 16;
         private readonly static float sampleRadius = 1.15f;
@@ -57,8 +33,6 @@ namespace HT.Engine.Rendering.Techniques
         private readonly DeviceSampler rotationNoiseSampler;
         private readonly AttributelessObject renderObject;
         private readonly BoxBlurTechnique blurTechnique;
-
-        private SpecializationData specializationData;
 
         //Target to render into
         private DeviceTexture aoTarget;
@@ -87,11 +61,12 @@ namespace HT.Engine.Rendering.Techniques
             this.scene = scene;
             this.logger = logger;
             
-            specializationData = new SpecializationData(
-                sampleKernelSize, sampleRadius, sampleBias, occlusionMultiplier);
-
             //Create renderer for rendering the ao texture
             renderer = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
+            renderer.AddSpecialization(sampleKernelSize);
+            renderer.AddSpecialization(sampleRadius);
+            renderer.AddSpecialization(sampleBias);
+            renderer.AddSpecialization(occlusionMultiplier);
 
             //Create random for generating the kernel and noise (using a arbitrary fixed seed)
             IRandom random = new ShiftRandom(seed: 1234); 
@@ -146,7 +121,7 @@ namespace HT.Engine.Rendering.Techniques
             renderer.BindTargets(new [] { aoTarget });
 
             //Tell the renderer to allocate its resources based on the data we've provided
-            renderer.CreateResources(specialization: this);
+            renderer.CreateResources();
 
             //Initialize the blurTechnique, point it to the ao-target
             blurTechnique.CreateResources(aoTarget);
@@ -189,35 +164,6 @@ namespace HT.Engine.Rendering.Techniques
                 float scale = (float)i / kernel.Length;
                 Float3 point = dir * FloatUtils.Lerp(.1f, 1f, scale * scale);
                 kernel[i] = point.XYZ0;
-            }
-        }
-
-        SpecializationInfo ISpecializationProvider.GetSpecialization()
-        {
-            unsafe
-            {
-                return new SpecializationInfo(new [] 
-                    {
-                        new SpecializationMapEntry(
-                            constantId: 0,
-                            offset: 0,
-                            size: new Size(sizeof(int))),
-                        new SpecializationMapEntry(
-                            constantId: 1,
-                            offset: sizeof(int),
-                            size: new Size(sizeof(float))),
-                        new SpecializationMapEntry(
-                            constantId: 2,
-                            offset: sizeof(int) + sizeof(float),
-                            size: new Size(sizeof(float))),
-                            
-                        new SpecializationMapEntry(
-                            constantId: 3,
-                            offset: sizeof(int) + sizeof(float) + sizeof(float),
-                            size: new Size(sizeof(float)))
-                    },
-                    new Size(SpecializationData.SIZE),
-                    data: new IntPtr(Unsafe.AsPointer(ref specializationData)));
             }
         }
 

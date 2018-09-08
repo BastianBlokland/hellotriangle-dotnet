@@ -8,7 +8,7 @@ namespace HT.Engine.Math
         public static int GetComponentCount<T>()
             where T : struct, IFloatSet
         {
-            //Its debabtably if we should be using the switching on the type here or a if-else chain
+            //Its debatable if we should be using the switching on the type here or a if-else chain
             //the advantage of the switch is that the compiler should be able to use jump-tables to
             //avoid checking all cases but the downside is that it has to allocate the value on the 
             //stack. But because the FloatX structs are small i think the jump-table approach is going

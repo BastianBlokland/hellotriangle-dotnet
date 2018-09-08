@@ -9,24 +9,8 @@ using VulkanCore;
 
 namespace HT.Engine.Rendering.Techniques
 {
-    internal sealed class BoxBlurTechnique : ISpecializationProvider, IDisposable
+    internal sealed class BoxBlurTechnique : IDisposable
     {
-        [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
-        private readonly struct SpecializationData
-        {
-            public const int SIZE = sizeof(int) + sizeof(float);
-            
-            //Data
-            public readonly int SampleRange;
-            public readonly float SampleScale;
-
-            public SpecializationData(int sampleRange, float sampleScale)
-            {
-                SampleRange = sampleRange;
-                SampleScale = sampleScale;
-            }
-        }
-
         //Properties
         internal IShaderInput BlurOutput => outputSampler;
 
@@ -35,8 +19,6 @@ namespace HT.Engine.Rendering.Techniques
         private readonly Renderer renderer;
 
         private readonly AttributelessObject renderObject;
-
-        private SpecializationData specializationData;
 
         //Target and sampler used during the blur pass
         private DeviceTexture outputTarget;
@@ -58,10 +40,10 @@ namespace HT.Engine.Rendering.Techniques
 
             this.scene = scene;
 
-            specializationData = new SpecializationData(sampleRange, sampleScale);
-
             //Setup renderer
             renderer = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
+            renderer.AddSpecialization(sampleRange);
+            renderer.AddSpecialization(sampleScale);
 
             //Add a full-screen object to the renderer
             renderObject = new AttributelessObject(scene, vertexCount: 3, new TextureInfo[0]);
@@ -91,7 +73,7 @@ namespace HT.Engine.Rendering.Techniques
             renderer.BindTargets(new [] { outputTarget });
 
             //Tell the renderer to allocate its resources based on the data we've provided
-            renderer.CreateResources(specialization: this);
+            renderer.CreateResources();
         }
 
         internal void Record(CommandBuffer commandbuffer)
@@ -118,26 +100,6 @@ namespace HT.Engine.Rendering.Techniques
         {
             if (disposed)
                 throw new Exception($"[{nameof(BoxBlurTechnique)}] Allready disposed");
-        }
-
-        SpecializationInfo ISpecializationProvider.GetSpecialization()
-        {
-            unsafe
-            {
-                return new SpecializationInfo(new [] 
-                    {
-                        new SpecializationMapEntry(
-                            constantId: 0,
-                            offset: 0,
-                            size: new Size(sizeof(int))),
-                        new SpecializationMapEntry(
-                            constantId: 1,
-                            offset: sizeof(int),
-                            size: new Size(sizeof(float)))
-                    },
-                    new Size(SpecializationData.SIZE),
-                    data: new IntPtr(Unsafe.AsPointer(ref specializationData)));
-            }
         }
     }
 }

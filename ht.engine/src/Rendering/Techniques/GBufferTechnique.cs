@@ -56,6 +56,7 @@ namespace HT.Engine.Rendering.Techniques
 
             //Create renderer for rendering into the g-buffer targets
             renderer = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
+            renderer.AddSpecialization(false); //NOT IsShadow
         }
 
         internal void AddObject(
@@ -102,7 +103,7 @@ namespace HT.Engine.Rendering.Techniques
             renderer.BindTargets(new [] { colorTarget, normalTarget, attributeTarget, depthTarget });
 
             //Tell the renderer to allocate its resources based on the data we've provided
-            renderer.CreateResources(specialization: null);
+            renderer.CreateResources();
         }
 
         internal void Record(CommandBuffer commandbuffer)

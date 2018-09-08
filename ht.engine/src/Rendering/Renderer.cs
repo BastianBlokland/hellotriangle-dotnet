@@ -22,6 +22,7 @@ namespace HT.Engine.Rendering
             private readonly bool depthBias;
             private readonly IInternalRenderObject renderObject;
             private readonly IPushDataProvider pushDataProvider;
+            private readonly SpecializationContainer specializationContainer;
             private readonly ShaderModule vertModule;
             private readonly ShaderModule fragModule;
 
@@ -34,6 +35,7 @@ namespace HT.Engine.Rendering
                 bool depthClamp,
                 bool depthBias,
                 IInternalRenderObject renderObject,
+                SpecializationContainer specializationContainer,
                 IPushDataProvider pushDataProvider,
                 ShaderProgram vertProg,
                 ShaderProgram fragProg,
@@ -41,6 +43,7 @@ namespace HT.Engine.Rendering
             {
                 this.order = order;
                 this.renderObject = renderObject;
+                this.specializationContainer = specializationContainer;
                 this.pushDataProvider = pushDataProvider;
                 this.depthClamp = depthClamp;
                 this.depthBias = depthBias;
@@ -53,7 +56,6 @@ namespace HT.Engine.Rendering
                 Device logicalDevice,
                 ShaderInputManager shaderInputManager,
                 RenderPass renderPass,
-                ISpecializationProvider specialization,
                 ReadOnlySpan<DeviceTexture> targets,
                 ReadOnlySpan<IShaderInput> globalInputs)
             {
@@ -79,7 +81,7 @@ namespace HT.Engine.Rendering
                         pipelineLayout,
                         vertModule,
                         fragModule,
-                        specialization,
+                        specializationContainer,
                         depthClamp,
                         depthBias,
                         targets,
@@ -146,6 +148,7 @@ namespace HT.Engine.Rendering
         //Data
         private readonly Device logicalDevice;
         private readonly ShaderInputManager shaderInputManager;
+        private readonly SpecializationContainer specializationContainer;
         private readonly Logger logger;
         private readonly List<Item> items = new List<Item>();
 
@@ -166,8 +169,12 @@ namespace HT.Engine.Rendering
 
             this.logicalDevice = logicalDevice;
             this.shaderInputManager = shaderInputManager;
+            this.specializationContainer = new SpecializationContainer(logger);
             this.logger = logger;
         }
+
+        public void AddSpecialization<T>(T data) where T : struct
+            => specializationContainer.Add(data);
 
         public void AddObject(
             IInternalRenderObject renderObject,
@@ -185,6 +192,7 @@ namespace HT.Engine.Rendering
                 depthClamp,
                 depthBias,
                 renderObject,
+                specializationContainer,
                 pushDataProvider,
                 vertProg,
                 fragProg,
@@ -210,6 +218,7 @@ namespace HT.Engine.Rendering
             items.DisposeAll();
             outputs.DisposeAll();
             renderPass?.Dispose();
+            specializationContainer.Dispose();
             disposed = true;
         }
 
@@ -258,7 +267,7 @@ namespace HT.Engine.Rendering
             globalInputs = inputs.ToArray();
         }
 
-        internal void CreateResources(ISpecializationProvider specialization = null)
+        internal void CreateResources()
         {
             ThrowIfDisposed();
 
@@ -271,7 +280,6 @@ namespace HT.Engine.Rendering
                     logicalDevice,
                     shaderInputManager,
                     renderPass,
-                    specialization,
                     outputs[0].Targets,
                     globalInputs);
         }
