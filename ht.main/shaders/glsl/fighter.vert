@@ -7,7 +7,7 @@
 #include "include_math.glsl"
 
 //Specialization
-layout(constant_id = 0) const int swapchainCount = 1;
+layout(constant_id = 0) const int swapchainCount = 3;
 layout(constant_id = 1) const bool isShadowPass = false;
 
 //PushData

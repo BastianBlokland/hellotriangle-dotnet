@@ -7,7 +7,7 @@
 #include "include_game.glsl"
 
 //Specialization
-layout(constant_id = 0) const int swapchainCount = 1;
+layout(constant_id = 0) const int swapchainCount = 3;
 
 //PushData
 layout(push_constant) uniform PushData

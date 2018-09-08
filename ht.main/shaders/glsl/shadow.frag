@@ -3,7 +3,7 @@
 #extension GL_GOOGLE_include_directive : enable
 
 //Specialization
-layout(constant_id = 0) const int swapchainCount = 1;
+layout(constant_id = 0) const int swapchainCount = 3;
 layout(constant_id = 1) const bool isShadowPass = false;
 
 //PushData
