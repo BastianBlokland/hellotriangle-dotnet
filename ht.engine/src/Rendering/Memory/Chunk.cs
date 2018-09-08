@@ -221,9 +221,7 @@ namespace HT.Engine.Rendering.Memory
         private long GetPadding(long offset, long alignment)
         {
             long remainder = offset % alignment;
-            if (remainder == 0)
-                return 0;
-            return alignment - remainder;
+            return remainder == 0 ? 0 : (alignment - remainder);
         }
 
         private bool DoesOverlap(Block blockA, Block blockB)

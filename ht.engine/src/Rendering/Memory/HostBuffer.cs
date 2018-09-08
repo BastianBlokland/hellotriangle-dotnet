@@ -18,6 +18,7 @@ namespace HT.Engine.Rendering.Memory
         private readonly VulkanCore.Buffer buffer;
         private readonly Block memory;
         private readonly long size;
+        private readonly long alignment;
 
         private bool disposed;
 
@@ -25,13 +26,15 @@ namespace HT.Engine.Rendering.Memory
             Device logicalDevice,
             Pool memoryPool,
             BufferUsages usages,
-            long size)
+            long size,
+            long alignment = 1)
         {
             if (logicalDevice == null)
                 throw new ArgumentNullException(nameof(logicalDevice));
             if (memoryPool == null)
                 throw new ArgumentNullException(nameof(memoryPool));
             this.size = size;
+            this.alignment = alignment;
 
             //Create the buffer
             buffer = logicalDevice.CreateBuffer(new BufferCreateInfo(
@@ -67,8 +70,12 @@ namespace HT.Engine.Rendering.Memory
         {
             ThrowIfDisposed();
 
+            //Calculate padding to adhere to the alignment
+            long padding = GetPadding(offset, alignment);
+            long paddedOffset = offset + padding;
+
             int dataSize = Unsafe.SizeOf<T>();
-            if (dataSize + offset > memory.Size)
+            if (dataSize + paddedOffset > memory.Size)
                 throw new ArgumentException(
                     $"[{nameof(HostBuffer)}] Data does not fit in memory region", nameof(data));
 
@@ -76,7 +83,7 @@ namespace HT.Engine.Rendering.Memory
             unsafe
             {
                 //Map the memory to a cpu pointer
-                void* stagingPointer = memory.Map(offset).ToPointer();
+                void* stagingPointer = memory.Map(paddedOffset).ToPointer();
                 
                 //Copy the data over
                 void* dataPointer = Unsafe.AsPointer(ref data);
@@ -105,13 +112,17 @@ namespace HT.Engine.Rendering.Memory
                 throw new ArgumentException(
                     $"[{nameof(Pool)}] Given data-array is empty", nameof(data));
 
+            //Calculate padding to adhere to the alignment
+            long padding = GetPadding(offset, alignment);
+            long paddedOffset = offset + padding;
+
             int dataSize = data.GetSize();
-            if (offset + dataSize > memory.Size)
+            if (paddedOffset + dataSize > memory.Size)
                 throw new ArgumentException(
-                    $"[{nameof(HostBuffer)}] Data ({offset + dataSize}) does not fit in memory region", nameof(data));
+                    $"[{nameof(HostBuffer)}] Data ({paddedOffset + dataSize}) does not fit in memory region", nameof(data));
 
             //Map the memory to a cpu pointer
-            void* stagingPointer = memory.Map(offset).ToPointer();
+            void* stagingPointer = memory.Map(paddedOffset).ToPointer();
             
             //Copy the data over
             void* dataPointer = Unsafe.AsPointer(ref MemoryMarshal.GetReference(data));
@@ -123,6 +134,12 @@ namespace HT.Engine.Rendering.Memory
             //Release the cpu memory
             memory.Unmap();
             return dataSize;
+        }
+
+        private long GetPadding(long offset, long alignment)
+        {
+            long remainder = offset % alignment;
+            return remainder == 0 ? 0 : (alignment - remainder);
         }
 
         private void ThrowIfDisposed()

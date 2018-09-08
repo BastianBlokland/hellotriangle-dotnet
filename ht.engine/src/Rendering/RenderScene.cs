@@ -19,6 +19,7 @@ namespace HT.Engine.Rendering
 
         //Internal properties
         internal int SwapchainCount => window.SwapchainCount;
+        internal HostDevice HostDevice => window.HostDevice;
         internal Device LogicalDevice => window.LogicalDevice;
         internal Memory.Pool MemoryPool => memoryPool;
         internal TransientExecutor Executor => executor;
@@ -87,7 +88,9 @@ namespace HT.Engine.Rendering
                 BufferUsages.TransferSrc,
                 size: ByteUtils.MegabyteToByte(16));
             sceneDataBuffer = new Memory.HostBuffer(
-                window.LogicalDevice, memoryPool, BufferUsages.UniformBuffer, SceneData.SIZE);
+                window.LogicalDevice, memoryPool, BufferUsages.UniformBuffer,
+                size: 512,// SceneData.SIZE * window.SwapchainCount,
+                alignment: window.HostDevice.Limits.NonCoherentAtomSize);
             inputManager = new ShaderInputManager(window.LogicalDevice, logger);
 
             //Create techniques
@@ -179,17 +182,17 @@ namespace HT.Engine.Rendering
             dirty = false;
         }
 
-        internal void PreDraw(FrameTracker tracker)
+        internal void PreDraw(FrameTracker tracker, int swapchainIndex)
         {
             //Update the scene data
             SceneData sceneData = new SceneData(
                 tracker.FrameNumber,
                 (float)tracker.ElapsedTime,
                 tracker.DeltaTime);
-            sceneDataBuffer.Write(sceneData);
+            sceneDataBuffer.Write(sceneData, SceneData.SIZE * swapchainIndex);
 
-            gbufferTechnique.PreDraw();
-            shadowTechnique.PreDraw(sunDirection, shadowDistance);
+            gbufferTechnique.PreDraw(swapchainIndex);
+            shadowTechnique.PreDraw(swapchainIndex, sunDirection, shadowDistance);
         }
 
         private void ThrowIfDisposed()

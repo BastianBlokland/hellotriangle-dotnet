@@ -53,7 +53,9 @@ namespace HT.Engine.Rendering.Techniques
 
             //Create buffer for storing camera transformations
             cameraBuffer = new Memory.HostBuffer(
-                scene.LogicalDevice, scene.MemoryPool, BufferUsages.UniformBuffer, CameraData.SIZE);
+                scene.LogicalDevice, scene.MemoryPool, BufferUsages.UniformBuffer,
+                size: 1024, //CameraData.SIZE);
+                alignment: scene.HostDevice.Limits.NonCoherentAtomSize);
 
             //Create renderer for rendering into the g-buffer targets
             renderer = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
@@ -117,11 +119,11 @@ namespace HT.Engine.Rendering.Techniques
             renderer.Record(commandbuffer);
         }
 
-        internal void PreDraw()
+        internal void PreDraw(int swapchainIndex)
         {
             float aspect = (float)colorTarget.Size.X / colorTarget.Size.Y;
             var cameraData = CameraData.FromCamera(scene.Camera, aspect);
-            cameraBuffer.Write(cameraData);
+            cameraBuffer.Write(cameraData, offset: CameraData.SIZE * swapchainIndex);
         }
 
         public void Dispose()

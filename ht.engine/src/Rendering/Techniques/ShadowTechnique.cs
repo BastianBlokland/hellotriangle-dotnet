@@ -12,16 +12,6 @@ namespace HT.Engine.Rendering.Techniques
 {
     internal sealed class ShadowTechnique : IDisposable
     {
-        [StructLayout(LayoutKind.Sequential, Pack = 1, Size = SIZE)]
-        private readonly struct SpecializationData
-        {
-            public const int SIZE = sizeof(bool);
-            
-            public readonly bool IsShadowPass;
-
-            public SpecializationData(bool isShadowPass) => IsShadowPass = isShadowPass;
-        }
-
         private readonly static int targetSize = 2048;
         private readonly static Format depthFormat = Format.D16UNorm;
 
@@ -34,8 +24,6 @@ namespace HT.Engine.Rendering.Techniques
         private readonly Logger logger;
         private readonly Renderer renderer;
         private readonly int swapchainIndexPushDataBinding;
-
-        private SpecializationData specializationData;
 
         //Buffer for storing the camera transformations
         private readonly Memory.HostBuffer cameraBuffer;
@@ -58,11 +46,11 @@ namespace HT.Engine.Rendering.Techniques
             this.scene = scene;
             this.logger = logger;
 
-            specializationData = new SpecializationData(isShadowPass: true);
-
             //Create buffer for storing camera transformations
             cameraBuffer = new Memory.HostBuffer(
-                scene.LogicalDevice, scene.MemoryPool, BufferUsages.UniformBuffer, CameraData.SIZE);
+                scene.LogicalDevice, scene.MemoryPool, BufferUsages.UniformBuffer,
+                size: 1024, //CameraData.SIZE);
+                alignment: scene.HostDevice.Limits.NonCoherentAtomSize);
 
             //Create renderer for rendering into the g-buffer targets
             renderer = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
@@ -117,7 +105,7 @@ namespace HT.Engine.Rendering.Techniques
             renderer.Record(commandbuffer);
         }
 
-        internal void PreDraw(Float3 sunDirection, float shadowDistance)
+        internal void PreDraw(int swapchainIndex, Float3 sunDirection, float shadowDistance)
         {
             //Get the 'normal' scene projections for current camera and aspect
             CameraData sceneCameraData = CameraData.FromCamera(scene.Camera, swapchainAspect);
@@ -166,7 +154,7 @@ namespace HT.Engine.Rendering.Techniques
                 viewProjectionMatrix,
                 viewProjectionMatrix.Invert(),
                 shadowNearClip,
-                shadowFarClip));
+                shadowFarClip), offset: CameraData.SIZE * swapchainIndex);
         }
 
         public void Dispose()

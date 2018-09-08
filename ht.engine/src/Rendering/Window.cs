@@ -120,27 +120,29 @@ namespace HT.Engine.Rendering
                 CreateRenderCommands(scene);
             }
 
-            int nextImage = swapchain.AcquireNextImage(semaphore: imageAvailableSemaphore);
+            int swapchainIndex = swapchain.AcquireNextImage(semaphore: imageAvailableSemaphore);
 
             //Wait for the previous submit of this buffer to be done
-            waitFences[nextImage].Wait();
-            waitFences[nextImage].Reset();
+            waitFences[swapchainIndex].Wait();
+            waitFences[swapchainIndex].Reset();
 
             //Give the scene a chance to prepare some data for drawing
-            scene?.PreDraw(frameTracker);
+            scene?.PreDraw(frameTracker, swapchainIndex);
 
             //Once we have acquired an image we submit a commandbuffer for writing to it
             graphicsQueue.Submit(
                 waitSemaphore: imageAvailableSemaphore,
                 waitDstStageMask: PipelineStages.ColorAttachmentOutput,
-                commandBuffer: commandbuffers[nextImage],
+                commandBuffer: commandbuffers[swapchainIndex],
                 signalSemaphore: renderFinishedSemaphore,
-                fence: waitFences[nextImage]
+                fence: waitFences[swapchainIndex]
             );
 
             //Once rendering to the framebuffer is done we can present it
             presentQueue.PresentKhr(
-                waitSemaphore: renderFinishedSemaphore, swapchain: swapchain, imageIndex: nextImage);
+                waitSemaphore: renderFinishedSemaphore,
+                swapchain: swapchain,
+                imageIndex: swapchainIndex);
 
             //Set the window title mostly for debugging purposes
             nativeWindow.Title = 

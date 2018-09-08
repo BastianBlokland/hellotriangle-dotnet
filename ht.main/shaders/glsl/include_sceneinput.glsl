@@ -3,6 +3,7 @@ struct SceneData
     int frame;
     float time;
     float deltaTime;
+    //float padding[1];
 };
 
 struct CameraData
@@ -14,4 +15,5 @@ struct CameraData
     mat4 inverseViewProjectionMatrix;
     float nearClipDistance;
     float farClipDistance;
+    //float padding[2];
 };
