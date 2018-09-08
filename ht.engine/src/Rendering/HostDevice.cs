@@ -106,6 +106,19 @@ namespace HT.Engine.Rendering
             return PresentModeKhr.Fifo;
         }
 
+        internal int GetSwapchainCount(SurfaceKhr surface)
+        {
+            SurfaceCapabilitiesKhr capabilities = GetCurrentCapabilities(surface);
+
+            //1 more then min to support triple buffering
+            int count = capabilities.MinImageCount + 1;
+            
+            //If the capabilities specify a max then clamp to that
+            if (capabilities.MaxImageCount > 0)
+                count = IntUtils.Min(count, capabilities.MaxImageCount);
+            return count;
+        }
+
         internal bool IsFormatSupported(Format format, ImageTiling tiling, FormatFeatures features)
         {
             var properties = physicalDevice.GetFormatProperties(format);

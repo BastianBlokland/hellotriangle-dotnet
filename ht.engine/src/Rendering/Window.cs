@@ -34,6 +34,7 @@ namespace HT.Engine.Rendering
         private readonly PresentModeKhr presentMode;
         private readonly Format surfaceFormat;
         private readonly ColorSpaceKhr surfaceColorspace;
+        private readonly int swapchainCount;
 
         private RenderScene scene;
         private SwapchainKhr swapchain;
@@ -79,6 +80,8 @@ namespace HT.Engine.Rendering
             presentMode = hostDevice.GetPresentMode(surface);
             //Get the surfaceformat to use
             (surfaceFormat, surfaceColorspace) = hostDevice.GetSurfaceFormat(surface);
+            //Gets how many swapchain images we should use
+            swapchainCount = hostDevice.GetSwapchainCount(surface);
 
             //Create a command-pool attached to this device
             commandPool = logicalDevice.CreateCommandPool(new CommandPoolCreateInfo(
@@ -87,7 +90,7 @@ namespace HT.Engine.Rendering
             ));
 
             //Create the swapchain (images to present to the screen)
-            CreateSwapchain();
+            CreateSwapchain(swapchainCount);
             //Synchronization objects are used to sync the rendering and presenting
             CreateSynchronizationObjects(); 
         }
@@ -197,7 +200,7 @@ namespace HT.Engine.Rendering
             logger?.Log(nameof(Window), $"Rendercommands recorded ({commandbuffers.Length} command-buffers)");
         }
 
-        private void CreateSwapchain()
+        private void CreateSwapchain(int swapchainCount)
         {
             SurfaceCapabilitiesKhr capabilities = hostDevice.GetCurrentCapabilities(surface);
             //Clamp the size to within the min and max extends reported by the surface capabilities
@@ -205,17 +208,11 @@ namespace HT.Engine.Rendering
                 new Int2(capabilities.MinImageExtent.Width, capabilities.MinImageExtent.Height),
                 new Int2(capabilities.MaxImageExtent.Width, capabilities.MaxImageExtent.Height));
 
-            //Choose the amount of swap-chain images (try 1 more then min to support triple
-            //buffering) ('MaxImageCount' of 0 means no limit)
-            int desiredImageCount = capabilities.MinImageCount + 1;
-            if (capabilities.MaxImageCount > 0 && desiredImageCount > capabilities.MaxImageCount)
-                desiredImageCount = capabilities.MaxImageCount;
-
             //Gather info about the swapchain
             var createInfo = new SwapchainCreateInfoKhr
             (
                 surface: surface,
-                minImageCount: desiredImageCount,
+                minImageCount: swapchainCount,
                 imageFormat: surfaceFormat,
                 imageColorSpace: surfaceColorspace,
                 imageExtent: new Extent2D(swapchainSize.X, swapchainSize.Y),
@@ -239,8 +236,13 @@ namespace HT.Engine.Rendering
             swapchain = logicalDevice.CreateSwapchainKhr(createInfo);
             var swapchainImages = swapchain.GetImages();
 
+            //Verify that we got the amount of images we expected
+            if (swapchainImages.Length != swapchainCount)
+                throw new Exception(
+                    $"[{nameof(Window)}] Incorrect number of swapchain images acquired, expected: {swapchainCount}, got: {swapchainImages.Length}");
+
             //Create the image targets
-            swapchainTextures = new DeviceTexture[swapchainImages.Length];
+            swapchainTextures = new DeviceTexture[swapchainCount];
             for (int i = 0; i < swapchainTextures.Length; i++)
                 swapchainTextures[i] = DeviceTexture.CreateSwapchainTarget(
                     swapchainSize, surfaceFormat, swapchainImages[i]);
@@ -260,7 +262,7 @@ $@"Swapchain created:
         {
             imageAvailableSemaphore = logicalDevice.CreateSemaphore();
             renderFinishedSemaphore = logicalDevice.CreateSemaphore();
-            waitFences = new Fence[swapchainTextures.Length];
+            waitFences = new Fence[swapchainCount];
             for (int i = 0; i < waitFences.Length; i++)
                 waitFences[i] = logicalDevice.CreateFence(
                     new FenceCreateInfo(FenceCreateFlags.Signaled));
@@ -287,7 +289,7 @@ $@"Swapchain created:
                 swapchain.Dispose();
 
                 //Recreate the swapchain
-                CreateSwapchain();
+                CreateSwapchain(swapchainCount);
                 CreateSynchronizationObjects();
 
                 if (scene != null)
