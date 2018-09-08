@@ -132,7 +132,7 @@ namespace HT.Engine.Rendering
             return false;
         }
 
-        internal (Device logicalDevice, Queue graphicsQueue, Queue presentQueue) CreateLogicalDevice(
+        internal (Device logicalDevice, Queue graphicsQueue, Queue presentQueue, IList<string>) CreateLogicalDevice(
             SurfaceKhr surface, HostDeviceRequirements deviceRequirements)
         {
             if (!AreRequirementsMet(deviceRequirements))
@@ -143,7 +143,14 @@ namespace HT.Engine.Rendering
             if (!AreExtensionsAvailable(requiredExtensions))
                 throw new Exception(
                     $"[{nameof(HostDevice)}] Device '{Name}' does not support required extensions");
-            
+            var extensionsToEnable = new List<string>(requiredExtensions);
+
+            //Add any optional extensions IF its supported by this host
+            string[] optionalExtensions = GetOptionalExtensions(surfaceType);
+            for (int i = 0; i < optionalExtensions.Length; i++)
+                if (IsExtensionAvailable(optionalExtensions[i]))
+                    extensionsToEnable.Add(optionalExtensions[i]);
+
             int? graphicsQueueFamilyIndex = GetGraphicsQueueFamilyIndex();
             if (graphicsQueueFamilyIndex == null)
                 throw new Exception(
@@ -166,7 +173,7 @@ namespace HT.Engine.Rendering
             
             VulkanCore.DeviceCreateInfo createInfo = new VulkanCore.DeviceCreateInfo(
                 queueCreateInfos: queueCreateInfos.ToArray(),
-                enabledExtensionNames: requiredExtensions,
+                enabledExtensionNames: extensionsToEnable.ToArray(),
                 enabledFeatures: deviceRequirements.GetRequiredFeatures()
             );
             Device logicalDevice = physicalDevice.CreateDevice(createInfo);
@@ -174,10 +181,10 @@ namespace HT.Engine.Rendering
             Queue presentQueue = logicalDevice.GetQueue(presentQueueFamilyIndex.Value, queueIndex: 0);
 
             logger?.Log(nameof(HostDevice), $"Created logical-device ({Name})");
-            logger?.LogList(nameof(HostDevice), $"Enabled extensions for logical-device:", requiredExtensions);
+            logger?.LogList(nameof(HostDevice), $"Enabled extensions for logical-device:", extensionsToEnable);
 
             //Note: If we are running on molten-vk then we can set some specific mvk device config
-            if (requiredExtensions.Contains("VK_MVK_moltenvk"))
+            if (extensionsToEnable.Contains("VK_MVK_moltenvk"))
             {
                 var deviceConfig = logicalDevice.GetMVKDeviceConfiguration();
                 deviceConfig.DebugMode = DebugUtils.IS_DEBUG;
@@ -186,7 +193,7 @@ namespace HT.Engine.Rendering
                 logicalDevice.SetMVKDeviceConfiguration(deviceConfig);
             }
 
-            return (logicalDevice, graphicsQueue, presentQueue);
+            return (logicalDevice, graphicsQueue, presentQueue, extensionsToEnable);
         }
 
         internal bool AreRequirementsMet(HostDeviceRequirements requirements)
@@ -263,6 +270,15 @@ namespace HT.Engine.Rendering
                 case SurfaceType.MvkMacOS: return new [] { "VK_KHR_swapchain" };
             }
             throw new Exception($"[{nameof(HostDevice)}] Unknown surfaceType: {surfaceType}");
+        }
+
+        private static string[] GetOptionalExtensions(SurfaceType surfaceType)
+        {
+            #if DEBUG
+                return new [] { "VK_EXT_debug_marker" };
+            #else
+                return new string[0];
+            #endif
         }
     }
 }

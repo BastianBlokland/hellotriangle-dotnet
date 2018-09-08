@@ -55,14 +55,18 @@ namespace HT.Engine.Rendering.Techniques
             this.scene = scene;
 
             //Create renderer for rendering the composition effects
-            renderer = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
+            renderer = new Renderer(scene, logger);
             renderer.AddSpecialization(scene.SwapchainCount);
             swapchainIndexPushDataBinding = renderer.AddPushData<int>();
 
             //Add full-screen object for drawing the composition
             renderObject = new AttributelessObject(scene, 
                 vertexCount: 3, new [] { reflectionTexture });
-            renderer.AddObject(renderObject, compositionVertProg, compositionFragProg);
+            renderer.AddObject(
+                renderObject,
+                compositionVertProg,
+                compositionFragProg,
+                debugName: "fullscreen");
         }
 
         internal void CreateResources(DeviceTexture[] swapchain, IShaderInput sceneData)
@@ -93,8 +97,12 @@ namespace HT.Engine.Rendering.Techniques
         {
             ThrowIfDisposed();
 
-            renderer.SetPushData(swapchainIndexPushDataBinding, swapchainIndex);
-            renderer.Record(commandbuffer, outputIndex: swapchainIndex);
+            scene.BeginDebugMarker(commandbuffer, "DeferredComposition", ColorUtils.Silver);
+            {
+                renderer.SetPushData(swapchainIndexPushDataBinding, swapchainIndex);
+                renderer.Record(commandbuffer, outputIndex: swapchainIndex);
+            }
+            scene.EndDebugMarker(commandbuffer);
         }
 
         public void Dispose()

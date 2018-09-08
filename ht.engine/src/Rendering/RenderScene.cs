@@ -5,7 +5,9 @@ using HT.Engine.Math;
 using HT.Engine.Resources;
 using HT.Engine.Utils;
 using HT.Engine.Rendering.Techniques;
+
 using VulkanCore;
+using VulkanCore.Ext;
 
 namespace HT.Engine.Rendering
 {
@@ -89,8 +91,7 @@ namespace HT.Engine.Rendering
                 size: ByteUtils.MegabyteToByte(16));
             sceneDataBuffer = new Memory.HostBuffer(
                 window.LogicalDevice, memoryPool, BufferUsages.UniformBuffer,
-                size: 512,// SceneData.SIZE * window.SwapchainCount,
-                alignment: window.HostDevice.Limits.NonCoherentAtomSize);
+                size: CameraData.SIZE * window.SwapchainCount);
             inputManager = new ShaderInputManager(window.LogicalDevice, logger);
 
             //Create techniques
@@ -111,7 +112,8 @@ namespace HT.Engine.Rendering
             IRenderObject renderObject,
             ShaderProgram vertProg,
             ShaderProgram fragProg,
-            ShaderProgram shadowFragProg)
+            ShaderProgram shadowFragProg,
+            string debugName = null)
         {
             IInternalRenderObject internalRenderObj = renderObject as IInternalRenderObject;
             if (internalRenderObj == null)
@@ -122,9 +124,10 @@ namespace HT.Engine.Rendering
             objects.Add(internalRenderObj);
 
             //Add them to techniques for rendering
-            gbufferTechnique.AddObject(internalRenderObj, vertProg, fragProg, renderOrder);
+            gbufferTechnique.AddObject(internalRenderObj, vertProg, fragProg, renderOrder, debugName);
             if (shadowFragProg != null)
-                shadowTechnique.AddObject(internalRenderObj, vertProg, shadowFragProg, renderOrder);
+                shadowTechnique.AddObject(
+                    internalRenderObj, vertProg, shadowFragProg, renderOrder, debugName);
             
             dirty = true;
         }
@@ -163,20 +166,24 @@ namespace HT.Engine.Rendering
         {
             ThrowIfDisposed();
 
-            //First render the gbuffer and shadow targets
-            gbufferTechnique.Record(commandbuffer, swapchainIndex);
-            shadowTechnique.Record(commandbuffer, swapchainIndex);
+            BeginDebugMarker(commandbuffer, "RenderScene", ColorUtils.Olive);
+            {
+                //First render the gbuffer and shadow targets
+                gbufferTechnique.Record(commandbuffer, swapchainIndex);
+                shadowTechnique.Record(commandbuffer, swapchainIndex);
 
-            //Insert barrier because bloom and ao depend on gbuffer output
-            Renderer.InsertOutputReadBarrier(commandbuffer);
+                //Insert barrier because bloom and ao depend on gbuffer output
+                Renderer.InsertOutputReadBarrier(commandbuffer);
 
-            bloomTechnique.Record(commandbuffer);
-            aoTechnique.Record(commandbuffer, swapchainIndex);
+                bloomTechnique.Record(commandbuffer);
+                aoTechnique.Record(commandbuffer, swapchainIndex);
 
-            //Insert barrier because deferred pass depends on all other outputs
-            Renderer.InsertOutputReadBarrier(commandbuffer);
+                //Insert barrier because deferred pass depends on all other outputs
+                Renderer.InsertOutputReadBarrier(commandbuffer);
 
-            deferredTechnique.Record(commandbuffer, swapchainIndex);
+                deferredTechnique.Record(commandbuffer, swapchainIndex);
+            }
+            EndDebugMarker(commandbuffer);
 
             //All added / removed objects have been taking into account so we can unset the dirty flag
             dirty = false;
@@ -193,6 +200,27 @@ namespace HT.Engine.Rendering
 
             gbufferTechnique.PreDraw(swapchainIndex);
             shadowTechnique.PreDraw(swapchainIndex, sunDirection, shadowDistance);
+        }
+
+        internal void BeginDebugMarker(CommandBuffer commandbuffer, string name, Byte4 color)
+        {
+            #if DEBUG
+            if (window.DebugMarkerIsSupported)
+            {
+                Float4 normColor = color.Normalized;
+                commandbuffer.CmdDebugMarkerBeginExt(new DebugMarkerMarkerInfoExt(
+                    markerName: name,
+                    color: new ColorF4(normColor.R, normColor.G, normColor.B, normColor.A)));
+            }
+            #endif
+        }
+
+        internal void EndDebugMarker(CommandBuffer commandbuffer)
+        {
+            #if DEBUG
+             if (window.DebugMarkerIsSupported)
+                commandbuffer.CmdDebugMarkerEndExt();
+            #endif
         }
 
         private void ThrowIfDisposed()

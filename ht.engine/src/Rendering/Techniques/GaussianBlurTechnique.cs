@@ -43,18 +43,18 @@ namespace HT.Engine.Rendering.Techniques
             this.scene = scene;
 
             //Create renderers (2 so we can ping-pong between two targets)
-            rendererHor = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
+            rendererHor = new Renderer(scene, logger);
             rendererHor.AddSpecialization(true); //IsHorizontal
             rendererHor.AddSpecialization(sampleScale);
 
-            rendererVer = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
+            rendererVer = new Renderer(scene, logger);
             rendererVer.AddSpecialization(false); //NOT IsHorizontal
             rendererVer.AddSpecialization(sampleScale);
 
             //Add a full-screen object to both renderers
             renderObject = new AttributelessObject(scene, vertexCount: 3, new TextureInfo[0]);
-            rendererHor.AddObject(renderObject, postVertProg, blurFragProg);
-            rendererVer.AddObject(renderObject, postVertProg, blurFragProg);
+            rendererHor.AddObject(renderObject, postVertProg, blurFragProg, debugName: "horizontal");
+            rendererVer.AddObject(renderObject, postVertProg, blurFragProg, debugName: "vertical");
         }
 
         internal void CreateResources(DeviceTexture blurTarget)
@@ -91,21 +91,25 @@ namespace HT.Engine.Rendering.Techniques
         {
             ThrowIfDisposed();
 
-            for (int i = 0; i < iterations; i++)
+            scene.BeginDebugMarker(commandbuffer, "GaussianBlur", ColorUtils.Navy);
             {
-                if (i != 0)
+                for (int i = 0; i < iterations; i++)
                 {
-                    //Insert barrier to wait for last blur 'step' to be done
+                    if (i != 0)
+                    {
+                        //Insert barrier to wait for last blur 'step' to be done
+                        Renderer.InsertOutputReadBarrier(commandbuffer);
+                    }
+
+                    rendererHor.Record(commandbuffer);
+
+                    //Insert barrier to wait for rendererA is done before starting rendererB
                     Renderer.InsertOutputReadBarrier(commandbuffer);
+
+                    rendererVer.Record(commandbuffer);
                 }
-
-                rendererHor.Record(commandbuffer);
-
-                //Insert barrier to wait for rendererA is done before starting rendererB
-                Renderer.InsertOutputReadBarrier(commandbuffer);
-
-                rendererVer.Record(commandbuffer);
             }
+            scene.EndDebugMarker(commandbuffer);
         }
 
         public void Dispose()

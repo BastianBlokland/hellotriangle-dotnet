@@ -64,7 +64,7 @@ namespace HT.Engine.Rendering.Techniques
             this.logger = logger;
             
             //Create renderer for rendering the ao texture
-            renderer = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
+            renderer = new Renderer(scene, logger);
             renderer.AddSpecialization(scene.SwapchainCount);
             renderer.AddSpecialization(sampleKernelSize);
             renderer.AddSpecialization(sampleRadius);
@@ -92,7 +92,7 @@ namespace HT.Engine.Rendering.Techniques
 
             //Add full-screen object for drawing the composition
             renderObject = new AttributelessObject(scene, vertexCount: 3, new TextureInfo[0]);
-            renderer.AddObject(renderObject, postVertProg, aoFragProg);
+            renderer.AddObject(renderObject, postVertProg, aoFragProg, debugName: "fullscreen");
 
             //Create a BlurTechnique for blurring the ao texture (to hide the ao sample pattern)
             blurTechnique = new BoxBlurTechnique(
@@ -136,14 +136,18 @@ namespace HT.Engine.Rendering.Techniques
         {
             ThrowIfDisposed();
 
-            renderer.SetPushData(swapchainIndexPushDataBinding, swapchainIndex);
-            renderer.SetPushData(targetSizePushBinding, aoTarget.Size);
-            renderer.Record(commandbuffer);
+            scene.BeginDebugMarker(commandbuffer, "AmbientOcclusion", ColorUtils.Fuchsia);
+            {
+                renderer.SetPushData(swapchainIndexPushDataBinding, swapchainIndex);
+                renderer.SetPushData(targetSizePushBinding, aoTarget.Size);
+                renderer.Record(commandbuffer);
 
-            //Insert barrier to wait for rendering of ao-target to be done before starting the blurring
-            Renderer.InsertOutputReadBarrier(commandbuffer);
+                //Insert barrier to wait for rendering of ao-target to be done before starting the blurring
+                Renderer.InsertOutputReadBarrier(commandbuffer);
 
-            blurTechnique.Record(commandbuffer);
+                blurTechnique.Record(commandbuffer);
+            }
+            scene.EndDebugMarker(commandbuffer);
         }
 
         public void Dispose()

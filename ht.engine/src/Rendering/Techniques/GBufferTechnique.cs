@@ -4,6 +4,7 @@ using HT.Engine.Resources;
 using HT.Engine.Utils;
 
 using VulkanCore;
+using VulkanCore.Ext;
 
 namespace HT.Engine.Rendering.Techniques
 {
@@ -54,11 +55,10 @@ namespace HT.Engine.Rendering.Techniques
             //Create buffer for storing camera transformations
             cameraBuffer = new Memory.HostBuffer(
                 scene.LogicalDevice, scene.MemoryPool, BufferUsages.UniformBuffer,
-                size: 1024, //CameraData.SIZE);
-                alignment: scene.HostDevice.Limits.NonCoherentAtomSize);
+                size: CameraData.SIZE * scene.SwapchainCount);
 
             //Create renderer for rendering into the g-buffer targets
-            renderer = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
+            renderer = new Renderer(scene, logger);
             renderer.AddSpecialization(scene.SwapchainCount);
             renderer.AddSpecialization(false); //NOT IsShadow
             swapchainIndexPushDataBinding = renderer.AddPushData<int>();
@@ -68,9 +68,10 @@ namespace HT.Engine.Rendering.Techniques
             IInternalRenderObject renderObject,
             ShaderProgram vertProg,
             ShaderProgram fragProg,
-            int renderOrder = 0)
+            int renderOrder = 0,
+            string debugName = null)
         {
-            renderer.AddObject(renderObject, vertProg, fragProg, renderOrder);
+            renderer.AddObject(renderObject, vertProg, fragProg, renderOrder, debugName: debugName);
         }
 
         internal void CreateResources(Int2 swapchainSize, IShaderInput sceneData)
@@ -115,8 +116,12 @@ namespace HT.Engine.Rendering.Techniques
         {
             ThrowIfDisposed();
 
-            renderer.SetPushData(swapchainIndexPushDataBinding, swapchainIndex);
-            renderer.Record(commandbuffer);
+            scene.BeginDebugMarker(commandbuffer, "G-Buffer", ColorUtils.Red);
+            {
+                renderer.SetPushData(swapchainIndexPushDataBinding, swapchainIndex);
+                renderer.Record(commandbuffer);
+            }
+            scene.EndDebugMarker(commandbuffer);
         }
 
         internal void PreDraw(int swapchainIndex)

@@ -55,7 +55,24 @@
             }
         },
         {
-            "label": "publish-macos",
+            "label": "publish-macos-debug",
+            "dependsOn": [ "build-assets" ],
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "${workspaceFolder}/platforms/ht.macos/ht.macos.csproj",
+                "--runtime",
+                "osx-x64",
+                "--configuration",
+                "Debug",
+                "--output",
+                "${workspaceFolder}/build/macos/"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "publish-macos-release",
             "dependsOn": [ "build-assets" ],
             "command": "dotnet",
             "type": "process",
@@ -125,7 +142,24 @@
             }
         },
         {
-            "label": "publish-win32",
+            "label": "publish-win32-debug",
+            "dependsOn": [ "build-assets" ],
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "${workspaceFolder}/platforms/ht.win32/ht.win32.csproj",
+                "--runtime",
+                "win-x64",
+                "--configuration",
+                "Debug",
+                "--output",
+                "${workspaceFolder}/build/win32/"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "publish-win32-release",
             "dependsOn": [ "build-assets" ],
             "command": "dotnet",
             "type": "process",

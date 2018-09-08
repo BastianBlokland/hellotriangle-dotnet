@@ -93,6 +93,7 @@ namespace HT.Engine.Rendering
                         //We want to handle everthing except for info reports
                         flags: DebugReportFlagsExt.All & ~DebugReportFlagsExt.Information,
                         callback: OnDebugReport));
+                logger?.Log(nameof(Host), "Enabled debug callback");
             }
             #else
                 debugCallback = null;

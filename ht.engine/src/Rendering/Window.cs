@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 
 using HT.Engine.Math;
 using HT.Engine.Platform;
 using HT.Engine.Utils;
+
 using VulkanCore;
 using VulkanCore.Khr;
 
@@ -17,6 +19,7 @@ namespace HT.Engine.Rendering
         public bool IsCloseRequested => isCloseRequested;
         public bool IsMinimized => nativeWindow.IsMinimized;
 
+        internal bool DebugMarkerIsSupported => hasDebugMarkerExtension;
         internal int SwapchainCount => swapchainCount;
         internal Device LogicalDevice => logicalDevice;
         internal HostDevice HostDevice => hostDevice;
@@ -32,6 +35,7 @@ namespace HT.Engine.Rendering
         private readonly Device logicalDevice;
         private readonly Queue graphicsQueue;
         private readonly Queue presentQueue;
+        private readonly bool hasDebugMarkerExtension;
         private readonly PresentModeKhr presentMode;
         private readonly Format surfaceFormat;
         private readonly ColorSpaceKhr surfaceColorspace;
@@ -74,9 +78,14 @@ namespace HT.Engine.Rendering
             nativeWindow.Resized += OnNativeWindowResized;
 
             //Create a logical device (and queues on the device)
-            (logicalDevice, graphicsQueue, presentQueue) = hostDevice.CreateLogicalDevice(
+            IList<string> enabledExtensions;
+            (logicalDevice, graphicsQueue, presentQueue, enabledExtensions) = hostDevice.CreateLogicalDevice(
                 surface: surface, 
                 deviceRequirements: deviceRequirements);
+            hasDebugMarkerExtension = enabledExtensions.Contains("VK_EXT_debug_marker");
+            if (hasDebugMarkerExtension)
+                logger?.Log(nameof(Window), "Enabled debug-markers");
+
             //Get a presentmode to use
             presentMode = hostDevice.GetPresentMode(surface);
             //Get the surfaceformat to use

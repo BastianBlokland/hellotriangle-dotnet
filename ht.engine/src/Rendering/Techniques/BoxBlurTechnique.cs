@@ -41,13 +41,13 @@ namespace HT.Engine.Rendering.Techniques
             this.scene = scene;
 
             //Setup renderer
-            renderer = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
+            renderer = new Renderer(scene, logger);
             renderer.AddSpecialization(sampleRange);
             renderer.AddSpecialization(sampleScale);
 
             //Add a full-screen object to the renderer
             renderObject = new AttributelessObject(scene, vertexCount: 3, new TextureInfo[0]);
-            renderer.AddObject(renderObject, postVertProg, blurFragProg);
+            renderer.AddObject(renderObject, postVertProg, blurFragProg, debugName: "fullscreen");
         }
 
         internal void CreateResources(DeviceTexture blurTarget)
@@ -80,7 +80,11 @@ namespace HT.Engine.Rendering.Techniques
         {
             ThrowIfDisposed();
 
-            renderer.Record(commandbuffer);
+            scene.BeginDebugMarker(commandbuffer, "BoxBlur", ColorUtils.Teal);
+            {
+                renderer.Record(commandbuffer);
+            }
+            scene.EndDebugMarker(commandbuffer);
         }
 
         public void Dispose()

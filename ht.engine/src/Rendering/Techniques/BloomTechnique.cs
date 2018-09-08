@@ -53,11 +53,11 @@ namespace HT.Engine.Rendering.Techniques
             this.scene = scene;
 
             //Create renderer for rendering the bloom texture
-            renderer = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
+            renderer = new Renderer(scene, logger);
 
             //Add full-screen object for drawing the composition
             renderObject = new AttributelessObject(scene, vertexCount: 3, new TextureInfo[0]);
-            renderer.AddObject(renderObject, postVertProg, bloomFragProg);
+            renderer.AddObject(renderObject, postVertProg, bloomFragProg, debugName: "fullscreen");
 
             //Create a BlurTechnique for blurring the bloom texture
             blurTechnique = new GaussianBlurTechnique(
@@ -102,12 +102,16 @@ namespace HT.Engine.Rendering.Techniques
         {
             ThrowIfDisposed();
 
-            renderer.Record(commandbuffer);
+            scene.BeginDebugMarker(commandbuffer, "Bloom", ColorUtils.Yellow);
+            {
+                renderer.Record(commandbuffer);
 
-            //Insert barrier because bloom rendering needs to be done before we can blur it
-            Renderer.InsertOutputReadBarrier(commandbuffer);
+                //Insert barrier because bloom rendering needs to be done before we can blur it
+                Renderer.InsertOutputReadBarrier(commandbuffer);
 
-            blurTechnique.Record(commandbuffer);
+                blurTechnique.Record(commandbuffer);
+            }
+            scene.EndDebugMarker(commandbuffer);
         }
 
         public void Dispose()

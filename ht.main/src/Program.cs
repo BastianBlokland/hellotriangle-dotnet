@@ -65,7 +65,8 @@ namespace HT.Main
                     textureSources: new [] { ("textures/skybox.cube", useMipMaps: false, repeat: false) },
                     vertShaderPath: "shaders/bin/skybox.vert.spv",
                     fragShaderPath: "shaders/bin/skybox.frag.spv",
-                    shadowFragShaderPath: "shaders/bin/shadow.frag.spv");
+                    shadowFragShaderPath: "shaders/bin/shadow.frag.spv",
+                    debugName: "skybox");
 
                 //Add the fighter to the scene
                 var fighter = AddInstancedObject(nativeApp, taskRunner, scene, renderOrder: 0,
@@ -77,7 +78,8 @@ namespace HT.Main
                     },
                     vertShaderPath: "shaders/bin/fighter.vert.spv",
                     fragShaderPath: "shaders/bin/fighter.frag.spv",
-                    shadowFragShaderPath: "shaders/bin/shadow.frag.spv");
+                    shadowFragShaderPath: "shaders/bin/shadow.frag.spv",
+                    debugName: "fighter");
                 InstanceData[] fighterInstances = new InstanceData[16 * 16];
                 for (int y = 0; y < 16; y++)
                 for (int x = 0; x < 16; x++)
@@ -152,7 +154,8 @@ namespace HT.Main
                 textureSources,
                 vertShaderPath,
                 fragShaderPath,
-                drawShadows: false, shadowFragShaderPath);
+                drawShadows: false, shadowFragShaderPath,
+                debugName: "terrain");
             terrain.UpdateInstances(instances);
             return terrain;
         }
@@ -173,7 +176,8 @@ namespace HT.Main
             var random = new ShiftRandom(seed: 1337);
             var bush = AddInstancedObject(
                 app, taskRunner, scene, renderOrder,
-                modelSource, textureSources, vertShaderPath, fragShaderPath, shadowFragShaderPath);
+                modelSource, textureSources, vertShaderPath, fragShaderPath, shadowFragShaderPath,
+                debugName: "vegetation");
 
             InstanceData[] bushInstances = new InstanceData[BUSH_COUNT];
             for (int i = 0; i < BUSH_COUNT; i++)
@@ -198,7 +202,8 @@ namespace HT.Main
             (string path, bool useMipMaps, bool repeat)[] textureSources,
             string vertShaderPath,
             string fragShaderPath,
-            bool drawShadows, string shadowFragShaderPath)
+            bool drawShadows, string shadowFragShaderPath,
+            string debugName)
         {
             var loader = Load(app, taskRunner, ArrayUtils.Build<string>(
                 textureSources.MorphArray(a => a.path),
@@ -219,7 +224,8 @@ namespace HT.Main
                 renderObject,
                 loader.GetResult<ShaderProgram>(vertShaderPath),
                 loader.GetResult<ShaderProgram>(fragShaderPath),
-                drawShadows ? loader.GetResult<ShaderProgram>(shadowFragShaderPath) : null);
+                drawShadows ? loader.GetResult<ShaderProgram>(shadowFragShaderPath) : null,
+                debugName);
             return renderObject;
         }
 
@@ -232,7 +238,8 @@ namespace HT.Main
             (string path, bool useMipMaps, bool repeat)[] textureSources,
             string vertShaderPath,
             string fragShaderPath,
-            string shadowFragShaderPath)
+            string shadowFragShaderPath,
+            string debugName)
         {
             var loader = Load(app, taskRunner, ArrayUtils.Build<string>(
                 modelSource.path,
@@ -257,7 +264,8 @@ namespace HT.Main
                 renderObject,
                 loader.GetResult<ShaderProgram>(vertShaderPath),
                 loader.GetResult<ShaderProgram>(fragShaderPath),
-                loader.GetResult<ShaderProgram>(shadowFragShaderPath));
+                loader.GetResult<ShaderProgram>(shadowFragShaderPath),
+                debugName);
             return renderObject;
         }
 
@@ -270,7 +278,8 @@ namespace HT.Main
             (string path, bool useMipMaps, bool repeat)[] textureSources,
             string vertShaderPath,
             string fragShaderPath,
-            string shadowFragShaderPath)
+            string shadowFragShaderPath,
+            string debugName)
         {
             var loader = Load(app, taskRunner, ArrayUtils.Build<string>(
                 textureSources.MorphArray(a => a.path),
@@ -291,7 +300,8 @@ namespace HT.Main
                 renderObject,
                 loader.GetResult<ShaderProgram>(vertShaderPath),
                 loader.GetResult<ShaderProgram>(fragShaderPath),
-                loader.GetResult<ShaderProgram>(shadowFragShaderPath));
+                loader.GetResult<ShaderProgram>(shadowFragShaderPath),
+                debugName);
             return renderObject;
         }
 

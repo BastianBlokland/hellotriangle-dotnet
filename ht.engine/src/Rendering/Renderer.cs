@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using HT.Engine.Math;
 using HT.Engine.Resources;
 using HT.Engine.Utils;
+
 using VulkanCore;
+using VulkanCore.Ext;
 
 namespace HT.Engine.Rendering
 {
@@ -14,6 +16,7 @@ namespace HT.Engine.Rendering
         {
             //Properties
             public int Order => order;
+            public string DebugName => debugName;
             public IInternalRenderObject RenderObject => renderObject;
             
             //Data
@@ -25,6 +28,7 @@ namespace HT.Engine.Rendering
             private readonly PushDataContainer pushDataContainer;
             private readonly ShaderModule vertModule;
             private readonly ShaderModule fragModule;
+            private readonly string debugName;
 
             private ShaderInputManager.Block? inputBlock;
             private PipelineLayout pipelineLayout;
@@ -39,7 +43,8 @@ namespace HT.Engine.Rendering
                 PushDataContainer pushDataContainer,
                 ShaderProgram vertProg,
                 ShaderProgram fragProg,
-                Device logicalDevice)
+                Device logicalDevice,
+                string debugName = null)
             {
                 this.order = order;
                 this.renderObject = renderObject;
@@ -47,6 +52,7 @@ namespace HT.Engine.Rendering
                 this.pushDataContainer = pushDataContainer;
                 this.depthClamp = depthClamp;
                 this.depthBias = depthBias;
+                this.debugName = debugName;
 
                 vertModule = vertProg.CreateModule(logicalDevice);
                 fragModule = fragProg.CreateModule(logicalDevice);
@@ -146,8 +152,7 @@ namespace HT.Engine.Rendering
         }
 
         //Data
-        private readonly Device logicalDevice;
-        private readonly ShaderInputManager shaderInputManager;
+        private readonly RenderScene scene;
         private readonly SpecializationContainer specializationContainer;
         private readonly PushDataContainer pushDataContainer;
         private readonly Logger logger;
@@ -158,18 +163,12 @@ namespace HT.Engine.Rendering
         private RenderPass renderPass;
         private bool disposed;
         
-        internal Renderer(
-            Device logicalDevice,
-            ShaderInputManager shaderInputManager,
-            Logger logger = null)
+        internal Renderer(RenderScene scene, Logger logger = null)
         {
-            if (logicalDevice == null)
-                throw new ArgumentNullException(nameof(logicalDevice));
-            if (shaderInputManager == null)
-                throw new ArgumentNullException(nameof(shaderInputManager));
+            if (scene == null)
+                throw new ArgumentNullException(nameof(scene));
 
-            this.logicalDevice = logicalDevice;
-            this.shaderInputManager = shaderInputManager;
+            this.scene = scene;
             this.specializationContainer = new SpecializationContainer(logger);
             this.pushDataContainer = new PushDataContainer(
                 stages: ShaderStages.Vertex | ShaderStages.Fragment, logger);
@@ -191,7 +190,8 @@ namespace HT.Engine.Rendering
             ShaderProgram fragProg,
             int order = 0,
             bool depthClamp = false,
-            bool depthBias = false)
+            bool depthBias = false,
+            string debugName = null)
         {
             ThrowIfDisposed();
 
@@ -204,7 +204,8 @@ namespace HT.Engine.Rendering
                 pushDataContainer,
                 vertProg,
                 fragProg,
-                logicalDevice));
+                scene.LogicalDevice,
+                debugName));
 
             //Sort the objects based on order
             items.Sort(CompareOrder);
@@ -260,7 +261,7 @@ namespace HT.Engine.Rendering
             //they can however have different sizes, in the future to be more robust this should check
             //if we can reuse the renderpass or if we have to create a new one
             if (renderPass == null)
-                renderPass = CreateRenderPass(logicalDevice, targets);
+                renderPass = CreateRenderPass(scene.LogicalDevice, targets);
 
             //Dispose the old output
             outputs[outputIndex]?.Dispose();
@@ -286,8 +287,8 @@ namespace HT.Engine.Rendering
             //Create resources for all the items
             for (int i = 0; i < items.Count; i++)
                 items[i].CreateResources(
-                    logicalDevice,
-                    shaderInputManager,
+                    scene.LogicalDevice,
+                    scene.InputManager,
                     renderPass,
                     outputs[0].Targets,
                     globalInputs);
@@ -319,7 +320,13 @@ namespace HT.Engine.Rendering
             {
                 //Record all individual items
                 for (int i = 0; i < items.Count; i++)
-                    items[i].Record(commandbuffer);
+                {
+                    scene.BeginDebugMarker(commandbuffer, items[i].DebugName ?? "unknown", ColorUtils.GetColor(i));
+                    {
+                        items[i].Record(commandbuffer);
+                    }
+                    scene.EndDebugMarker(commandbuffer);
+                }
             }
             commandbuffer.CmdEndRenderPass();
         }
