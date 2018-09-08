@@ -21,8 +21,8 @@ namespace HT.Engine.Rendering
             private readonly bool depthClamp;
             private readonly bool depthBias;
             private readonly IInternalRenderObject renderObject;
-            private readonly IPushDataProvider pushDataProvider;
             private readonly SpecializationContainer specializationContainer;
+            private readonly PushDataContainer pushDataContainer;
             private readonly ShaderModule vertModule;
             private readonly ShaderModule fragModule;
 
@@ -36,7 +36,7 @@ namespace HT.Engine.Rendering
                 bool depthBias,
                 IInternalRenderObject renderObject,
                 SpecializationContainer specializationContainer,
-                IPushDataProvider pushDataProvider,
+                PushDataContainer pushDataContainer,
                 ShaderProgram vertProg,
                 ShaderProgram fragProg,
                 Device logicalDevice)
@@ -44,7 +44,7 @@ namespace HT.Engine.Rendering
                 this.order = order;
                 this.renderObject = renderObject;
                 this.specializationContainer = specializationContainer;
-                this.pushDataProvider = pushDataProvider;
+                this.pushDataContainer = pushDataContainer;
                 this.depthClamp = depthClamp;
                 this.depthBias = depthBias;
 
@@ -71,7 +71,7 @@ namespace HT.Engine.Rendering
                 if (pipelineLayout == null)
                     pipelineLayout = logicalDevice.CreatePipelineLayout(new PipelineLayoutCreateInfo(
                         setLayouts: new [] { inputBlock.Value.Layout },
-                        pushConstantRanges: pushDataProvider?.GetDataRanges()));
+                        pushConstantRanges: pushDataContainer.GetRanges()));
 
                 //Create a pipeline if we don't have one allready
                 if (pipeline == null)
@@ -94,7 +94,7 @@ namespace HT.Engine.Rendering
                     throw new Exception($"[{nameof(Renderer)}] Resources have not been created yet");
 
                 //Bind the pushdata (if there is any provider)
-                pushDataProvider?.PushData(commandBuffer, pipelineLayout);
+                pushDataContainer?.Push(commandBuffer, pipelineLayout);
 
                 //Bind the inputs
                 commandBuffer.CmdBindDescriptorSet(
@@ -149,6 +149,7 @@ namespace HT.Engine.Rendering
         private readonly Device logicalDevice;
         private readonly ShaderInputManager shaderInputManager;
         private readonly SpecializationContainer specializationContainer;
+        private readonly PushDataContainer pushDataContainer;
         private readonly Logger logger;
         private readonly List<Item> items = new List<Item>();
 
@@ -170,18 +171,25 @@ namespace HT.Engine.Rendering
             this.logicalDevice = logicalDevice;
             this.shaderInputManager = shaderInputManager;
             this.specializationContainer = new SpecializationContainer(logger);
+            this.pushDataContainer = new PushDataContainer(
+                stages: ShaderStages.Vertex | ShaderStages.Fragment, logger);
             this.logger = logger;
         }
 
         public void AddSpecialization<T>(T data) where T : struct
             => specializationContainer.Add(data);
 
+        public int AddPushData<T>() where T : struct
+            => pushDataContainer.Add<T>();
+
+        public void SetPushData<T>(int binding, T data) where T : struct
+            => pushDataContainer.Set(binding, data);
+
         public void AddObject(
             IInternalRenderObject renderObject,
             ShaderProgram vertProg,
             ShaderProgram fragProg,
             int order = 0,
-            IPushDataProvider pushDataProvider = null,
             bool depthClamp = false,
             bool depthBias = false)
         {
@@ -193,7 +201,7 @@ namespace HT.Engine.Rendering
                 depthBias,
                 renderObject,
                 specializationContainer,
-                pushDataProvider,
+                pushDataContainer,
                 vertProg,
                 fragProg,
                 logicalDevice));
@@ -219,6 +227,7 @@ namespace HT.Engine.Rendering
             outputs.DisposeAll();
             renderPass?.Dispose();
             specializationContainer.Dispose();
+            pushDataContainer.Dispose();
             disposed = true;
         }
 

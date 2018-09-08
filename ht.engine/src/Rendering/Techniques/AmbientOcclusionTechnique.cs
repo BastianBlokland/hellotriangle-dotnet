@@ -10,7 +10,7 @@ using VulkanCore;
 
 namespace HT.Engine.Rendering.Techniques
 {
-    internal sealed class AmbientOcclusionTechnique : IPushDataProvider, IDisposable
+    internal sealed class AmbientOcclusionTechnique : IDisposable
     {
         private readonly static Format aoFormat = Format.R8UNorm;
         private readonly static int sampleKernelSize = 16;
@@ -30,6 +30,7 @@ namespace HT.Engine.Rendering.Techniques
         private readonly Renderer renderer;
         private readonly Logger logger;
 
+        private readonly int targetSizePushBinding;
         private readonly DeviceSampler rotationNoiseSampler;
         private readonly AttributelessObject renderObject;
         private readonly BoxBlurTechnique blurTechnique;
@@ -67,6 +68,7 @@ namespace HT.Engine.Rendering.Techniques
             renderer.AddSpecialization(sampleRadius);
             renderer.AddSpecialization(sampleBias);
             renderer.AddSpecialization(occlusionMultiplier);
+            targetSizePushBinding = renderer.AddPushData<Int2>();
 
             //Create random for generating the kernel and noise (using a arbitrary fixed seed)
             IRandom random = new ShiftRandom(seed: 1234); 
@@ -87,7 +89,7 @@ namespace HT.Engine.Rendering.Techniques
 
             //Add full-screen object for drawing the composition
             renderObject = new AttributelessObject(scene, vertexCount: 3, new TextureInfo[0]);
-            renderer.AddObject(renderObject, postVertProg, aoFragProg, pushDataProvider: this);
+            renderer.AddObject(renderObject, postVertProg, aoFragProg);
 
             //Create a BlurTechnique for blurring the ao texture (to hide the ao sample pattern)
             blurTechnique = new BoxBlurTechnique(
@@ -108,6 +110,9 @@ namespace HT.Engine.Rendering.Techniques
 
             //Create the new render target
             aoTarget = DeviceTexture.CreateColorTarget(swapchainSize, aoFormat, scene);
+
+            //Provide the target size as a push-constant to the renderer
+            renderer.SetPushData(targetSizePushBinding, aoTarget.Size);
 
             //Bind inputs to the renderer
             renderer.BindGlobalInputs(new IShaderInput[] {
@@ -164,24 +169,6 @@ namespace HT.Engine.Rendering.Techniques
                 float scale = (float)i / kernel.Length;
                 Float3 point = dir * FloatUtils.Lerp(.1f, 1f, scale * scale);
                 kernel[i] = point.XYZ0;
-            }
-        }
-
-        PushConstantRange[] IPushDataProvider.GetDataRanges()
-            => new [] { new PushConstantRange(ShaderStages.Fragment, offset: 0, size: Int2.SIZE) };
-
-        void IPushDataProvider.PushData(CommandBuffer commandBuffer, PipelineLayout pipelineLayout)
-        {
-            //Send the target size as a push-constant to the ambient occlusion shader
-            unsafe
-            {
-                Int2 size = aoTarget.Size;
-                commandBuffer.CmdPushConstants(
-                    pipelineLayout,
-                    ShaderStages.Fragment,
-                    offset: 0,
-                    size: Int2.SIZE,
-                    values: new IntPtr(Unsafe.AsPointer(ref size)));
             }
         }
 

@@ -8,7 +8,7 @@ using VulkanCore;
 
 namespace HT.Engine.Rendering
 {
-    internal unsafe class SpecializationContainer : IDisposable
+    internal class SpecializationContainer : IDisposable
     {
         private readonly UnmanagedMemory memory;
         private readonly ResizeArray<SpecializationMapEntry> entries = new ResizeArray<SpecializationMapEntry>();
