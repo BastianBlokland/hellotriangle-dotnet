@@ -9,6 +9,12 @@
 //Specialization
 layout(constant_id = 0) const int swapchainCount = 1;
 
+//PushData
+layout(push_constant) uniform PushData
+{
+    int swapchainIndex;
+} pushdata;
+
 //Uniforms
 layout(binding = 0) uniform SceneData sceneData;
 layout(binding = 1) uniform CameraData cameraData;

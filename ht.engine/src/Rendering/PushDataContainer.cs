@@ -10,9 +10,21 @@ namespace HT.Engine.Rendering
 {
     internal class PushDataContainer : IDisposable
     {
+        private readonly struct Entry
+        {
+            public readonly long Offset;
+            public readonly long Size;
+
+            public Entry(long offset, long size)
+            {
+                Offset = offset;
+                Size = size;
+            }
+        }
+
         private readonly ShaderStages stages;
         private readonly UnmanagedMemory memory;
-        private readonly ResizeArray<PushConstantRange> entries = new ResizeArray<PushConstantRange>();
+        private readonly ResizeArray<Entry> entries = new ResizeArray<Entry>();
 
         private bool disposed;
         private long currentSize = 0;
@@ -31,15 +43,6 @@ namespace HT.Engine.Rendering
             entries.Clear();
         }
 
-        public PushConstantRange? GetRange(int binding)
-        {
-            ThrowIfDisposed();
-
-            if (binding < 0 || binding >= entries.Count)
-                return null;
-            return entries.Data[binding];
-        }
-
         public int Add<T>() where T : struct
         {
             ThrowIfDisposed();
@@ -47,11 +50,7 @@ namespace HT.Engine.Rendering
             int size = Unsafe.SizeOf<T>();
             int binding = entries.Count;
 
-            entries.Add(new PushConstantRange(
-                stageFlags: stages,
-                offset: (int)currentSize,
-                size: size));
-
+            entries.Add(new Entry(currentSize, size));
             currentSize += size;
             return binding;
         }
@@ -60,22 +59,25 @@ namespace HT.Engine.Rendering
         {
             ThrowIfDisposed();
 
-            PushConstantRange? range = GetRange(binding);
-            if (range == null)
+            Entry? entry = GetEntry(binding);
+            if (entry == null)
                 throw new Exception(
                     $"[{nameof(PushDataContainer)}] Binding '{binding}' unknown");
             
             #if DEBUG
             int size = Unsafe.SizeOf<T>();
-            if (size != range.Value.Size)
+            if (size != entry.Value.Size)
                 throw new Exception(
                     $"[{nameof(PushDataContainer)}] Binding '{binding}' has different size then provided data");
             #endif
 
-            memory.Write(data, range.Value.Offset);
+            memory.Write(data, entry.Value.Offset);
         }
 
-        public PushConstantRange[] GetRanges() => entries.ToArray();
+        public PushConstantRange[] GetRanges() =>
+            entries.Count == 0 ?
+                null :
+                new [] { new PushConstantRange(stages, offset: 0, size: (int)currentSize) };
 
         public void Push(CommandBuffer commandBuffer, PipelineLayout pipelineLayout)
         {
@@ -97,6 +99,13 @@ namespace HT.Engine.Rendering
 
             memory.Dispose();
             disposed = true;
+        }
+
+        private Entry? GetEntry(int binding)
+        {
+            if (binding < 0 || binding >= entries.Count)
+                return null;
+            return entries.Data[binding];
         }
 
         private void ThrowIfDisposed()

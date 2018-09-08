@@ -6,6 +6,12 @@
 layout(constant_id = 0) const int swapchainCount = 1;
 layout(constant_id = 1) const bool isShadowPass = false;
 
+//PushData
+layout(push_constant) uniform PushData
+{
+    int swapchainIndex;
+} pushdata;
+
 void main()
 {
     

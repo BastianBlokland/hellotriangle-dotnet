@@ -28,9 +28,10 @@ namespace HT.Engine.Rendering.Techniques
         private readonly GBufferTechnique gbufferTechnique;
         private readonly RenderScene scene;
         private readonly Renderer renderer;
+        private readonly int swapchainIndexPushDataBinding;
+        private readonly int targetSizePushBinding;
         private readonly Logger logger;
 
-        private readonly int targetSizePushBinding;
         private readonly DeviceSampler rotationNoiseSampler;
         private readonly AttributelessObject renderObject;
         private readonly BoxBlurTechnique blurTechnique;
@@ -69,6 +70,7 @@ namespace HT.Engine.Rendering.Techniques
             renderer.AddSpecialization(sampleRadius);
             renderer.AddSpecialization(sampleBias);
             renderer.AddSpecialization(occlusionMultiplier);
+            swapchainIndexPushDataBinding = renderer.AddPushData<int>();
             targetSizePushBinding = renderer.AddPushData<Int2>();
 
             //Create random for generating the kernel and noise (using a arbitrary fixed seed)
@@ -112,9 +114,6 @@ namespace HT.Engine.Rendering.Techniques
             //Create the new render target
             aoTarget = DeviceTexture.CreateColorTarget(swapchainSize, aoFormat, scene);
 
-            //Provide the target size as a push-constant to the renderer
-            renderer.SetPushData(targetSizePushBinding, aoTarget.Size);
-
             //Bind inputs to the renderer
             renderer.BindGlobalInputs(new IShaderInput[] {
                 gbufferTechnique.CameraOutput,
@@ -133,10 +132,12 @@ namespace HT.Engine.Rendering.Techniques
             blurTechnique.CreateResources(aoTarget);
         }
 
-        internal void Record(CommandBuffer commandbuffer)
+        internal void Record(CommandBuffer commandbuffer, int swapchainIndex)
         {
             ThrowIfDisposed();
 
+            renderer.SetPushData(swapchainIndexPushDataBinding, swapchainIndex);
+            renderer.SetPushData(targetSizePushBinding, aoTarget.Size);
             renderer.Record(commandbuffer);
 
             //Insert barrier to wait for rendering of ao-target to be done before starting the blurring

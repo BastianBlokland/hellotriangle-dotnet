@@ -24,6 +24,7 @@ namespace HT.Engine.Rendering.Techniques
         //Data
         private readonly RenderScene scene;
         private readonly Renderer renderer;
+        private readonly int swapchainIndexPushDataBinding;
 
         //Buffer for storing the camera transformations
         private readonly Memory.HostBuffer cameraBuffer;
@@ -58,6 +59,7 @@ namespace HT.Engine.Rendering.Techniques
             renderer = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
             renderer.AddSpecialization(scene.SwapchainCount);
             renderer.AddSpecialization(false); //NOT IsShadow
+            swapchainIndexPushDataBinding = renderer.AddPushData<int>();
         }
 
         internal void AddObject(
@@ -107,10 +109,11 @@ namespace HT.Engine.Rendering.Techniques
             renderer.CreateResources();
         }
 
-        internal void Record(CommandBuffer commandbuffer)
+        internal void Record(CommandBuffer commandbuffer, int swapchainIndex)
         {
             ThrowIfDisposed();
 
+            renderer.SetPushData(swapchainIndexPushDataBinding, swapchainIndex);
             renderer.Record(commandbuffer);
         }
 

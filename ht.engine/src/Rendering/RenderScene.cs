@@ -156,24 +156,24 @@ namespace HT.Engine.Rendering
             deferredTechnique.CreateResources(swapchainTargets, sceneDataBuffer);
         }
 
-        internal void Record(CommandBuffer commandbuffer, int swapchainImageIndex)
+        internal void Record(CommandBuffer commandbuffer, int swapchainIndex)
         {
             ThrowIfDisposed();
 
             //First render the gbuffer and shadow targets
-            gbufferTechnique.Record(commandbuffer);
-            shadowTechnique.Record(commandbuffer);
+            gbufferTechnique.Record(commandbuffer, swapchainIndex);
+            shadowTechnique.Record(commandbuffer, swapchainIndex);
 
             //Insert barrier because bloom and ao depend on gbuffer output
             Renderer.InsertOutputReadBarrier(commandbuffer);
 
             bloomTechnique.Record(commandbuffer);
-            aoTechnique.Record(commandbuffer);
+            aoTechnique.Record(commandbuffer, swapchainIndex);
 
             //Insert barrier because deferred pass depends on all other outputs
             Renderer.InsertOutputReadBarrier(commandbuffer);
 
-            deferredTechnique.Record(commandbuffer, swapchainImageIndex);
+            deferredTechnique.Record(commandbuffer, swapchainIndex);
 
             //All added / removed objects have been taking into account so we can unset the dirty flag
             dirty = false;

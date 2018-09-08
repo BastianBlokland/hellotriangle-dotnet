@@ -15,6 +15,7 @@ namespace HT.Engine.Rendering.Techniques
         private readonly AmbientOcclusionTechnique aoTechnique;
         private readonly RenderScene scene;
         private readonly Renderer renderer;
+        private readonly int swapchainIndexPushDataBinding;
 
         private readonly AttributelessObject renderObject;
 
@@ -56,6 +57,7 @@ namespace HT.Engine.Rendering.Techniques
             //Create renderer for rendering the composition effects
             renderer = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
             renderer.AddSpecialization(scene.SwapchainCount);
+            swapchainIndexPushDataBinding = renderer.AddPushData<int>();
 
             //Add full-screen object for drawing the composition
             renderObject = new AttributelessObject(scene, 
@@ -91,6 +93,7 @@ namespace HT.Engine.Rendering.Techniques
         {
             ThrowIfDisposed();
 
+            renderer.SetPushData(swapchainIndexPushDataBinding, swapchainIndex);
             renderer.Record(commandbuffer, outputIndex: swapchainIndex);
         }
 

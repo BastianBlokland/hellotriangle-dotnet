@@ -33,6 +33,7 @@ namespace HT.Engine.Rendering.Techniques
         private readonly RenderScene scene;
         private readonly Logger logger;
         private readonly Renderer renderer;
+        private readonly int swapchainIndexPushDataBinding;
 
         private SpecializationData specializationData;
 
@@ -67,6 +68,7 @@ namespace HT.Engine.Rendering.Techniques
             renderer = new Renderer(scene.LogicalDevice, scene.InputManager, logger);
             renderer.AddSpecialization(scene.SwapchainCount);
             renderer.AddSpecialization(true); //IsShadow
+            swapchainIndexPushDataBinding = renderer.AddPushData<int>();
         }
 
         internal void AddObject(
@@ -107,10 +109,11 @@ namespace HT.Engine.Rendering.Techniques
             swapchainAspect = (float)swapchainSize.X / swapchainSize.Y;
         }
 
-        internal void Record(CommandBuffer commandbuffer)
+        internal void Record(CommandBuffer commandbuffer, int swapchainIndex)
         {
             ThrowIfDisposed();
 
+            renderer.SetPushData(swapchainIndexPushDataBinding, swapchainIndex);
             renderer.Record(commandbuffer);
         }
 
