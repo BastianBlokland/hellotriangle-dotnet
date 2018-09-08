@@ -16,8 +16,8 @@ layout(push_constant) uniform PushData
 } pushdata;
 
 //Uniforms
-layout(binding = 0) uniform SceneData sceneData;
-layout(binding = 1) uniform CameraData cameraData;
+layout(binding = 0) uniform SceneDataBlock { SceneData sceneData[swapchainCount]; };
+layout(binding = 1) uniform CameraDataBlock { CameraData cameraData[swapchainCount]; };
 
 //Output
 out gl_PerVertex
@@ -31,5 +31,8 @@ void main()
 {
     outColor = vertColor;
     outWorldNormal = mat3(instanceModelMatrix) * vertNormal;
-    gl_Position = cameraData.viewProjectionMatrix * instanceModelMatrix * vec4(vertPosition, 1.0);
+    gl_Position = 
+        cameraData[pushdata.swapchainIndex].viewProjectionMatrix * 
+        instanceModelMatrix *
+        vec4(vertPosition, 1.0);
 }

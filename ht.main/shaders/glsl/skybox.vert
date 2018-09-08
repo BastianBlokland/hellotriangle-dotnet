@@ -15,8 +15,8 @@ layout(push_constant) uniform PushData
 } pushdata;
 
 //Uniforms
-layout(binding = 0) uniform SceneData sceneData;
-layout(binding = 1) uniform CameraData cameraData;
+layout(binding = 0) uniform SceneDataBlock { SceneData sceneData[swapchainCount]; };
+layout(binding = 1) uniform CameraDataBlock { CameraData cameraData[swapchainCount]; };
 layout(binding = 2) uniform samplerCube skyboxSampler;
 
 //Output
@@ -39,10 +39,10 @@ void main()
     //triangle on the far clip plane of the camera.
     //We use a inverse of the projection matrix to go from clip-space into view-space (unroll the 
     //projection)
-    vec3 viewSpaceVertPos = (inverse(cameraData.projectionMatrix) * gl_Position).xyz;
+    vec3 viewSpaceVertPos = (inverse(cameraData[pushdata.swapchainIndex].projectionMatrix) * gl_Position).xyz;
 
     //Calculate where this vertex is in worldspace. 
-    vec3 worldSpaceVertPos = mat3(cameraData.cameraMatrix) * viewSpaceVertPos;
+    vec3 worldSpaceVertPos = mat3(cameraData[pushdata.swapchainIndex].cameraMatrix) * viewSpaceVertPos;
 
     //Apply offset to be able to rotate the skybox
     outSkyboxDirection = yRotMatrix(offsetAngle) * worldSpaceVertPos;

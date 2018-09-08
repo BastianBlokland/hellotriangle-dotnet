@@ -18,8 +18,8 @@ layout(push_constant) uniform PushData
 } pushdata;
 
 //Uniforms
-layout(binding = 0) uniform SceneData sceneData;
-layout(binding = 1) uniform CameraData cameraData;
+layout(binding = 0) uniform SceneDataBlock { SceneData sceneData[swapchainCount]; };
+layout(binding = 1) uniform CameraDataBlock { CameraData cameraData[swapchainCount]; };
 layout(binding = 2) uniform sampler2D colorSampler;
 layout(binding = 3) uniform sampler2D normalSampler;
 layout(binding = 4) uniform sampler2D terrainSampler;
@@ -58,7 +58,8 @@ void main()
     vec4 vertWorldPosition = instanceModelMatrix * vec4(vertPosition, 1.0);
 
     //Apply bending to simulate wind
-    vec4 bendWorldPosition = vec4(windBend(vertWorldPosition.xyz, instanceWorldPositon, sceneData.time), 1.0);
+    const float time = sceneData[pushdata.swapchainIndex].time;
+    vec4 bendWorldPosition = vec4(windBend(vertWorldPosition.xyz, instanceWorldPositon, time), 1.0);
     vec3 bendOffset = bendWorldPosition.xyz - vertWorldPosition.xyz;
 
     //Offset by the terrain height
@@ -68,5 +69,5 @@ void main()
     outColorTint = getTint();
     outWorldNormal = mat3(instanceModelMatrix) * (vertNormal + bendOffset);
     outWorldPosition = bendWorldPosition.xyz;
-    gl_Position = cameraData.viewProjectionMatrix * bendWorldPosition;
+    gl_Position = cameraData[pushdata.swapchainIndex].viewProjectionMatrix * bendWorldPosition;
 }

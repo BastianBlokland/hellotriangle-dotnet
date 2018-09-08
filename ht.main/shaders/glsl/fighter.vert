@@ -17,8 +17,8 @@ layout(push_constant) uniform PushData
 } pushdata;
 
 //Uniforms
-layout(binding = 0) uniform SceneData sceneData;
-layout(binding = 1) uniform CameraData cameraData;
+layout(binding = 0) uniform SceneDataBlock { SceneData sceneData[swapchainCount]; };
+layout(binding = 1) uniform CameraDataBlock { CameraData cameraData[swapchainCount]; };
 layout(binding = 2) uniform sampler2D colorSampler;
 layout(binding = 3) uniform sampler2D normalSampler;
 
@@ -35,11 +35,12 @@ layout(location = 4) out vec3 outWorldNormal;
 
 void main()
 {
+    const float time = sceneData[pushdata.swapchainIndex].time;
+
     //Wobble effect
     #define wobbleFrequencies vec2(1.2, 1.5)
     #define wobbleStrenghts vec2(0.06, 0.08)
-    const vec2 wobbleAngles = 
-        sin((sceneData.time + gl_InstanceIndex) * wobbleFrequencies) * wobbleStrenghts;
+    const vec2 wobbleAngles = sin((time + gl_InstanceIndex) * wobbleFrequencies) * wobbleStrenghts;
     mat3 wobbleMatrix = xRotMatrix(wobbleAngles.x) * zRotMatrix(wobbleAngles.y);
     
     //Apply wobble matrix
@@ -55,7 +56,7 @@ void main()
         #define maxExhaustScale 3.5
         #define frequency 20.0
         outExhaustIntensity = vertColor.g *
-            abs(sin((adjustedPos.x + adjustedPos.y + sceneData.time + (gl_InstanceIndex * 0.5312)) * frequency));
+            abs(sin((adjustedPos.x + adjustedPos.y + time + (gl_InstanceIndex * 0.5312)) * frequency));
         adjustedPos.z -= vertColor.g * mix(minExhaustScale, maxExhaustScale, outExhaustIntensity);
         outExhaustMask = vertColor.r;
     }
@@ -68,5 +69,7 @@ void main()
     outUv = vertUv1;
     outWorldPosition = (instanceModelMatrix * vec4(adjustedPos, 1.0)).xyz;
     outWorldNormal = mat3(instanceModelMatrix) * adjustedNorm;
-    gl_Position = cameraData.viewProjectionMatrix * vec4(outWorldPosition, 1.0);
+    gl_Position = 
+        cameraData[pushdata.swapchainIndex].viewProjectionMatrix *
+        vec4(outWorldPosition, 1.0);
 }

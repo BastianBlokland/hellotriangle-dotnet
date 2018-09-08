@@ -20,7 +20,7 @@ layout(push_constant) uniform PushData
 } pushdata;
 
 //Uniforms
-layout(binding = 0) uniform CameraData cameraData;
+layout(binding = 0) uniform CameraDataBlock { CameraData cameraData[swapchainCount]; };
 layout(binding = 1) uniform sampler2D sceneDepthSampler;
 layout(binding = 2) uniform sampler2D sceneNormalSampler;
 layout(binding = 3) uniform SampleKernel
@@ -37,10 +37,15 @@ layout(location = 0) out vec4 outColor;
 
 void main()
 {
+    float nearClipDistance = cameraData[pushdata.swapchainIndex].nearClipDistance;
+    float farClipDistance = cameraData[pushdata.swapchainIndex].farClipDistance;
+    mat4 invViewProjectionMatrix = cameraData[pushdata.swapchainIndex].inverseViewProjectionMatrix;
+    mat4 viewProjectionMatrix = cameraData[pushdata.swapchainIndex].viewProjectionMatrix;
+
     //Get world position and normal from the gbuffer pass
     float depth = texture(sceneDepthSampler, inUv).r;
-    float linearDepth = linearizeDepth(depth, cameraData.nearClipDistance, cameraData.farClipDistance);
-    vec3 worldPos = worldPosFromDepth(depth, inUv, cameraData.inverseViewProjectionMatrix);
+    float linearDepth = linearizeDepth(depth, nearClipDistance, farClipDistance);
+    vec3 worldPos = worldPosFromDepth(depth, inUv, invViewProjectionMatrix);
     vec3 worldNormal = texture(sceneNormalSampler, inUv).xyz;
 
     //Calculate a matrix that aligns the sample hemisphere with the normal of the surface
@@ -62,17 +67,17 @@ void main()
         vec3 samplePos = worldPos + sampleDir * sampleRadius;
 
         //Caculate clipspace position for that point
-        vec4 sampleClipPos = cameraData.viewProjectionMatrix * vec4(samplePos, 1.0);
+        vec4 sampleClipPos = viewProjectionMatrix * vec4(samplePos, 1.0);
         sampleClipPos.xyz /= sampleClipPos.w; //Perspective divide
         vec2 sampleCoord = sampleClipPos.xy * 0.5 + 0.5; //To texture space
         //Calculate the target linear depth of the sample
         float linearTargetDepth = linearizeDepth(sampleClipPos.z, 
-           cameraData.nearClipDistance, cameraData.farClipDistance) + sampleBias;
+           nearClipDistance, farClipDistance) + sampleBias;
 
         //Sample the depth-texture at that coord
         float actualSampleDepth = texture(sceneDepthSampler, sampleCoord).r;
         float actualSampleLinearDepth = linearizeDepth(actualSampleDepth, 
-           cameraData.nearClipDistance, cameraData.farClipDistance);
+            nearClipDistance, farClipDistance);
 
         //Fade out the effect based on how far away from the origin the sample is
         float radiusFade = smoothstep(0.0, 1.0, sampleRadius / abs(linearDepth - actualSampleLinearDepth));

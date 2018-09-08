@@ -16,9 +16,9 @@ layout(push_constant) uniform PushData
 } pushdata;
 
 //Uniforms
-layout(binding = 0) uniform SceneData sceneData;
-layout(binding = 1) uniform CameraData cameraData;
-layout(binding = 2) uniform ShadowData shadowData;
+layout(binding = 0) uniform SceneDataBlock { SceneData sceneData[swapchainCount]; };
+layout(binding = 1) uniform CameraDataBlock { CameraData cameraData[swapchainCount]; };
+layout(binding = 2) uniform ShadowDataBlock { CameraData shadowData[swapchainCount]; };
 layout(binding = 3) uniform sampler2D sceneColorSampler;
 layout(binding = 4) uniform sampler2D sceneNormalSampler;
 layout(binding = 5) uniform sampler2D sceneAttributeSampler;
@@ -38,8 +38,9 @@ float getShadow(vec3 worldPos)
 {
     #define blurSize 0.5
 
+    mat4 viewProjectionMatrix = shadowData[pushdata.swapchainIndex].viewProjectionMatrix;
     vec2 texelSize = 1.0 / textureSize(sceneShadowSampler, 0);
-    vec4 clipPos = shadowData.viewProjectionMatrix * vec4(worldPos, 1.0);
+    vec4 clipPos = viewProjectionMatrix * vec4(worldPos, 1.0);
     vec2 baseShadowCoord = clipPos.xy * 0.5 + 0.5; //To texture space
 
     //Take multiple samples with a offset to apply blurring for softer shadows
@@ -55,9 +56,14 @@ float getShadow(vec3 worldPos)
 
 void main()
 {
+    float nearClipDistance = cameraData[pushdata.swapchainIndex].nearClipDistance;
+    float farClipDistance = cameraData[pushdata.swapchainIndex].farClipDistance;
+    mat4 cameraMatrix = cameraData[pushdata.swapchainIndex].cameraMatrix;
+    mat4 invViewProjectionMatrix = cameraData[pushdata.swapchainIndex].inverseViewProjectionMatrix;
+
     vec3 clipPos = vec3(inUv * 2.0 - 1.0, 1.0);
-    vec3 viewDir = normalize((cameraData.inverseViewProjectionMatrix * vec4(clipPos, 0.0)).xyz);
-    vec3 camPos = cameraData.cameraMatrix[3].xyz;
+    vec3 viewDir = normalize((invViewProjectionMatrix * vec4(clipPos, 0.0)).xyz);
+    vec3 camPos = cameraMatrix[3].xyz;
 
     //Sample data from the scene
     vec3 color = texture(sceneColorSampler, inUv).rgb;
@@ -68,9 +74,9 @@ void main()
     float emmisiveness = attributes.y;
     float shadowReceive = attributes.z;
     float reflectivity = attributes.a;
-    float linearDepth = linearizeDepth(depth, cameraData.nearClipDistance, cameraData.farClipDistance);
-    vec3 worldPos = worldPosFromDepth(depth, inUv, cameraData.inverseViewProjectionMatrix);
-    vec3 sunDirection = mat3(shadowData.cameraMatrix) * vec3(0.0, 0.0, 1.0);
+    float linearDepth = linearizeDepth(depth, nearClipDistance, farClipDistance);
+    vec3 worldPos = worldPosFromDepth(depth, inUv, invViewProjectionMatrix);
+    vec3 sunDirection = mat3(cameraMatrix) * vec3(0.0, 0.0, 1.0);
     float ambientOcclusion = texture(sceneAOSampler, inUv).r;
     
     //Calculate shadow
