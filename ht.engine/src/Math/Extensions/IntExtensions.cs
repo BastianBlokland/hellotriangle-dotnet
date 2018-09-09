@@ -11,6 +11,6 @@ namespace HT.Engine.Math
 
         public static bool HasBitSet(this int val, int bit) => (val & (1 << bit)) != 0;
 
-        public static float AsFloat(this int val) => Conversions.IntFloatUnion.IntAsFloat(val);
+        public static float AsFloat(this int val) => Convert.IntAsFloat(val);
     }
 }
