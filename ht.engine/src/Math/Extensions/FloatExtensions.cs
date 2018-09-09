@@ -4,7 +4,7 @@ namespace HT.Engine.Math
 {
     public static class FloatExtensions
     {
-        public static int AsInt(this float val) => Convert.FloatAsInt(val);
+        public static int AsInt(this float val) => Convert.FloatAsInt(ref val);
 
         public static float Round(this float val) => MathF.Round(val);
 
