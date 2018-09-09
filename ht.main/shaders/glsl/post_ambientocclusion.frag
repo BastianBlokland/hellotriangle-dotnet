@@ -7,9 +7,9 @@
 
 //Specialization
 layout(constant_id = 0) const int swapchainCount = 3;
-layout(constant_id = 1) const int sampleKernelSize = 32;
-layout(constant_id = 2) const float sampleRadius = 0.5;
-layout(constant_id = 3) const float sampleBias = -0.001;
+layout(constant_id = 1) const int sampleKernelSize = 8;
+layout(constant_id = 2) const float sampleRadius = 1.0;
+layout(constant_id = 3) const float sampleBias = -0.005;
 
 //PushData
 layout(push_constant) uniform PushData
