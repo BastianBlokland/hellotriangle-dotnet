@@ -12,8 +12,9 @@ namespace HT.Engine.Rendering.Techniques
     internal sealed class BloomTechnique : IDisposable
     {
         private readonly static Format bloomFormat = Format.R8G8B8A8UNorm;
+        private readonly static float targetSizeMultiplier = .5f;
         private readonly static int blurIterations = 2;
-        private readonly static float blurSampleScale = 1.5f;
+        private readonly static float blurSampleScale = 1.1f;
 
         //Properties
         internal IShaderInput BloomOutput => bloomSampler;
@@ -82,8 +83,9 @@ namespace HT.Engine.Rendering.Techniques
             bloomSampler?.Dispose();
 
             //Create the new render target
-            bloomTarget = DeviceTexture.CreateColorTarget(swapchainSize, bloomFormat, scene);
-            
+            bloomTarget = DeviceTexture.CreateColorTarget(
+                size: (swapchainSize * targetSizeMultiplier).RoundToInt(), bloomFormat, scene);
+
             //Create sampler
             bloomSampler = new DeviceSampler(scene.LogicalDevice, bloomTarget, disposeTexture: false);
 

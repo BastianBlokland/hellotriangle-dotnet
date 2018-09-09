@@ -14,6 +14,7 @@ namespace HT.Engine.Rendering.Techniques
     internal sealed class AmbientOcclusionTechnique : IDisposable
     {
         private readonly static Format aoFormat = Format.R8UNorm;
+        private readonly static float targetSizeMultiplier = .5f;
         private readonly static int sampleKernelSize = 16;
         private readonly static float sampleRadius = 1.15f;
         private readonly static float sampleBias = -.025f;
@@ -113,7 +114,8 @@ namespace HT.Engine.Rendering.Techniques
             aoTarget?.Dispose();
 
             //Create the new render target
-            aoTarget = DeviceTexture.CreateColorTarget(swapchainSize, aoFormat, scene);
+            aoTarget = DeviceTexture.CreateColorTarget(
+                size: (swapchainSize * targetSizeMultiplier).RoundToInt(), aoFormat, scene);
 
             //Bind inputs to the renderer
             renderer.BindGlobalInputs(new IShaderInput[] {
