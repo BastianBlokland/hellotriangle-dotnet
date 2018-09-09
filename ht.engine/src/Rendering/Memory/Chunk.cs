@@ -1,7 +1,9 @@
 using System;
+using System.Diagnostics;
 
 using HT.Engine.Math;
 using HT.Engine.Utils;
+
 using VulkanCore;
 
 namespace HT.Engine.Rendering.Memory
@@ -227,6 +229,7 @@ namespace HT.Engine.Rendering.Memory
         private bool DoesOverlap(Block blockA, Block blockB)
             => blockA.EndOffset > blockB.Offset && blockA.Offset < blockB.EndOffset;
 
+        [Conditional("DEBUG")]
         private void ThrowIfDisposed()
         {
             if (disposed)

@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -88,6 +89,7 @@ namespace HT.MacOS
             logger?.Log(nameof(NativeApp), $"Native window destroyed");
         }
 
+        [Conditional("DEBUG")]
         private void ThrowIfDisposed()
         {
             if (disposed)

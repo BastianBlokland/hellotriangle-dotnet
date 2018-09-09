@@ -217,6 +217,7 @@ namespace HT.Engine.Rendering
                 commandbuffer.CmdDebugMarkerEndExt();
         }
 
+        [Conditional("DEBUG")]
         private void ThrowIfDisposed()
         {
             if (disposed)

@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 
 using HT.Engine.Math;
@@ -429,6 +430,7 @@ namespace HT.Engine.Rendering
 
         private static int CompareOrder(Item a, Item b) => a.Order.CompareTo(b.Order);
 
+        [Conditional("DEBUG")]
         private void ThrowIfDisposed()
         {
             if (disposed)

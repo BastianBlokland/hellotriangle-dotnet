@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 
 using HT.Engine.Math;
 using HT.Engine.Resources;
@@ -69,6 +70,8 @@ namespace HT.Engine.Rendering
             disposed = true;
         }
         
+
+        [Conditional("DEBUG")]
         private void ThrowIfDisposed()
         {
             if (disposed)

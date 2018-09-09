@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 
 using HT.Engine.Math;
@@ -319,6 +320,7 @@ $@"Swapchain created:
             CloseRequested?.Invoke();
         }
 
+        [Conditional("DEBUG")]
         private void ThrowIfDisposed()
         {
             if (disposed)

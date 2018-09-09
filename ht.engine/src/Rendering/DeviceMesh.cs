@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 
 using HT.Engine.Resources;
 using HT.Engine.Utils;
@@ -63,6 +64,7 @@ namespace HT.Engine.Rendering
 
         internal FrontFace GetFrontFace() => FrontFace.Clockwise;
 
+        [Conditional("DEBUG")]
         private void ThrowIfDisposed()
         {
             if (disposed)

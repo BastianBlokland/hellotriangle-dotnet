@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Collections.Generic;
 
@@ -66,6 +67,7 @@ namespace HT.Win32
             logger?.Log(nameof(NativeApp), $"Native window destroyed");
         }
 
+        [Conditional("DEBUG")]
         private void ThrowIfDisposed()
         {
             if (disposed)

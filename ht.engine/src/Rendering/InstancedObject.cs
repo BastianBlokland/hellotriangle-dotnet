@@ -1,5 +1,7 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
+
 using HT.Engine.Math;
 using HT.Engine.Resources;
 using HT.Engine.Utils;
@@ -135,6 +137,7 @@ namespace HT.Engine.Rendering
                 stride: DrawIndexedIndirectCommand.SIZE);
         }
 
+        [Conditional("DEBUG")]
         private void ThrowIfDisposed()
         {
             if (disposed)

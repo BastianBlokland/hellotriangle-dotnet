@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 
 using HT.Engine.Math;
 using HT.Engine.Rendering.Memory;
@@ -504,6 +505,7 @@ namespace HT.Engine.Rendering
             });
         }
 
+        [Conditional("DEBUG")]
         private void ThrowIfDisposed()
         {
             if (disposed)

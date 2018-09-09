@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 using HT.Engine.Math;
@@ -351,6 +352,7 @@ namespace HT.Win32
             return DefWindowProc(windowHandle, message, wParam, lParam);
         }
 
+        [Conditional("DEBUG")]
         private void ThrowIfDisposed()
         {
             if (disposed)

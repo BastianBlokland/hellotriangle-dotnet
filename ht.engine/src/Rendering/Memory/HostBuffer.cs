@@ -1,6 +1,8 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+
 using HT.Engine.Utils;
 
 using VulkanCore;
@@ -129,6 +131,7 @@ namespace HT.Engine.Rendering.Memory
             return dataSize;
         }
 
+        [Conditional("DEBUG")]
         private void ThrowIfDisposed()
         {
             if (disposed)

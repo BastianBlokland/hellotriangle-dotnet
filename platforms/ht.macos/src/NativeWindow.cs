@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 using HT.Engine.Math;
@@ -227,6 +228,7 @@ namespace HT.MacOS
 
         private void OnCloseRequested() => invokeCloseRequestedEvent = true;
 
+        [Conditional("DEBUG")]
         private void ThrowIfDisposed()
         {
             if (disposed)

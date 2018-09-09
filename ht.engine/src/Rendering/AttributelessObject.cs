@@ -1,5 +1,7 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
+
 using HT.Engine.Math;
 using HT.Engine.Resources;
 using HT.Engine.Utils;
@@ -64,6 +66,7 @@ namespace HT.Engine.Rendering
             commandbuffer.CmdDraw(vertexCount, instanceCount: 1, firstVertex: 0, firstInstance: 0);
         }
 
+        [Conditional("DEBUG")]
         private void ThrowIfDisposed()
         {
             if (disposed)

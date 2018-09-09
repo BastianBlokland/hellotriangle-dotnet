@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 
 using VulkanCore;
 
@@ -99,6 +100,7 @@ namespace HT.Engine.Rendering.Memory
             disposed = true;
         }
 
+        [Conditional("DEBUG")]
         private void ThrowIfDisposed()
         {
             if (disposed)
