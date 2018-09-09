@@ -16,7 +16,8 @@ layout(constant_id = 4) const float occlusionMultiplier = 1.0;
 layout(push_constant) uniform PushData
 {
     int swapchainIndex;
-    ivec2 targetSize;
+    int targetWidth;
+    int targetHeight;
 } pushdata;
 
 //Uniforms
@@ -53,7 +54,8 @@ void main()
     //around the z-axis. This random rotation will effectivly increase our kernel sample size as we
     //sample more 'different' points. To hide the artficates that the random causes we blur the
     //different samples together at the end.
-    vec2 noiseScale = pushdata.targetSize / vec2(textureSize(rotationNoiseSampler, 0));
+    ivec2 targetSize = ivec2(pushdata.targetWidth, pushdata.targetHeight);
+    vec2 noiseScale = targetSize / vec2(textureSize(rotationNoiseSampler, 0));
     vec3 randRotation = texture(rotationNoiseSampler, inUv * noiseScale).xyz;
     vec3 tangent = normalize(randRotation - worldNormal * dot(randRotation, worldNormal));
     vec3 bitangent = cross(worldNormal, tangent);
