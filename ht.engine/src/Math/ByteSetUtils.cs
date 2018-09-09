@@ -31,10 +31,10 @@ namespace HT.Engine.Math
             T value = default(T);
             switch (value)
             {
-            case Byte1 _: UnsafeUtils.ForceAssign(ref value, new Byte1(data[0])); break;
-            case Byte2 _: UnsafeUtils.ForceAssign(ref value, new Byte2(data[0], data[1])); break;
-            case Byte3 _: UnsafeUtils.ForceAssign(ref value, new Byte3(data[0], data[1], data[2])); break;
-            case Byte4 _: UnsafeUtils.ForceAssign(ref value, new Byte4(data[0], data[1], data[2], data[3])); break;
+            case Byte1 _: UnsafeUtils.Assign(ref value, new Byte1(data[0])); break;
+            case Byte2 _: UnsafeUtils.Assign(ref value, new Byte2(data[0], data[1])); break;
+            case Byte3 _: UnsafeUtils.Assign(ref value, new Byte3(data[0], data[1], data[2])); break;
+            case Byte4 _: UnsafeUtils.Assign(ref value, new Byte4(data[0], data[1], data[2], data[3])); break;
             }
             return value;
         }

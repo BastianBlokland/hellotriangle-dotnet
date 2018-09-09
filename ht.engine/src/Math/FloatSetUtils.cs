@@ -38,10 +38,10 @@ namespace HT.Engine.Math
             T value = default(T);
             switch (value)
             {
-            case Float1 _: UnsafeUtils.ForceAssign(ref value, new Float1(data[0])); break;
-            case Float2 _: UnsafeUtils.ForceAssign(ref value, new Float2(data[0], data[1])); break;
-            case Float3 _: UnsafeUtils.ForceAssign(ref value, new Float3(data[0], data[1], data[2])); break;
-            case Float4 _: UnsafeUtils.ForceAssign(ref value, new Float4(data[0], data[1], data[2], data[3])); break;
+            case Float1 _: UnsafeUtils.Assign(ref value, new Float1(data[0])); break;
+            case Float2 _: UnsafeUtils.Assign(ref value, new Float2(data[0], data[1])); break;
+            case Float3 _: UnsafeUtils.Assign(ref value, new Float3(data[0], data[1], data[2])); break;
+            case Float4 _: UnsafeUtils.Assign(ref value, new Float4(data[0], data[1], data[2], data[3])); break;
             }
             return value;
         }
