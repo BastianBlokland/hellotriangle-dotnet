@@ -20,7 +20,7 @@ layout(binding = 0) uniform SceneDataBlock { SceneData sceneData[swapchainCount]
 layout(binding = 1) uniform CameraDataBlock { CameraData cameraData[swapchainCount]; };
 layout(binding = 2) uniform sampler2D colorSampler;
 layout(binding = 3) uniform sampler2D normalSampler;
-layout(binding = 4) uniform sampler2D terrainSampler;
+layout(binding = 4) uniform sampler2D terrainHeightSampler;
 
 //Input
 layout(location = 0) in vec2 inUv;

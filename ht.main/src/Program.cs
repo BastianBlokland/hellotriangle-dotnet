@@ -36,7 +36,8 @@ namespace HT.Main
                 AddTerrain(nativeApp, taskRunner, scene, renderOrder: 900,
                     textureSources: new []
                     { 
-                        ("textures/terrain.tga", useMipMaps: false, repeat: false),
+                        ("textures/terrain_height.r32", useMipMaps: false, repeat: false),
+                        ("textures/terrain_color.tga", useMipMaps: true, repeat: false),
                         ("textures/terrain_detail_1_color.tga", useMipMaps: true, repeat: true),
                         ("textures/terrain_detail_1_normal.tga", useMipMaps: true, repeat: true),
                         ("textures/terrain_detail_2_color.tga", useMipMaps: true, repeat: true),
@@ -53,7 +54,7 @@ namespace HT.Main
                     { 
                         ("textures/bush_color.tga", useMipMaps: true, repeat: false),
                         ("textures/bush_normal.tga", useMipMaps: true, repeat: false),
-                        ("textures/terrain.tga", useMipMaps: false, repeat: false)
+                        ("textures/terrain_height.r32", useMipMaps: false, repeat: false)
                     },
                     vertShaderPath: "shaders/bin/vegetation.vert.spv",
                     fragShaderPath: "shaders/bin/vegetation.frag.spv",
@@ -92,7 +93,7 @@ namespace HT.Main
                 {
                     //Rotate the camera
                     scene.Camera.Transformation = Float4x4.CreateOrbit(
-                        center: Float3.Lerp((0f, 10f, 0f), (75f, 5f, 0f), 0f),//(float)frameTracker.ElapsedTime * .03f),
+                        center: Float3.Lerp((0f, 10, 0f), (75f, 5f, 0f), 0f),//(float)frameTracker.ElapsedTime * .03f),
                         offset: (-3f, 1f, 0f), //-100f, 25f, 0f
                         axis: Float3.Up,
                         angle: (float)frameTracker.ElapsedTime * .25f);

@@ -44,6 +44,14 @@ namespace HT.Engine.Rendering.Memory
         }
 
         internal static DeviceBuffer UploadData<T>(
+            ReadOnlyMemory<T> data,
+            RenderScene scene,
+            BufferUsages usages) where T : struct
+        {
+            return UploadData<T>(data.Span, scene, usages);
+        }
+
+        internal static DeviceBuffer UploadData<T>(
             ReadOnlySpan<T> data,
             RenderScene scene,
             BufferUsages usages) where T : struct

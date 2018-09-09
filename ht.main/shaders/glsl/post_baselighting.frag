@@ -58,12 +58,13 @@ void main()
 {
     float nearClipDistance = cameraData[pushdata.swapchainIndex].nearClipDistance;
     float farClipDistance = cameraData[pushdata.swapchainIndex].farClipDistance;
-    mat4 cameraMatrix = cameraData[pushdata.swapchainIndex].cameraMatrix;
+    mat4 sceneCamMatrix = cameraData[pushdata.swapchainIndex].cameraMatrix;
     mat4 invViewProjectionMatrix = cameraData[pushdata.swapchainIndex].inverseViewProjectionMatrix;
+    mat4 shadowCamMatrix = shadowData[pushdata.swapchainIndex].cameraMatrix;
 
     vec3 clipPos = vec3(inUv * 2.0 - 1.0, 1.0);
     vec3 viewDir = normalize((invViewProjectionMatrix * vec4(clipPos, 0.0)).xyz);
-    vec3 camPos = cameraMatrix[3].xyz;
+    vec3 camPos = sceneCamMatrix[3].xyz;
 
     //Sample data from the scene
     vec3 color = texture(sceneColorSampler, inUv).rgb;
@@ -76,7 +77,7 @@ void main()
     float reflectivity = attributes.a;
     float linearDepth = linearizeDepth(depth, nearClipDistance, farClipDistance);
     vec3 worldPos = worldPosFromDepth(depth, inUv, invViewProjectionMatrix);
-    vec3 sunDirection = mat3(cameraMatrix) * vec3(0.0, 0.0, 1.0);
+    vec3 sunDirection = mat3(shadowCamMatrix) * vec3(0.0, 0.0, 1.0);
     float ambientOcclusion = texture(sceneAOSampler, inUv).r;
     
     //Calculate shadow
@@ -109,8 +110,8 @@ void main()
     outColor = vec4(mix(litResult, color, emmisiveness), 1.0);
 
     //Apply fog
-    float fogHeightBlend = smoothstep(1000.0, 3.0, worldPos.y * worldPos.y);
-    float fogDistanceBlend = clamp(linearDepth / 100, 0.01, 0.7);
+    float fogHeightBlend = smoothstep(1500.0, 0.0, worldPos.y * worldPos.y);
+    float fogDistanceBlend = clamp(linearDepth / 125.0, 0.0, 0.6);
     outColor = mix(outColor, vec4(sunColor, 1), fogHeightBlend * fogDistanceBlend);
 
     //Apply bloom

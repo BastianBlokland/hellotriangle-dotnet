@@ -84,7 +84,7 @@ namespace HT.Engine.Rendering.Techniques
                 sampleKernel, scene, BufferUsages.UniformBuffer);
 
             //Create the rotation noise texture
-            FloatTexture rotationNoiseTexture = TextureUtils.CreateRandomFloatTexture(
+            Float4Texture rotationNoiseTexture = TextureUtils.CreateRandomFloatTexture(
                 random, min: (-1f, -1f, 0f, 0f), max: (1f, 1f, 0f, 0f), size: (noiseSize, noiseSize));
             rotationNoiseSampler = new DeviceSampler(scene.LogicalDevice, 
                 texture: DeviceTexture.UploadTexture(rotationNoiseTexture, scene),

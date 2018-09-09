@@ -36,6 +36,11 @@
         <None Include="textures/*.tga">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
+
+        <!--Textures (binary raw32 format-->
+        <None Include="textures/*.r32">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
         
     </ItemGroup>
 

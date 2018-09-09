@@ -35,6 +35,9 @@ namespace HT.Engine.Resources
             case ".tga": case ".TGA":
                 return new TruevisionTgaParser(app.ReadFile(path), leaveStreamOpen: false);
 
+            case ".r32": case ".R32":
+                return new R32Parser(app.ReadFile(path), leaveStreamOpen: false);
+
             case ".spv": case ".SPV":
                 return new SpirVParser(app.ReadFile(path), leaveStreamOpen: false);
             }

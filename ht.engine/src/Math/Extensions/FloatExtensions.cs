@@ -6,6 +6,8 @@ namespace HT.Engine.Math
     {
         public static int AsInt(this float val) => Convert.FloatAsInt(ref val);
 
+        public static Half ToHalf(this float val) => Half.FromFloat(val);
+
         public static float Round(this float val) => MathF.Round(val);
 
         public static int RoundToInt(this float val) => (int)MathF.Round(val);

@@ -22,7 +22,7 @@ layout(binding = 0) uniform SceneDataBlock { SceneData sceneData[swapchainCount]
 layout(binding = 1) uniform CameraDataBlock { CameraData cameraData[swapchainCount]; };
 layout(binding = 2) uniform sampler2D colorSampler;
 layout(binding = 3) uniform sampler2D normalSampler;
-layout(binding = 4) uniform sampler2D terrainSampler;
+layout(binding = 4) uniform sampler2D terrainHeightSampler;
 
 //Output
 out gl_PerVertex
@@ -63,7 +63,7 @@ void main()
     vec3 bendOffset = bendWorldPosition.xyz - vertWorldPosition.xyz;
 
     //Offset by the terrain height
-    bendWorldPosition.y += texture(terrainSampler, getWorldUv(instanceWorldPositon)).a * heightmapScale;
+    bendWorldPosition.y += texture(terrainHeightSampler, getWorldUv(instanceWorldPositon)).r * heightmapScale;
 
     outUv = vertUv1;
     outColorTint = getTint();

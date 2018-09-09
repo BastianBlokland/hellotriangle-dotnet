@@ -96,7 +96,13 @@ namespace HT.Engine.Rendering.Memory
         }
 
         internal int Write<T>(T[] data, long offset = 0) where T : struct => 
-            Write((ReadOnlySpan<T>)data, offset);
+            Write<T>(data, offset);
+
+        internal int Write<T>(Memory<T> data, long offset = 0) where T : struct => 
+            Write<T>(data.Span, offset);
+
+        internal int Write<T>(ReadOnlyMemory<T> data, long offset = 0) where T : struct => 
+            Write<T>(data.Span, offset);
         
         internal unsafe int Write<T>(ReadOnlySpan<T> data, long offset = 0)
             where T : struct

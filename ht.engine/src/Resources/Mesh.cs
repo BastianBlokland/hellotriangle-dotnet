@@ -51,16 +51,20 @@ namespace HT.Engine.Resources
         }
 
         //Data
-        private readonly Vertex[] vertices;
-        private readonly UInt16[] indices;
+        private readonly Memory<Vertex> vertices;
+        private readonly Memory<UInt16> indices;
         private readonly TopologyType type;
 
-        public Mesh(Vertex[] vertices, UInt16[] indices, TopologyType type = TopologyType.TriangleList)
+        public Mesh(
+            Memory<Vertex> vertices,
+            Memory<UInt16> indices,
+            TopologyType type = TopologyType.TriangleList)
         {
-            if (vertices == null)
-                throw new ArgumentNullException(nameof(vertices));
-            if (indices == null)
-                throw new ArgumentNullException(nameof(indices));
+            if (vertices.Length == 0)
+                throw new ArgumentException($"[{nameof(Mesh)}] No vertices provided", nameof(vertices));
+            if (indices.Length == 0)
+                throw new ArgumentException($"[{nameof(Mesh)}] No indices provided", nameof(indices));
+
             this.vertices = vertices;
             this.indices = indices;
             this.type = type;
@@ -69,12 +73,12 @@ namespace HT.Engine.Resources
         public void Scale(float scale)
         {
             for (int i = 0; i < vertices.Length; i++)
-                vertices[i] = new Vertex(
-                    position: vertices[i].Position * scale,
-                    color: vertices[i].Color,
-                    normal: vertices[i].Normal,
-                    uv1: vertices[i].Uv1,
-                    uv2: vertices[i].Uv2);
+                vertices.Span[i] = new Vertex(
+                    position: vertices.Span[i].Position * scale,
+                    color: vertices.Span[i].Color,
+                    normal: vertices.Span[i].Normal,
+                    uv1: vertices.Span[i].Uv1,
+                    uv2: vertices.Span[i].Uv2);
         }
 
         internal DeviceBuffer UploadVertices(RenderScene scene)

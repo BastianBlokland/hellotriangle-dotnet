@@ -7,7 +7,7 @@ using VulkanCore;
 
 namespace HT.Engine.Resources
 {
-    public sealed class ByteTexture : IInternalTexture
+    public sealed class Byte4Texture : IInternalTexture
     {
         //Properties
         public Int2 Size => size;
@@ -15,16 +15,16 @@ namespace HT.Engine.Resources
         public bool IsCubeMap => false;
 
         //Data
-        private readonly Byte4[] pixels; //stored row by row
+        private readonly ReadOnlyMemory<Byte4> pixels; //stored row by row
         private readonly Int2 size;
 
-        public ByteTexture(Byte4[] pixels, Int2 size)
+        public Byte4Texture(ReadOnlyMemory<Byte4> pixels, Int2 size)
         {
-            if (pixels == null)
-                throw new ArgumentNullException(nameof(pixels));
+            if (pixels.Length == 0)
+                throw new ArgumentException($"[{nameof(Byte4Texture)}] No pixels provided", nameof(pixels));
             if (pixels.Length != size.X * size.Y)
                 throw new ArgumentException(
-                    $"[{nameof(ByteTexture)}] Invalid count, expected: {size.X * size.Y}, got: {pixels.Length}", nameof(pixels));
+                    $"[{nameof(Byte4Texture)}] Invalid count, expected: {size.X * size.Y}, got: {pixels.Length}", nameof(pixels));
             this.pixels = pixels;
             this.size = size;
         }

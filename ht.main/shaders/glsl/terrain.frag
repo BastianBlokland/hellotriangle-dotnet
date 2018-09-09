@@ -18,17 +18,17 @@ layout(push_constant) uniform PushData
 //Uniforms
 layout(binding = 0) uniform SceneDataBlock { SceneData sceneData[swapchainCount]; };
 layout(binding = 1) uniform CameraDataBlock { CameraData cameraData[swapchainCount]; };
-layout(binding = 2) uniform sampler2D terrainSampler;
-layout(binding = 3) uniform sampler2D detail1ColorSampler;
-layout(binding = 4) uniform sampler2D detail1NormalSampler;
-layout(binding = 5) uniform sampler2D detail2ColorSampler;
-layout(binding = 6) uniform sampler2D detail2NormalSampler;
+layout(binding = 2) uniform sampler2D terrainHeightSampler;
+layout(binding = 3) uniform sampler2D terrainColorSampler;
+layout(binding = 4) uniform sampler2D detail1ColorSampler;
+layout(binding = 5) uniform sampler2D detail1NormalSampler;
+layout(binding = 6) uniform sampler2D detail2ColorSampler;
+layout(binding = 7) uniform sampler2D detail2NormalSampler;
 
 //Input
-layout(location = 0) in vec4 inBaseColor;
-layout(location = 1) in vec2 inWorldUv;
-layout(location = 2) in vec3 inWorldPosition;
-layout(location = 3) in vec3 inWorldNormal;
+layout(location = 0) in vec2 inWorldUv;
+layout(location = 1) in vec3 inWorldPosition;
+layout(location = 2) in vec3 inWorldNormal;
 
 //Output
 layout(location = 0) out vec4 outColor;
@@ -37,10 +37,11 @@ layout(location = 2) out vec4 outAttributes;
 
 void main() 
 {
-    #define detail1Uv inWorldUv * 5
-    #define detail2Uv inWorldUv * 100
+    #define detail1Uv inWorldUv * 10
+    #define detail2Uv inWorldUv * 125
 
-    vec4 colorAndSpec = vec4(inBaseColor.rgb, 1.0) * 
+    vec4 colorAndSpec =
+        texture(terrainColorSampler, inWorldUv) *
         texture(detail1ColorSampler, detail1Uv) *
         texture(detail2ColorSampler, detail2Uv);
 
