@@ -1,6 +1,6 @@
 #define worldSize vec2(256, 256)
 #define heightmapScale 35.0
-#define minAmbientColor vec3(0.1, 0.06, 0.05)
+#define minAmbientColor vec3(0.07, 0.05, 0.04)
 #define maxAmbientColor vec3(0.6, 0.5, 0.4)
 #define sunColor vec3(0.8, 0.7, 0.5)
 #define sunSpecPower 16

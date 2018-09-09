@@ -10,7 +10,6 @@ layout(constant_id = 0) const int swapchainCount = 3;
 layout(constant_id = 1) const int sampleKernelSize = 32;
 layout(constant_id = 2) const float sampleRadius = 0.5;
 layout(constant_id = 3) const float sampleBias = -0.001;
-layout(constant_id = 4) const float occlusionMultiplier = 1.0;
 
 //PushData
 layout(push_constant) uniform PushData
@@ -87,5 +86,5 @@ void main()
         occlusion += float(actualSampleLinearDepth <= linearTargetDepth) * radiusFade;
     }
 
-    outColor = vec4(1.0 - occlusion / sampleKernelSize * occlusionMultiplier);
+    outColor = vec4(1.0 - occlusion / sampleKernelSize);
 }

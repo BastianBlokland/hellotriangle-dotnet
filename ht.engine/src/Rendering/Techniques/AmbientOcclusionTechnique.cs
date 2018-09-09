@@ -14,12 +14,11 @@ namespace HT.Engine.Rendering.Techniques
     internal sealed class AmbientOcclusionTechnique : IDisposable
     {
         private readonly static Format aoFormat = Format.R8UNorm;
-        private readonly static float targetSizeMultiplier = .5f;
-        private readonly static int sampleKernelSize = 16;
-        private readonly static float sampleRadius = 1.15f;
-        private readonly static float sampleBias = -.025f;
-        private readonly static float occlusionMultiplier = 3f;
-        private readonly static int noiseSize = 4;
+        private readonly static float targetSizeMultiplier = 1f;
+        private readonly static int sampleKernelSize = 8;
+        private readonly static float sampleRadius = 1f;
+        private readonly static float sampleBias = -.005f;
+        private readonly static int noiseSize = 2;
         //We want to blur out the noise, but blur goes in both directions so we need to take half
         private readonly static int blurSampleRange = noiseSize / 2; 
 
@@ -71,7 +70,6 @@ namespace HT.Engine.Rendering.Techniques
             renderer.AddSpecialization(sampleKernelSize);
             renderer.AddSpecialization(sampleRadius);
             renderer.AddSpecialization(sampleBias);
-            renderer.AddSpecialization(occlusionMultiplier);
             swapchainIndexPushDataBinding = renderer.AddPushData<int>();
             targetSizePushBinding = renderer.AddPushData<Int2>();
 
@@ -173,7 +171,7 @@ namespace HT.Engine.Rendering.Techniques
             for (int i = 0; i < kernel.Length; i++)
             {
                 Float3 dir = Float3.FastNormalize(
-                    random.GetBetween(minValue: (-1f, -1f, 0f), maxValue: (1f, 1f, 1f)));
+                    random.GetBetween(minValue: (-1f, -1f, .2f), maxValue: (1f, 1f, 1f)));
 
                 float scale = (float)i / kernel.Length;
                 Float3 point = dir * FloatUtils.Lerp(.1f, 1f, scale * scale);
