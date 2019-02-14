@@ -1,6 +1,8 @@
 # [Retired] hellotriangle-dotnet
 Work in progress dotnet vulkan renderer
 
+[![Demo of latest state](https://img.youtube.com/vi/iqTKLuKaDnc/0.jpg)](https://www.youtube.com/watch?v=iqTKLuKaDnc)
+
 # structure
 Supported platforms are Windows and MacOS at the moment. Using dotnet-core so base code is portable to loads of platforms.
 For platform specific code (for example window management) there are thin wrappers around the os functions.
