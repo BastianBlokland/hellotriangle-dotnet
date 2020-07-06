@@ -94,7 +94,7 @@ namespace HT.Engine.Parsing
                     charCache.Add(c);
             }
             string text = new string(charCache.Data, startIndex: 0, length: charCache.Count);
-            return float.Parse(text, NumberStyles.Float);
+            return float.Parse(text, NumberStyles.Float, CultureInfo.InvariantCulture);
         }
 
         public int ConsumeInt()
@@ -107,7 +107,7 @@ namespace HT.Engine.Parsing
             while (Current.IsDigit)
                 charCache.Add(Consume());
             string text = new string(charCache.Data, startIndex: 0, length: charCache.Count);
-            return int.Parse(text);
+            return int.Parse(text, CultureInfo.InvariantCulture);
         }
 
         public string ConsumeQuotedString()

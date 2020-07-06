@@ -133,7 +133,8 @@ namespace HT.Engine.Parsing
                 string meter = unitElement.Tag.GetAttributeValue("meter");
                 if (!string.IsNullOrEmpty(meter))
                 {
-                    float meterScale = float.Parse(meter.Replace(',', '.'), NumberStyles.Float);
+                    float meterScale = float.Parse(
+                        meter.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture);
                     transform *= Float4x4.CreateScale(meterScale);
                 }
             }
